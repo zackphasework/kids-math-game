@@ -1,73 +1,80 @@
-<title>Pip's Star Jar</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#DCEFEA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111933" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Power-Up Math</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&family=Sniglet:wght@400;800&display=swap">
 <style>
-/* Layout: one-screen app in a single centred column (max 640px). The play screen pins answers to the bottom for thumbs.
-   Look: paper stickers, thick ink outlines and hard drop shadows. Day sky in light mode, night garden in dark mode. */
+/* Layout: one-screen app in a single centred column (max 640px); play screens pin controls to the bottom for thumbs.
+   Look: paper stickers, thick ink outlines, hard drop shadows. Day colours in light mode, night colours in dark mode. */
 :root{
-  --sky:#DCEFEA; --speck:#C3E2DB; --card:#FFFFFF; --card-2:#EEF7F4; --jar:#F4FBF9;
+  --sky:#DCEFEA; --speck:#C3E2DB; --card:#FFFFFF; --card-2:#EEF7F4;
   --ink:#1D2540; --ink-soft:#56607E; --line:#1D2540; --line-soft:#A8C6C0;
   --marigold:#FF8A3D; --star:#FFC233; --leaf:#22A06B; --leaf-soft:#CDEFDD;
   --rose:#E8577A; --berry:#7357DB; --sea:#2F95D6; --mint:#4FCBA9; --plum:#B04F9C;
-  --wing:#F2FAFF; --eye:#FFFFFF; --on-warm:#1D2540; --on-leaf:#FFFFFF;
-  --soft-note:#FFF0DC; --wrong-soft:#FBE1E7;
+  --on-warm:#1D2540; --on-leaf:#FFFFFF; --soft-note:#FFF0DC; --wrong-soft:#FBE1E7;
+  --sky-2:#BFE6F7; --grass:#6CBF5C; --grass-2:#5AAE4B; --dirt:#C9A47A; --dirt-deep:#9C7650; --concrete:#B9BFC7;
+  --glass:#BFE7F5; --metal:#4A4F5C; --ball:#FFFFFF; --post:#FFFFFF; --roof:#C0563F; --eye:#FFFFFF;
+  --skin1:#F6D2B4; --skin2:#D9A27B; --skin3:#8D5A3B; --hair1:#2A2440; --hair2:#E86AA6; --hair3:#2B8C9A;
+  --gold:#F5B82E; --silver:#C7CED8; --bronze:#CD8B52; --shadow-mon:#3B2C5E;
   --display:"Sniglet", ui-rounded, "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
   --body:"Lexend", ui-rounded, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --r:22px;
+  color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --sky:#111933; --speck:#1C2648; --card:#1E2A4E; --card-2:#263361; --jar:#17213F;
+  :root{
+    --sky:#111933; --speck:#1C2648; --card:#1E2A4E; --card-2:#263361;
     --ink:#F0F2FF; --ink-soft:#A8B1D8; --line:#060A18; --line-soft:#34416C;
     --marigold:#FF9A55; --star:#FFD154; --leaf:#34C185; --leaf-soft:#173F33;
     --rose:#FF6F90; --berry:#9A82FF; --sea:#4DB0F0; --mint:#62DDBC; --plum:#D47BC4;
-    --wing:#C9D4FF; --eye:#FFFFFF; --on-warm:#1D2540; --on-leaf:#05200F;
-    --soft-note:#3A2F27; --wrong-soft:#4A2233;
+    --on-warm:#1D2540; --on-leaf:#05200F; --soft-note:#3A2F27; --wrong-soft:#4A2233;
+    --sky-2:#22305A; --grass:#2F6B3A; --grass-2:#285D32; --dirt:#6B4F36; --dirt-deep:#4A3524; --concrete:#7A8292;
+    --glass:#5D8FB0; --metal:#2A2F3B; --ball:#EEF1F8; --post:#E8ECF5; --roof:#A84A38; --eye:#FFFFFF;
+    --hair2:#F07DB4; --hair3:#3AA7B6; --shadow-mon:#1A1230;
     color-scheme:dark;
   }
-}
-:root[data-theme="dark"]{
-  --sky:#111933; --speck:#1C2648; --card:#1E2A4E; --card-2:#263361; --jar:#17213F;
-  --ink:#F0F2FF; --ink-soft:#A8B1D8; --line:#060A18; --line-soft:#34416C;
-  --marigold:#FF9A55; --star:#FFD154; --leaf:#34C185; --leaf-soft:#173F33;
-  --rose:#FF6F90; --berry:#9A82FF; --sea:#4DB0F0; --mint:#62DDBC; --plum:#D47BC4;
-  --wing:#C9D4FF; --eye:#FFFFFF; --on-warm:#1D2540; --on-leaf:#05200F;
-  --soft-note:#3A2F27; --wrong-soft:#4A2233;
-  color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
 body{
-  background-color:var(--sky);
-  background-image:radial-gradient(var(--speck) 1.6px, transparent 1.8px);
-  background-size:28px 28px;
+  margin:0; background-color:var(--sky);
+  background-image:radial-gradient(var(--speck) 1.6px, transparent 1.8px); background-size:28px 28px;
   color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.45;
-  padding-left:max(16px, env(safe-area-inset-left, 0px));
-  padding-right:max(16px, env(safe-area-inset-right, 0px));
-  -webkit-tap-highlight-color:transparent; overflow-x:hidden;
+  padding-top:env(safe-area-inset-top, 0px); padding-bottom:env(safe-area-inset-bottom, 0px);
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));
+  -webkit-tap-highlight-color:transparent; overflow-x:hidden; -webkit-text-size-adjust:100%;
 }
+[hidden]{display:none !important}
 #app{max-width:640px; margin:0 auto; min-height:100%; display:flex; flex-direction:column; gap:22px; padding-block:14px 32px}
 html.playing body{overflow:hidden}
 html.playing #app{height:100%; min-height:0; padding-block:8px 12px; gap:0}
 button{font:inherit; color:inherit}
 h1,h2,h3{font-family:var(--display); font-weight:800; margin:0; line-height:1.1; text-wrap:balance}
-h1{font-size:clamp(32px, 8.5vw, 46px)}
+h1{font-size:clamp(32px, 9vw, 48px)}
 .block h2{font-size:22px; margin-bottom:12px}
-.sub{margin:4px 0 0; color:var(--ink-soft); max-width:34ch}
+.sub{margin:6px 0 0; color:var(--ink-soft); max-width:36ch}
 :focus-visible{outline:4px solid var(--sea); outline-offset:3px}
-.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
-
-/* icons */
-.ic{width:26px; height:26px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; flex:none}
+svg{display:block}
+.ic{width:26px; height:26px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; flex:none; display:inline-block}
 .ic.fill{fill:var(--star); stroke:var(--line); stroke-width:1.6}
+.art g{stroke:var(--line)}
 
 /* buttons */
-.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--display); font-weight:800; font-size:22px; padding:13px 22px; border:3px solid var(--line); border-radius:18px; background:var(--card); color:var(--ink); box-shadow:0 5px 0 var(--line); cursor:pointer; touch-action:manipulation; transition:transform .08s, box-shadow .08s}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--display); font-weight:800; font-size:22px; padding:13px 22px; border:3px solid var(--line); border-radius:18px; background:var(--card); color:var(--ink); box-shadow:0 5px 0 var(--line); cursor:pointer; touch-action:manipulation; transition:transform .08s, box-shadow .08s; text-align:center}
 .btn:active:not(:disabled){transform:translateY(4px); box-shadow:0 1px 0 var(--line)}
 .btn.primary{background:var(--marigold); color:var(--on-warm)}
+.btn.go{background:var(--leaf); color:var(--on-leaf)}
 .btn.wide{width:100%}
+.btn.big{font-size:clamp(21px, 6vw, 28px); padding:15px 18px; border-radius:22px}
 .btn.ghost{background:transparent; box-shadow:none; border-style:dashed; font-size:18px; color:var(--ink-soft)}
 .btn.small{font-size:17px; padding:7px 14px; box-shadow:0 3px 0 var(--line); border-radius:14px}
 .btn.small .ic{width:20px; height:20px}
@@ -75,91 +82,106 @@ h1{font-size:clamp(32px, 8.5vw, 46px)}
 .icon-btn{width:52px; height:52px; flex:none; display:grid; place-items:center; border-radius:16px; border:3px solid var(--line); background:var(--card); color:var(--ink); box-shadow:0 4px 0 var(--line); cursor:pointer; touch-action:manipulation}
 .icon-btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--line)}
 
-/* header */
 .top{display:flex; align-items:center; justify-content:space-between; gap:12px}
-.brand{display:flex; align-items:center; gap:10px; min-width:0}
-.pip-hero{width:92px; height:92px; flex:none; animation:float 4s ease-in-out infinite}
 .title{font-size:26px; overflow-wrap:anywhere}
+.hero-strip{display:flex; align-items:flex-end; gap:6px; margin-top:12px}
+.hero-strip > *{flex:1; max-width:120px}
 
 /* players */
 .players{display:grid; grid-template-columns:repeat(auto-fill, minmax(146px, 1fr)); gap:14px}
-.player{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:156px; padding:16px 10px 14px; border:3px solid var(--line); border-radius:var(--r); background:var(--card); box-shadow:0 5px 0 var(--line); cursor:pointer; text-align:center; touch-action:manipulation}
+.player{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:164px; padding:14px 10px; border:3px solid var(--line); border-radius:var(--r); background:var(--card); box-shadow:0 5px 0 var(--line); cursor:pointer; text-align:center; touch-action:manipulation}
 .player:active{transform:translateY(4px); box-shadow:0 1px 0 var(--line)}
 .player.add{border-style:dashed; box-shadow:none; background:transparent; color:var(--ink-soft); font-family:var(--display); font-weight:800; font-size:20px}
 .player.add .ic{width:42px; height:42px}
 .avatar{display:inline-block; flex:none}
-.avatar svg{width:100%; height:100%; display:block}
-.av{width:66px; height:66px}
-.av-sm{width:50px; height:50px}
-.av-big{width:96px; height:96px}
+.avatar svg{width:100%; height:100%}
+.av{width:78px; height:70px}
+.av-sm{width:54px; height:50px}
+.av-big{width:120px; height:108px}
 .pname{font-family:var(--display); font-weight:800; font-size:22px; line-height:1.1; overflow-wrap:anywhere}
 .pmeta{display:inline-flex; align-items:center; gap:4px; color:var(--ink-soft); font-size:14px; font-variant-numeric:tabular-nums}
 .pmeta .ic{width:16px; height:16px}
 .empty-note{margin:14px 0 0; color:var(--ink-soft); max-width:46ch}
 
-/* world preview */
-.peek{display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:10px}
-.peek-item{display:flex; align-items:center; gap:10px; padding:8px; border-radius:16px; background:var(--card-2); min-width:0}
-.peek-item b{display:block; font-size:14px; line-height:1.2}
-.peek-item small{color:var(--ink-soft); font-size:12.5px}
-.badge{flex:none; min-width:66px; height:54px; padding:0 8px; border-radius:14px; display:grid; place-items:center; background:var(--wc); border:3px solid var(--line); font-family:var(--display); font-weight:800; font-size:20px; color:#FFFFFF; white-space:nowrap;
-  text-shadow:2px 0 0 var(--line),-2px 0 0 var(--line),0 2px 0 var(--line),0 -2px 0 var(--line),2px 2px 0 var(--line),-2px -2px 0 var(--line),2px -2px 0 var(--line),-2px 2px 0 var(--line)}
-.peek .badge{min-width:58px; height:44px; font-size:16px}
-
-/* sync status */
-.sync{margin-top:16px; display:flex; flex-direction:column; gap:6px}
-.sync-b{align-self:flex-start; display:inline-flex; align-items:center; gap:8px; padding:6px 13px; border-radius:999px; border:2px solid var(--line-soft); background:var(--card); color:var(--ink-soft); font-size:14px; cursor:pointer; text-align:left}
+/* family save */
+.sync{margin-top:16px; display:flex; flex-direction:column; gap:10px; align-items:flex-start}
+.sync-b{display:inline-flex; align-items:center; gap:8px; padding:6px 13px; border-radius:999px; border:2px solid var(--line-soft); background:var(--card); color:var(--ink-soft); font-size:14px; cursor:pointer; text-align:left}
 .sync-b .dot{width:10px; height:10px; border-radius:50%; background:var(--ink-soft); flex:none}
 .sync-b[data-s="synced"] .dot{background:var(--leaf)}
-.sync-b[data-s="connecting"] .dot{background:var(--star)}
-.sync-b[data-s="offline"] .dot, .sync-b[data-s="error"] .dot, .sync-b[data-s="full"] .dot{background:var(--rose)}
-.sync-info{margin:0; font-size:14px; color:var(--ink-soft); max-width:60ch}
+.sync-b[data-s="syncing"] .dot{background:var(--star)}
+.sync-b[data-s="offline"] .dot, .sync-b[data-s="badcode"] .dot{background:var(--rose)}
+.sync-panel{display:flex; flex-direction:column; gap:10px; padding:14px; border-radius:18px; background:var(--card-2); width:100%}
+.sync-panel p{margin:0; font-size:14px; color:var(--ink-soft); max-width:60ch}
+.join-row{display:flex; gap:8px; flex-wrap:wrap}
+.join-row .field{flex:1; min-width:160px; text-transform:uppercase; letter-spacing:.08em}
+.err{color:var(--rose); font-weight:600}
+.code{font-family:var(--display); font-weight:800; letter-spacing:.08em; color:var(--ink)}
 
 /* form */
 .form{display:flex; flex-direction:column; gap:10px}
 .preview{display:flex; align-items:center; gap:14px; font-family:var(--display); font-weight:800; font-size:30px; min-width:0; overflow-wrap:anywhere}
 .lab{font-weight:700; margin-top:8px}
-.field{font:600 22px var(--body); padding:12px 14px; border:3px solid var(--line); border-radius:16px; background:var(--card); color:var(--ink); width:100%}
-.swatches,.shapes,.ages{display:flex; flex-wrap:wrap; gap:10px}
-.sw{width:52px; height:52px; border-radius:50%; background:var(--c); border:3px solid var(--line); cursor:pointer}
+.field{font:600 20px var(--body); padding:11px 14px; border:3px solid var(--line); border-radius:16px; background:var(--card); color:var(--ink); width:100%}
+.themes{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px}
+.theme-b{display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 6px; border:3px solid var(--line-soft); border-radius:18px; background:var(--card); cursor:pointer; font-family:var(--display); font-weight:800; font-size:17px}
+.theme-b svg{width:100%; max-width:96px; height:auto; aspect-ratio:10/9}
+.theme-b.on{border-color:var(--line); box-shadow:0 4px 0 var(--line); background:var(--leaf-soft)}
+.swatches,.ages{display:flex; flex-wrap:wrap; gap:10px}
+.sw{width:50px; height:50px; border-radius:50%; background:var(--c); border:3px solid var(--line); cursor:pointer}
 .sw.on{box-shadow:0 0 0 4px var(--sky), 0 0 0 7px var(--line)}
-.shp{width:64px; height:64px; padding:6px; border-radius:16px; border:3px solid transparent; background:var(--card); cursor:pointer}
-.shp.on{border-color:var(--line); box-shadow:0 4px 0 var(--line)}
-.shp svg{width:100%; height:100%; display:block}
-.age{min-width:56px; height:56px; padding:0 8px; border-radius:16px; border:3px solid var(--line); background:var(--card); font:800 22px var(--display); cursor:pointer}
+.age{min-width:54px; height:54px; padding:0 8px; border-radius:16px; border:3px solid var(--line); background:var(--card); font:800 22px var(--display); cursor:pointer}
 .age.on{background:var(--marigold); color:var(--on-warm); box-shadow:0 4px 0 var(--line)}
 .hint-text{color:var(--ink-soft); font-size:14px; margin:0}
 .form .btn.wide{margin-top:12px}
 
-/* map */
+/* hub */
 .who{display:flex; align-items:center; gap:10px; flex:1; min-width:0}
-.worlds{display:flex; flex-direction:column; gap:16px}
-.world{position:relative; display:flex; align-items:center; gap:14px; width:100%; text-align:left; padding:13px 14px; border:3px solid var(--line); border-radius:var(--r); background:var(--card); box-shadow:0 5px 0 var(--line); cursor:pointer; touch-action:manipulation}
+.mission{display:flex; flex-direction:column; gap:12px; padding:14px; border:3px solid var(--line); border-radius:var(--r); background:var(--card); box-shadow:0 5px 0 var(--line)}
+.mission-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap}
+.mission-head h3{font-size:24px}
+.mission-head small{color:var(--ink-soft); font-size:14px}
+.scene{border:3px solid var(--line); border-radius:16px; overflow:hidden; background:var(--sky-2)}
+.scene svg{width:100%; height:auto}
+.stepdots{display:flex; gap:6px}
+.stepdots i{flex:1; height:8px; border-radius:4px; background:var(--line-soft)}
+.stepdots i.on{background:var(--leaf)}
+.stepdots i.now{background:var(--star)}
+.power{display:flex; align-items:center; gap:8px}
+.power-lab{font-weight:700; font-size:14px; min-width:56px}
+.cells{display:flex; gap:5px; flex:1}
+.cells i{flex:1; height:22px; border-radius:7px; border:2.5px solid var(--line); background:var(--card-2); position:relative}
+.cells i.on{background:var(--pc)}
+.cells i.on::after{content:""; position:absolute; inset:3px 30% 50% 12%; border-radius:4px; background:rgba(255,255,255,.45)}
+.cells.pop i.on:last-child{animation:pulse .5s ease}
+.vs{display:flex; align-items:center; justify-content:space-around; gap:10px; padding:12px; border-radius:16px; background:var(--card-2); text-align:center}
+.vs .team{display:flex; flex-direction:column; align-items:center; gap:4px; font-weight:700; font-size:14px}
+.vs .team svg{width:64px; height:64px}
+.vs .vtxt{font:800 28px var(--display); color:var(--ink-soft)}
+.trail{display:flex; align-items:center; gap:0; padding:10px 4px}
+.trail .stop{flex:none; width:44px; height:44px; border-radius:50%; border:3px solid var(--line); background:var(--card-2); display:grid; place-items:center; font:800 16px var(--display)}
+.trail .stop.on{background:var(--leaf); color:var(--on-leaf)}
+.trail .stop.now{background:var(--star); color:var(--on-warm)}
+.trail .path{flex:1; height:5px; background:repeating-linear-gradient(90deg, var(--line-soft) 0 8px, transparent 8px 14px)}
+.worldrow{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.worldrow .wtext{flex:1; min-width:150px}
+.worlds{display:flex; flex-direction:column; gap:14px; margin-top:14px}
+.world{position:relative; display:flex; align-items:center; gap:14px; width:100%; text-align:left; padding:12px 14px; border:3px solid var(--line); border-radius:var(--r); background:var(--card); box-shadow:0 5px 0 var(--line); cursor:pointer; touch-action:manipulation}
+.world.on{background:var(--leaf-soft)}
 .world:active{transform:translateY(4px); box-shadow:0 1px 0 var(--line)}
-.wtext{flex:1; min-width:0}
+.wtext{min-width:0; flex:1}
 .wtext b{display:block; font-family:var(--display); font-size:20px; line-height:1.15}
 .wtext small{display:block; color:var(--ink-soft); font-size:13.5px; margin-top:2px}
-.wside{display:flex; flex-direction:column; align-items:flex-end; gap:7px; flex:none}
-.steps{display:flex; gap:4px}
+.steps{display:flex; gap:4px; flex:none}
 .steps i{width:11px; height:11px; border-radius:50%; border:2px solid var(--line); display:block}
 .steps i.on{background:var(--wc)}
-.wstars{display:inline-flex; align-items:center; gap:3px; font-weight:700; font-variant-numeric:tabular-nums}
-.wstars .ic{width:18px; height:18px}
+.badge{flex:none; min-width:66px; height:52px; padding:0 8px; border-radius:14px; display:grid; place-items:center; background:var(--wc); border:3px solid var(--line); font-family:var(--display); font-weight:800; font-size:19px; color:#FFFFFF; white-space:nowrap;
+  text-shadow:2px 0 0 var(--line),-2px 0 0 var(--line),0 2px 0 var(--line),0 -2px 0 var(--line),2px 2px 0 var(--line),-2px -2px 0 var(--line),2px -2px 0 var(--line),-2px 2px 0 var(--line)}
 .ribbon{position:absolute; top:-12px; left:14px; background:var(--star); color:var(--on-warm); border:2px solid var(--line); border-radius:999px; font:700 11.5px var(--body); letter-spacing:.07em; text-transform:uppercase; padding:2px 10px}
-.crown{position:absolute; top:-15px; right:16px; width:34px; height:26px}
-.crown svg{width:100%; height:100%; display:block}
-
-/* jar */
-.jar-lid{height:16px; margin:0 22%; background:var(--line-soft); border:3px solid var(--line); border-bottom:0; border-radius:10px 10px 0 0}
-.jar{border:3px solid var(--line); border-radius:26px 26px 38px 38px; background:var(--jar); padding:14px; display:grid; grid-template-columns:repeat(auto-fill, minmax(78px, 1fr)); gap:6px 8px}
-.jar.empty{display:flex; align-items:center; gap:12px; color:var(--ink-soft)}
-.jar.empty p{margin:0}
-.jbug{display:flex; flex-direction:column; align-items:center; font-size:12.5px; color:var(--ink-soft); min-width:0}
-.jbug svg{width:66px; height:66px}
-.jmore{display:grid; place-items:center; font-weight:700; color:var(--ink-soft)}
-.ghost{opacity:.3; width:66px; height:66px; flex:none}
-
-/* settings */
+.shelf{display:grid; grid-template-columns:repeat(auto-fill, minmax(92px, 1fr)); gap:10px; padding:12px; border:3px solid var(--line); border-radius:18px; background:var(--card-2)}
+.shelf.empty{display:block; color:var(--ink-soft)}
+.shelf-item{display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; font-size:12.5px; color:var(--ink-soft); min-width:0}
+.shelf-item svg{width:76px; height:70px}
+.record{margin:10px 0 0; color:var(--ink-soft); font-size:14px}
 .set-row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:10px 0; border-bottom:2px dashed var(--line-soft)}
 .set-row > span{font-weight:600}
 .seg{display:inline-flex; border:3px solid var(--line); border-radius:14px; overflow:hidden}
@@ -167,15 +189,11 @@ h1{font-size:clamp(32px, 8.5vw, 46px)}
 .seg-b + .seg-b{border-left:3px solid var(--line)}
 .seg-b.on{background:var(--marigold); color:var(--on-warm)}
 
-/* play */
+/* play (charge + action) */
 .play{display:grid; grid-template-rows:auto minmax(0,1fr) auto; height:100%; gap:10px}
 .bar{display:flex; align-items:center; gap:8px}
-.pips{flex:1; display:flex; justify-content:center; align-items:center; gap:4px; min-width:0}
-.pip{width:clamp(13px, 4vw, 22px); aspect-ratio:1; border-radius:50%; border:2.5px solid var(--line-soft); display:grid; place-items:center}
-.pip.now{border-color:var(--line); background:var(--card)}
-.pip.hit{border:0}
-.pip.hit .ic{width:118%; height:118%}
-.pip.miss{background:var(--line-soft); border-color:transparent}
+.bar .power{flex:1; min-width:0}
+.bar .power-lab{min-width:0}
 .stage{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-height:0; overflow-y:auto; padding:4px 0}
 .wtag{display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--ink-soft); text-align:center}
 .wtag::before{content:""; width:10px; height:10px; border-radius:50%; background:var(--wc); border:2px solid var(--line); flex:none}
@@ -197,11 +215,9 @@ h1{font-size:clamp(32px, 8.5vw, 46px)}
 .obj{position:relative; width:clamp(44px, 13vw, 70px); aspect-ratio:1}
 .objs.few .obj{width:clamp(60px, 19vw, 104px)}
 .objs.many .obj{width:clamp(30px, 9vw, 46px)}
-.obj svg{width:100%; height:100%; display:block}
+.obj svg{width:100%; height:100%}
 .objs.enter .obj{animation:pop .36s cubic-bezier(.3,1.6,.6,1) both; animation-delay:calc(var(--i) * 45ms)}
 .obj .num{position:absolute; right:-6px; bottom:-6px; min-width:22px; height:22px; padding:0 4px; border-radius:11px; background:var(--card); border:2px solid var(--line); font:700 12px/18px var(--body); text-align:center}
-
-/* helpers shown under a question */
 .aid{padding:10px 14px; border-radius:18px; background:var(--card-2); max-width:100%}
 .aid-row{display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap}
 .aop{font:800 30px var(--display); color:var(--ink-soft)}
@@ -227,19 +243,13 @@ h1{font-size:clamp(32px, 8.5vw, 46px)}
 .bowl.hi{background:var(--leaf-soft)}
 .bowl .dots{grid-template-columns:repeat(4, auto); gap:3px}
 .bowl .dots i{width:10px; height:10px; border-width:1.5px}
-.hint{align-self:center}
-
-/* feedback */
-.fb{display:flex; align-items:center; gap:10px; width:100%; max-width:520px; padding:8px 8px 8px 10px; border:3px solid var(--line); border-radius:20px; background:var(--card)}
+.fb{display:flex; align-items:center; gap:10px; width:100%; max-width:520px; padding:8px 8px 8px 14px; border:3px solid var(--line); border-radius:20px; background:var(--card)}
 .fb.good{background:var(--leaf-soft)}
 .fb.soft{background:var(--soft-note)}
 .fb-msg{flex:1; min-width:0; font-family:var(--display); font-weight:800; font-size:22px; line-height:1.15}
 .fb-msg b{font-size:1.2em}
-.fb-pip{width:54px; height:54px; flex:none}
 .next{padding:10px 16px}
 .next .ic{width:30px; height:30px}
-
-/* answers */
 .choices{display:grid; grid-template-columns:repeat(2, 1fr); gap:12px}
 .choices.c3{grid-template-columns:repeat(3, 1fr)}
 .choice{min-height:clamp(76px, 13vh, 116px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px; border:3px solid var(--line); border-radius:22px; background:var(--card); color:var(--ink); box-shadow:0 6px 0 var(--line); cursor:pointer; touch-action:manipulation; transition:transform .08s, box-shadow .08s}
@@ -257,81 +267,137 @@ h1{font-size:clamp(32px, 8.5vw, 46px)}
 .key.del{background:var(--card-2)}
 .key:disabled{opacity:.4; cursor:default}
 
-/* results */
-.results{display:flex; flex-direction:column; align-items:center; gap:12px; padding-top:10px; text-align:center}
-.rstars{display:flex; flex-wrap:wrap; justify-content:center; gap:4px}
-.rs .ic{width:30px; height:30px}
-.rs:not(.on) .ic{fill:var(--line-soft); stroke:var(--line-soft)}
-.rs.on{animation:pop .4s cubic-bezier(.3,1.6,.6,1) both; animation-delay:calc(var(--i) * 70ms)}
-.rtitle{font-size:clamp(34px, 9vw, 48px)}
-.catch svg{width:min(200px, 52vw); height:auto; display:block}
-.caught{animation:float 3s ease-in-out infinite}
+/* action scenes */
+.act-title{font-size:clamp(24px, 7vw, 32px); text-align:center}
+.act-sub{margin:0; color:var(--ink-soft); text-align:center; font-weight:600}
+.act-scene{width:100%; max-width:520px}
+.work .truck-wrap{animation:rumble .25s ease}
+.pitch{position:relative; width:100%; max-width:520px; aspect-ratio:16/11; border:3px solid var(--line); border-radius:16px; overflow:hidden; background:var(--grass)}
+.pitch > svg{position:absolute; inset:0; width:100%; height:100%}
+.zone{position:absolute; width:24%; height:28%; transform:translate(-50%,-50%); border:3px dashed rgba(255,255,255,.75); border-radius:14px; background:rgba(255,255,255,.12); cursor:pointer; display:grid; place-items:center; touch-action:manipulation}
+.zone::after{content:""; width:26px; height:26px; border-radius:50%; border:4px solid rgba(255,255,255,.85)}
+.zone:active{background:rgba(255,255,255,.3)}
+.zone:disabled{opacity:0; cursor:default}
+.keeper,.kball{position:absolute; transform:translate(-50%,-50%); transition:left .38s cubic-bezier(.2,.8,.3,1), top .38s cubic-bezier(.2,.8,.3,1), transform .38s ease; pointer-events:none}
+.keeper{width:22%; left:50%; top:52%}
+.kball{width:10%; left:50%; top:90%}
+.keeper svg,.kball svg{width:100%; height:auto}
+.kick-msg{position:absolute; left:50%; top:46%; transform:translate(-50%,-50%); font:800 clamp(34px, 11vw, 56px) var(--display); color:#FFFFFF; white-space:nowrap; pointer-events:none;
+  text-shadow:3px 0 0 var(--line),-3px 0 0 var(--line),0 3px 0 var(--line),0 -3px 0 var(--line),3px 3px 0 var(--line),-3px -3px 0 var(--line),3px -3px 0 var(--line),-3px 3px 0 var(--line); animation:pop .35s cubic-bezier(.3,1.6,.6,1) both}
+.scoreline{display:flex; gap:6px; justify-content:center}
+.scoreline i{width:22px; height:22px; border-radius:50%; border:2.5px solid var(--line); background:var(--card-2)}
+.scoreline i.g{background:var(--leaf)}
+.scoreline i.s{background:var(--rose)}
+.arena{position:relative; width:100%; max-width:520px; aspect-ratio:16/10; border:3px solid var(--line); border-radius:16px; overflow:hidden; background:linear-gradient(var(--sky-2), var(--card-2))}
+.arena .fighter{position:absolute; bottom:6%; width:38%}
+.arena .fighter svg{width:100%; height:auto}
+.arena .me{left:4%}
+.arena .mon{right:4%; width:40%}
+.arena .hp{position:absolute; top:6%; right:6%; display:flex; gap:4px}
+.arena .hp i{width:20px; height:18px; display:block; background:var(--rose); clip-path:path("M10 17 C3 12 0 9 0 5.5 0 2.5 2.4 0 5.2 0 7.2 0 8.8 1.2 10 3 11.2 1.2 12.8 0 14.8 0 17.6 0 20 2.5 20 5.5 20 9 17 12 10 17Z")}
+.arena .hp i.off{background:var(--line-soft)}
+.arena .lvl{position:absolute; top:6%; left:6%; padding:2px 10px; border-radius:999px; border:2px solid var(--line); background:var(--star); color:var(--on-warm); font:800 14px var(--display)}
+.beam{position:absolute; left:34%; top:50%; height:16%; width:0; border-radius:999px; background:linear-gradient(90deg, var(--star), #FFFFFF); box-shadow:0 0 18px var(--star); opacity:0}
+.blast .beam{animation:beam .45s ease-out}
+.blast .mon svg{animation:hit .45s ease}
+.mon.gone svg{animation:poof .6s ease forwards}
+.aura{animation:aura 1.8s ease-in-out infinite}
+.done-panel{display:flex; flex-direction:column; gap:12px; align-items:stretch; width:100%}
+.done-panel .act-title{margin-bottom:2px}
+
+/* reward */
+.results{display:flex; flex-direction:column; align-items:center; gap:14px; padding-top:10px; text-align:center}
+.rtitle{font-size:clamp(32px, 9vw, 46px)}
+.reward-art{width:min(280px, 74vw)}
+.reward-art svg{width:100%; height:auto}
 .rmsg{margin:0; font-size:18px; max-width:32ch}
-.rnote{display:inline-flex; align-items:center; gap:6px; margin:0; padding:6px 14px; border-radius:999px; background:var(--leaf-soft); font-weight:600}
-.rnote .ic{width:20px; height:20px}
-.ractions{display:flex; flex-direction:column; gap:14px; width:100%; max-width:360px; margin-top:8px}
+.ractions{display:flex; flex-direction:column; gap:14px; width:100%; max-width:360px; margin-top:6px}
 
-/* creatures */
-.bug{display:block}
-.bug g,.shape g{stroke:var(--line)}
-.halo{opacity:.3; animation:glow 2.6s ease-in-out infinite}
-.hop{animation:hop .55s ease}
-.tilt{animation:tilt .7s ease}
-
-/* effects */
 #fx{position:fixed; inset:0; pointer-events:none; z-index:50; overflow:hidden}
 .spark{position:absolute; width:24px; height:24px; margin:-12px 0 0 -12px; animation:spark .85s ease-out forwards}
 .spark .ic{width:100%; height:100%; fill:var(--c)}
 #toast{position:fixed; left:50%; top:calc(env(safe-area-inset-top, 0px) + 72px); transform:translateX(-50%); z-index:60; display:flex; align-items:center; gap:6px; padding:8px 18px; border:3px solid var(--line); border-radius:999px; background:var(--star); color:var(--on-warm); box-shadow:0 4px 0 var(--line); font:800 20px var(--display); white-space:nowrap}
 
-#toast[hidden]{display:none}
 @keyframes pop{from{transform:scale(.2); opacity:0} to{transform:none; opacity:1}}
 @keyframes float{50%{transform:translateY(-6px)}}
-@keyframes glow{50%{opacity:.6}}
-@keyframes hop{30%{transform:translateY(-12px)} 60%{transform:none}}
-@keyframes tilt{30%{transform:rotate(-12deg)} 70%{transform:rotate(8deg)}}
-@keyframes pulse{40%{transform:scale(1.06)}}
+@keyframes pulse{40%{transform:scale(1.08)}}
+@keyframes rumble{25%{transform:translate(-3px,1px) rotate(-1deg)} 50%{transform:translate(3px,-1px)} 75%{transform:translate(-2px,0) rotate(1deg)}}
 @keyframes spark{to{transform:translate(var(--dx), var(--dy)) rotate(160deg) scale(.4); opacity:0}}
-@media (prefers-reduced-motion: reduce){
-  *,*::before,*::after{animation:none !important; transition:none !important}
-}
-@media (max-width:380px){
-  .badge{min-width:56px; height:48px; font-size:17px}
-  .world{gap:10px; padding:12px 10px}
-  .icon-btn{width:46px; height:46px}
-}
+@keyframes beam{0%{width:0; opacity:1} 70%{width:34%; opacity:1} 100%{width:34%; opacity:0}}
+@keyframes hit{30%{transform:translateX(10px) rotate(6deg)} 60%{transform:translateX(-6px)}}
+@keyframes poof{to{transform:scale(.2) rotate(40deg); opacity:0}}
+@keyframes aura{50%{opacity:.85; transform:scale(1.06)}}
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation:none !important; transition:none !important} }
+@media (max-width:380px){ .badge{min-width:56px; height:46px; font-size:16px} .world{gap:10px; padding:12px 10px} .icon-btn{width:46px; height:46px} }
 </style>
-
+</head>
+<body>
 <div id="app"></div>
 <div id="fx" aria-hidden="true"></div>
 <div id="toast" role="status" hidden></div>
-
 <script>
 (() => {
 'use strict';
 const W = window;
 
+/* ---------- family save (Supabase) ---------- */
+const SB_URL = 'https://fvixamvkxrzzhjbidhyy.supabase.co';
+const SB_KEY = 'sb_publishable_tuG4SkViIQPPvhN-RTbw3g_bfWeG1_G';
+const FAMILY_KEY = 'pum-family-code';
+const LOCAL_KEY = 'pum-save-v1';
+
 /* ---------- constants ---------- */
 const COLORS = ['rose','marigold','star','leaf','sea','berry','mint','plum'];
-const SHAPES = ['circle','star','heart','triangle','square','hexagon'];
-const OBJECTS = ['circle','star','heart','fish','flower','triangle'];
 const AGES = [3,4,5,6,7,8,9,10,11,12];
 const MINUS = '−', TIMES = '×', DIV = '÷';
-const ROUND_LEN = 10;
+const FULL = 5;
 const LEVELS = [
-  {id:'count',  name:'Counting',               ages:'Ages 3–5',  ex:'1 2 3', color:'rose',     steps:['Count to 3','Count to 5','Count to 10','Find the group','Count to 20']},
-  {id:'add10',  name:'Add & take away to 10',  ages:'Ages 5–6',  ex:'3+2',   color:'marigold', steps:['Sums to 5','Sums to 10','Take away','Mixed']},
-  {id:'add20',  name:'Add & take away to 20',  ages:'Ages 6–7',  ex:'8+7',   color:'leaf',     steps:['Add to 20','Take away from 20','Mixed','Missing numbers']},
-  {id:'add100', name:'Numbers to 100',         ages:'Ages 7–8',  ex:'45+30', color:'sea',      steps:['Tens','Add & take ones','Two-digit','Carrying & borrowing']},
-  {id:'times',  name:'Times tables',           ages:'Ages 8–9',  ex:'6×7',  color:'berry', steps:['2, 5 and 10','3 and 4','6 to 9','Up to 12']},
-  {id:'divide', name:'Sharing & dividing',     ages:'Ages 9–11', ex:'24÷6', color:'plum',  steps:['÷ 2, 5 and 10','÷ 3 and 4','÷ 6 to 9','Up to 12']},
-  {id:'mix',    name:'Big challenges',         ages:'Ages 11–12', ex:'25%',  color:'mint',     steps:['Big times','Big sharing','Fractions of','Percentages']},
+  {id:'count',  name:'Counting',              ages:'Ages 3–5',  ex:'1 2 3', color:'rose',     steps:['Count to 3','Count to 5','Count to 10','Find the group','Count to 20']},
+  {id:'add10',  name:'Add & take away to 10', ages:'Ages 5–6',  ex:'3+2',   color:'marigold', steps:['Sums to 5','Sums to 10','Take away','Mixed']},
+  {id:'add20',  name:'Add & take away to 20', ages:'Ages 6–7',  ex:'8+7',   color:'leaf',     steps:['Add to 20','Take away from 20','Mixed','Missing numbers']},
+  {id:'add100', name:'Numbers to 100',        ages:'Ages 7–8',  ex:'45+30', color:'sea',      steps:['Tens','Add & take ones','Two-digit','Carrying & borrowing']},
+  {id:'times',  name:'Times tables',          ages:'Ages 8–9',  ex:'6×7',  color:'berry', steps:['2, 5 and 10','3 and 4','6 to 9','Up to 12']},
+  {id:'divide', name:'Sharing & dividing',    ages:'Ages 9–11', ex:'24÷6', color:'plum',  steps:['÷ 2, 5 and 10','÷ 3 and 4','÷ 6 to 9','Up to 12']},
+  {id:'mix',    name:'Big challenges',        ages:'Ages 11–12', ex:'25%',  color:'mint',     steps:['Big times','Big sharing','Fractions of','Percentages']},
 ];
 const LV = Object.fromEntries(LEVELS.map(l => [l.id, l]));
 const maxTier = id => LV[id].steps.length - 1;
 const AGE_START = {3:['count',0],4:['count',1],5:['add10',0],6:['add10',2],7:['add20',0],8:['add100',0],9:['times',0],10:['times',2],11:['divide',0],12:['mix',0]};
 const PRAISE = ['Yes!','Great job!','You got it!','Super!','Nice one!','Brilliant!','Spot on!'];
-const PIP = {body:'marigold', glow:'star', shape:'round', eyes:'two', ant:'ball', pattern:'none'};
+
+const THEMES = {
+  trucks: {name:'Trucks', power:'Fuel', pc:'marigold'},
+  soccer: {name:'Soccer', power:'Energy', pc:'leaf'},
+  anime:  {name:'Hero',   power:'Power', pc:'berry'},
+};
+const THEME_IDS = Object.keys(THEMES);
+const PROJECTS = [
+  {name:'Treehouse', color:'leaf'}, {name:'Fire station', color:'rose'}, {name:'Ice cream shop', color:'plum'},
+  {name:'Library', color:'sea'}, {name:'Train station', color:'marigold'}, {name:'Stadium', color:'berry'}, {name:'Skyscraper', color:'mint'},
+];
+const JOBS = [
+  {truck:'excavator', verb:'Dig!',   title:'Dig the foundation',  done:'Foundation dug!'},
+  {truck:'mixer',     verb:'Pour!',  title:'Pour the concrete',   done:'Concrete poured!'},
+  {truck:'dump',      verb:'Build!', title:'Bring bricks for the walls', done:'Walls are up!'},
+  {truck:'crane',     verb:'Lift!',  title:'Lift on the roof',    done:'Roof is on!'},
+];
+const TEAMS = [
+  {name:'River Foxes', color:'marigold'}, {name:'Thunder Owls', color:'berry'}, {name:'Maple Rockets', color:'rose'},
+  {name:'Harbour Lions', color:'sea'}, {name:'Pine Bears', color:'leaf'}, {name:'Comet Kids', color:'plum'}, {name:'North Stars', color:'mint'},
+];
+const CUPS = ['Autumn Cup','Snow Cup','Spring Cup','Summer Cup','City Cup','Golden Boot Cup'];
+const HEROES = [
+  {name:'Kai', skin:'skin1', hair:'hair1', iris:'marigold'},
+  {name:'Mira', skin:'skin2', hair:'hair2', iris:'berry'},
+  {name:'Juno', skin:'skin3', hair:'hair3', iris:'sea'},
+];
+const CHAPTERS = [
+  {name:'Misty Forest', color:'leaf'}, {name:'Crystal Caves', color:'sea'}, {name:'Cloud Temple', color:'star'},
+  {name:'Volcano Peak', color:'rose'}, {name:'Starlight City', color:'berry'}, {name:'Deep Sea Palace', color:'mint'},
+];
+const MONSTERS = ['Gloom Blob','Grumble Cloud','Shadow Snapper','Fog Goblin','Thorn Beast','Storm Wisp','Rock Muncher'];
+const OBJ_BY_THEME = {trucks:['cone','wheel','star'], soccer:['ball','star','heart'], anime:['star','orb','heart']};
+const OBJ_COLOR = {cone:'marigold', wheel:'metal', ball:'ball'};
 
 /* ---------- utils ---------- */
 const rnd = (a,b) => a + Math.floor(Math.random() * (b - a + 1));
@@ -343,88 +409,150 @@ const num = v => (Number.isFinite(+v) && +v >= 0) ? Math.floor(+v) : 0;
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 const reduced = () => { try { return W.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
-function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const F = c => `style="fill:var(--${c})"`;
 
-/* ---------- icons & drawings ---------- */
+/* ---------- icons ---------- */
 const IC = {
-  x:'<path d="M6 6l12 12M18 6L6 18"/>',
-  back:'<path d="M15 5l-7 7 7 7"/>',
-  next:'<path d="M5 12h13M13 6l6 6-6 6"/>',
-  check:'<path d="M5 13l4 4 10-10"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>', back:'<path d="M15 5l-7 7 7 7"/>', next:'<path d="M5 12h13M13 6l6 6-6 6"/>',
+  check:'<path d="M5 13l4 4 10-10"/>', plus:'<path d="M12 5v14M5 12h14"/>', up:'<path d="M12 19V5M6 11l6-6 6 6"/>',
   sound:'<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>',
   mute:'<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9.5l5 5M22 9.5l-5 5"/>',
   talk:'<path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/>',
   pencil:'<path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/>',
-  plus:'<path d="M12 5v14M5 12h14"/>',
   bulb:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
-  up:'<path d="M12 19V5M6 11l6-6 6 6"/>',
+  bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
   star:'<path d="M12 2.6l2.8 5.9 6.5.8-4.8 4.5 1.2 6.4L12 17.1l-5.7 3.1 1.2-6.4-4.8-4.5 6.5-.8z"/>',
 };
 const icon = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${IC[n]}</svg>`;
 
+/* ---------- drawings (all original) ---------- */
 function starPts(cx, cy, R, r, n, rot = -90){
   const steps = R === r ? n : n * 2, pts = [];
-  for (let i = 0; i < steps; i++) {
-    const rad = (R === r || i % 2 === 0) ? R : r, a = (rot + i * 360 / steps) * Math.PI / 180;
-    pts.push((cx + rad * Math.cos(a)).toFixed(1) + ',' + (cy + rad * Math.sin(a)).toFixed(1));
-  }
+  for (let i = 0; i < steps; i++) { const rad = (R === r || i % 2 === 0) ? R : r, a = (rot + i * 360 / steps) * Math.PI / 180; pts.push((cx + rad * Math.cos(a)).toFixed(1) + ',' + (cy + rad * Math.sin(a)).toFixed(1)); }
   return pts.join(' ');
 }
-function shapeInner(s, c){
+function shapeInner(s){
   switch (s) {
     case 'star': return `<polygon points="${starPts(50,54,45,20,5)}"/>`;
     case 'heart': return '<path d="M50 86C22 66 8 50 12 32 16 14 40 10 50 28 60 10 84 14 88 32 92 50 78 66 50 86Z"/>';
-    case 'triangle': return '<polygon points="50,11 90,86 10,86"/>';
-    case 'square': return '<rect x="13" y="13" width="74" height="74" rx="14"/>';
-    case 'hexagon': return `<polygon points="${starPts(50,50,42,42,6)}"/>`;
-    case 'fish': return '<path d="M72 50L92 33V67Z"/><path d="M10 50C22 26 58 24 76 50 58 76 22 74 10 50Z"/><circle cx="29" cy="46" r="5" stroke="none" style="fill:var(--line)"/>';
-    case 'flower': return [0,72,144,216,288].map(a => { const t = (a - 90) * Math.PI / 180; return `<circle cx="${(50 + 26 * Math.cos(t)).toFixed(1)}" cy="${(50 + 26 * Math.sin(t)).toFixed(1)}" r="17"/>`; }).join('') + `<circle cx="50" cy="50" r="14" style="fill:var(--${c === 'star' ? 'marigold' : 'star'})"/>`;
+    case 'cone': return `<path d="M50 10L80 84H20Z"/><path d="M39 38H61L65 50H35ZM31 62H69L73 74H27Z" stroke-width="3" ${F('ball')}/><rect x="12" y="82" width="76" height="9" rx="3"/>`;
+    case 'wheel': return `<circle cx="50" cy="50" r="42"/><circle cx="50" cy="50" r="18" ${F('concrete')}/><circle cx="50" cy="50" r="5" stroke="none" ${F('line')}/>`;
+    case 'ball': return `<circle cx="50" cy="50" r="42"/><polygon points="${starPts(50,50,13,13,5)}" stroke="none" ${F('line')}/><path d="M50 37V9M62 46L89 37M58 61L74 85M42 61L26 85M38 46L11 37" fill="none" stroke-width="4"/>`;
+    case 'orb': return `<circle cx="50" cy="50" r="40"/><circle cx="36" cy="35" r="10" stroke="none" opacity=".7" ${F('ball')}/>`;
     default: return '<circle cx="50" cy="50" r="40"/>';
   }
 }
-const shapeSVG = (s, c, cls = '') => `<svg class="shape ${cls}" viewBox="0 0 100 100" aria-hidden="true"><g style="fill:var(--${c})" stroke-width="6" stroke-linejoin="round">${shapeInner(s, c)}</g></svg>`;
-const avatar = (p, cls) => `<span class="avatar ${cls}">${shapeSVG(p.shape, p.color)}</span>`;
-const crownSVG = '<svg viewBox="0 0 34 26" aria-hidden="true"><path d="M3 23L5 6l7 7 5-10 5 10 7-7 2 17z" style="fill:var(--star);stroke:var(--line)" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+const shapeSVG = (s, c) => `<svg class="art" viewBox="0 0 100 100" aria-hidden="true"><g ${F(c)} stroke-width="6" stroke-linejoin="round">${shapeInner(s)}</g></svg>`;
 
-function bugParams(seed){
-  const r = mulberry32(seed), pr = a => a[Math.floor(r() * a.length)];
-  const body = pr(COLORS);
-  return {body, glow: pr(['star','mint','marigold','sea','rose'].filter(c => c !== body)), shape: pr(['round','tall','wide']),
-    eyes: pr(['two','two','two','one','sleepy','three']), ant: pr(['ball','ball','curl','heart','none']), pattern: pr(['none','spots','stripes'])};
+function wheels(xs){ return xs.map(x => `<circle cx="${x}" cy="72" r="11" ${F('metal')}/><circle cx="${x}" cy="72" r="4" ${F('concrete')}/>`).join(''); }
+function truckParts(kind, color){
+  const cab = `<path d="M74 32H96Q104 32 106 42L110 60H74Z" ${F(color)}/><path d="M80 37H94Q99 37 100 43L101 48H80Z" ${F('glass')}/>`;
+  const chassis = `<rect x="6" y="58" width="106" height="8" rx="3" ${F('metal')}/>`;
+  const arm = d => `<path d="${d}" fill="none" stroke-width="10"/><path d="${d}" fill="none" stroke-width="5" style="stroke:var(--star)"/>`;
+  if (kind === 'excavator') return `<rect x="8" y="62" width="74" height="20" rx="10" ${F('metal')}/>${[19,35,51,67].map(x => `<circle cx="${x}" cy="72" r="4.5" ${F('concrete')}/>`).join('')}
+    <rect x="14" y="40" width="54" height="22" rx="4" ${F(color)}/><path d="M40 20H62Q66 20 66 24V40H40Z" ${F(color)}/><rect x="45" y="25" width="16" height="11" rx="2" ${F('glass')}/>
+    ${arm('M64 46L88 18L106 44')}<path d="M98 42L116 45L111 60L96 54Z" ${F('metal')}/>`;
+  if (kind === 'mixer') return `${chassis}${cab}<ellipse cx="42" cy="38" rx="35" ry="20" transform="rotate(-8 42 38)" ${F('sea')}/><path d="M22 26Q38 44 33 57M47 20Q61 38 57 55" fill="none" stroke-width="3"/>${wheels([24,50,94])}`;
+  if (kind === 'crane') return `${chassis}${cab}<rect x="14" y="44" width="30" height="14" rx="3" ${F(color)}/>${arm('M28 46L62 6')}<path d="M62 6V30" fill="none" stroke-width="2.5"/><path d="M62 30q0 7 6 7" fill="none" stroke-width="3"/>${wheels([24,50,94])}`;
+  return `${chassis}<path d="M8 26H70L64 58H14Z" ${F('star')}/><path d="M18 34H60M16 44H62" fill="none" stroke-width="2.5" opacity=".5"/>${cab}${wheels([24,50,94])}`;
 }
-function bugName(seed){
-  const r = mulberry32((seed ^ 0x9E3779B9) >>> 0), syl = ['bo','zi','lu','mo','ka','fen','ri','tu','wix','na','jo','bee','lo','sa','dee','ki','po','mi','zu','fa'];
-  const n = syl[Math.floor(r() * syl.length)] + syl[Math.floor(r() * syl.length)];
-  return n[0].toUpperCase() + n.slice(1);
+const truckSVG = (kind, color) => `<svg class="art" viewBox="0 0 120 90" aria-hidden="true"><g stroke-width="3" stroke-linejoin="round" stroke-linecap="round">${truckParts(kind, color)}</g></svg>`;
+
+function jerseySVG(color, label){
+  return `<svg class="art" viewBox="0 0 100 90" aria-hidden="true"><g stroke-width="3.5" stroke-linejoin="round">
+    <path d="M30 8L42 4Q50 12 58 4L70 8L94 24L83 42L72 36V86H28V36L17 42L6 24Z" ${F(color)}/>
+    <path d="M42 4Q50 14 58 4" fill="none" stroke-width="3.5"/><path d="M6 24L17 42M94 24L83 42" fill="none" stroke-width="3" opacity=".4"/>
+    <text x="50" y="66" text-anchor="middle" font-family="Sniglet, sans-serif" font-weight="800" font-size="30" stroke-width="5" paint-order="stroke" style="fill:#FFFFFF">${esc(label)}</text>
+  </g></svg>`;
 }
-function bugSVG(p, cls = '', crown = false){
-  const [rx, ry] = p.shape === 'tall' ? [23, 30] : p.shape === 'wide' ? [31, 24] : [27, 27];
-  const top = 56 - ry, ay = top + 7;
-  const F = c => `style="fill:var(--${c})"`;
-  let s = `<svg class="bug ${cls}" viewBox="0 0 120 120" aria-hidden="true"><g stroke-width="4" stroke-linejoin="round" stroke-linecap="round">`;
-  s += `<circle class="halo" cx="60" cy="86" r="31" stroke="none" ${F(p.glow)}/>`;
-  if (p.ant === 'curl') {
-    s += `<path d="M49 ${ay}C45 ${ay-14} 31 ${ay-12} 37 ${ay-22}" fill="none"/><path d="M71 ${ay}C75 ${ay-14} 89 ${ay-12} 83 ${ay-22}" fill="none"/>`;
-  } else if (p.ant !== 'none') {
-    s += `<path d="M49 ${ay}L40 ${ay-18}" fill="none"/><path d="M71 ${ay}L80 ${ay-18}" fill="none"/>`;
-    if (p.ant === 'ball') s += `<circle cx="40" cy="${ay-19}" r="5" ${F(p.glow)}/><circle cx="80" cy="${ay-19}" r="5" ${F(p.glow)}/>`;
-    else s += [40, 80].map(x => `<path d="M${x} ${ay-14}c-6-4-7-9-3-10 2 0 3 1 3 3 0-2 1-3 3-3 4 1 3 6-3 10z" stroke-width="2.5" ${F('rose')}/>`).join('');
+function heroParts(idx, shirt){
+  const h = HEROES[idx] || HEROES[0];
+  let back = '', front = '';
+  if (idx === 0) {
+    back = `<polygon points="21,48 15,22 31,30 32,8 46,24 54,4 61,24 74,10 71,30 86,22 79,48" ${F(h.hair)}/>`;
+    front = `<path d="M23 46Q28 26 50 24Q72 26 77 46L67 37L58 43L50 33L42 43L33 37Z" ${F(h.hair)}/><rect x="22" y="36" width="56" height="7" rx="2" ${F('rose')}/><path d="M77 38L94 31L90 44Z" ${F('rose')}/>`;
+  } else if (idx === 1) {
+    back = `<circle cx="25" cy="24" r="12" ${F(h.hair)}/><circle cx="75" cy="24" r="12" ${F(h.hair)}/><path d="M22 50Q18 76 30 80L32 52ZM78 50Q82 76 70 80L68 52Z" ${F(h.hair)}/>`;
+    front = `<path d="M22 50Q21 23 50 21Q79 23 78 50Q71 36 61 34Q57 42 48 36Q40 43 34 34Q27 39 22 50Z" ${F(h.hair)}/><polygon points="${starPts(71,32,7,3,5)}" stroke-width="2" ${F('star')}/>`;
+  } else {
+    front = `<path d="M23 52Q19 21 50 19Q81 21 77 52Q74 38 66 34L60 41L54 32L46 41L38 32L31 41Q26 45 23 52Z" ${F(h.hair)}/><rect x="27" y="29" width="46" height="13" rx="6.5" ${F('metal')}/><circle cx="41" cy="35.5" r="4.5" ${F('glass')}/><circle cx="59" cy="35.5" r="4.5" ${F('glass')}/>`;
   }
-  s += `<ellipse cx="34" cy="55" rx="18" ry="12" transform="rotate(-28 34 55)" ${F('wing')}/><ellipse cx="86" cy="55" rx="18" ry="12" transform="rotate(28 86 55)" ${F('wing')}/>`;
-  s += `<ellipse cx="60" cy="88" rx="19" ry="15" ${F(p.glow)}/>`;
-  if (p.pattern === 'stripes') s += '<path d="M46 89h28M49 97h22" fill="none" opacity=".45"/>';
-  s += `<ellipse cx="60" cy="56" rx="${rx}" ry="${ry}" ${F(p.body)}/>`;
-  if (p.pattern === 'spots') s += `<circle cx="${60 - rx + 9}" cy="${56 + 8}" r="3.5" stroke="none" opacity=".25" ${F('line')}/><circle cx="${60 + rx - 9}" cy="${56 + 8}" r="3.5" stroke="none" opacity=".25" ${F('line')}/><circle cx="60" cy="${top + 8}" r="3" stroke="none" opacity=".25" ${F('line')}/>`;
-  const eye = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" stroke-width="3" ${F('eye')}/><circle cx="${x + r * .18}" cy="${y + r * .2}" r="${r * .48}" stroke="none" ${F('line')}/><circle cx="${x + r * .38}" cy="${y - r * .12}" r="${r * .16}" stroke="none" ${F('eye')}/>`;
-  if (p.eyes === 'one') s += eye(60, 51, 12);
-  else if (p.eyes === 'three') s += eye(46, 51, 6.5) + eye(60, 46, 6.5) + eye(74, 51, 6.5);
-  else if (p.eyes === 'sleepy') s += '<path d="M43 52q6 5 12 0M65 52q6 5 12 0" fill="none" stroke-width="3.5"/>';
-  else s += eye(49, 51, 8.5) + eye(71, 51, 8.5);
-  s += `<circle cx="43" cy="64" r="4" stroke="none" opacity=".45" ${F('rose')}/><circle cx="77" cy="64" r="4" stroke="none" opacity=".45" ${F('rose')}/>`;
-  s += '<path d="M53 66q7 6 14 0" fill="none" stroke-width="3.5"/>';
-  if (crown) s += `<path d="M47 ${top + 3}l2-15 6 6 5-9 5 9 6-6 2 15z" stroke-width="3" ${F('star')}/>`;
-  return s + '</g></svg>';
+  const eye = x => `<ellipse cx="${x}" cy="55" rx="6" ry="8" stroke-width="2.5" ${F('eye')}/><ellipse cx="${x + .5}" cy="56" rx="4.2" ry="6" stroke="none" ${F(h.iris)}/><circle cx="${x + .6}" cy="56.5" r="2.2" stroke="none" ${F('line')}/><circle cx="${x - 1.4}" cy="52.5" r="1.7" stroke="none" ${F('eye')}/>`;
+  return `${back}<path d="M20 112Q22 82 50 80Q78 82 80 112Z" ${F(shirt)}/><rect x="44" y="72" width="12" height="10" ${F(h.skin)}/>
+    <circle cx="50" cy="50" r="27" ${F(h.skin)}/>${front}${eye(40)}${eye(60)}
+    <circle cx="33" cy="64" r="3.5" stroke="none" opacity=".4" ${F('rose')}/><circle cx="67" cy="64" r="3.5" stroke="none" opacity=".4" ${F('rose')}/>
+    <path d="M45 67q5 4 10 0" fill="none" stroke-width="2.8"/>`;
 }
+const heroSVG = (idx, shirt, aura = '') => `<svg class="art" viewBox="0 0 100 112" aria-hidden="true">${aura ? `<ellipse class="aura" cx="50" cy="60" rx="48" ry="54" opacity=".45" ${F(aura)}/>` : ''}<g stroke-width="3" stroke-linejoin="round" stroke-linecap="round">${heroParts(idx, shirt)}</g></svg>`;
+function monsterSVG(color){
+  return `<svg class="art" viewBox="0 0 110 100" aria-hidden="true"><g stroke-width="3.5" stroke-linejoin="round">
+    <path d="M18 84Q6 52 28 34Q32 12 52 20Q66 4 80 24Q102 34 94 62Q102 84 80 90Q54 98 32 92Q14 92 18 84Z" ${F(color)}/>
+    <path d="M30 34Q34 46 26 56M86 40Q80 52 90 62" fill="none" stroke-width="3" opacity=".35"/>
+    <ellipse cx="44" cy="52" rx="9" ry="10" ${F('eye')}/><ellipse cx="70" cy="52" rx="9" ry="10" ${F('eye')}/>
+    <circle cx="46" cy="55" r="4.5" stroke="none" ${F('line')}/><circle cx="68" cy="55" r="4.5" stroke="none" ${F('line')}/>
+    <path d="M33 40L53 46M81 40L61 46" fill="none" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M40 72L46 66L52 72L58 66L64 72L70 66L76 72Q58 82 40 72Z" ${F('eye')}/>
+  </g></svg>`;
+}
+function keeperSVG(color){
+  return `<svg class="art" viewBox="0 0 80 90" aria-hidden="true"><g stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M24 36L6 12M56 36L74 12" fill="none" stroke-width="8"/><path d="M24 36L6 12M56 36L74 12" fill="none" stroke-width="4" style="stroke:var(--${color})"/>
+    <circle cx="6" cy="11" r="6" ${F('star')}/><circle cx="74" cy="11" r="6" ${F('star')}/>
+    <rect x="22" y="30" width="36" height="34" rx="8" ${F(color)}/><rect x="24" y="62" width="13" height="22" rx="4" ${F('metal')}/><rect x="43" y="62" width="13" height="22" rx="4" ${F('metal')}/>
+    <circle cx="40" cy="20" r="12" ${F('skin2')}/><path d="M28 18Q30 6 40 7Q51 6 52 18Q46 12 40 14Q34 12 28 18Z" ${F('hair1')}/>
+  </g></svg>`;
+}
+function trophySVG(medal){
+  return `<svg class="art" viewBox="0 0 100 92" aria-hidden="true"><g stroke-width="3.5" stroke-linejoin="round">
+    <path d="M26 14H74V34Q74 58 50 62Q26 58 26 34Z" ${F(medal)}/><path d="M26 20H14Q12 40 30 44M74 20H86Q88 40 70 44" fill="none" stroke-width="5"/>
+    <rect x="44" y="62" width="12" height="12" ${F(medal)}/><rect x="30" y="74" width="40" height="12" rx="3" ${F('metal')}/>
+    <polygon points="${starPts(50,34,10,4.5,5)}" stroke-width="2" ${F('ball')}/>
+  </g></svg>`;
+}
+function badgeSVG(color, n){
+  return `<svg class="art" viewBox="0 0 100 92" aria-hidden="true"><g stroke-width="3.5" stroke-linejoin="round">
+    <path d="M34 60L24 90L40 82L50 92L56 60ZM66 60L76 90L60 82L50 92L44 60Z" ${F('rose')}/>
+    <polygon points="${starPts(50,40,38,30,10)}" ${F(color)}/><circle cx="50" cy="40" r="22" ${F('star')}/>
+    <text x="50" y="49" text-anchor="middle" font-family="Sniglet, sans-serif" font-weight="800" font-size="26" stroke-width="4" paint-order="stroke" style="fill:#FFFFFF">${n}</text>
+  </g></svg>`;
+}
+function buildingSVG(color, flag = true){
+  return `<svg class="art" viewBox="0 0 100 92" aria-hidden="true"><g stroke-width="3" stroke-linejoin="round">
+    <rect x="0" y="80" width="100" height="12" stroke="none" ${F('grass')}/>
+    <rect x="18" y="40" width="64" height="42" ${F(color)}/><polygon points="12,42 50,12 88,42" ${F('roof')}/>
+    <rect x="26" y="50" width="12" height="12" ${F('glass')}/><rect x="62" y="50" width="12" height="12" ${F('glass')}/><rect x="43" y="60" width="14" height="22" ${F('metal')}/>
+    ${flag ? `<path d="M50 12V0" fill="none"/><path d="M50 1L64 5L50 9Z" ${F('star')}/>` : ''}
+  </g></svg>`;
+}
+function siteScene(q, prog){
+  const step = q.step, f = prog / FULL, proj = PROJECTS[q.mission % PROJECTS.length];
+  const done = step >= 4;
+  const d = step === 0 ? 36 * f : 36;
+  const pile = step === 0 ? 30 * f : step === 1 ? 30 : 0;
+  const conc = step === 1 ? 36 * f : step >= 2 ? 36 : 0;
+  const wh = step === 2 ? 72 * f : step >= 3 ? 72 : 0;
+  let s = `<svg viewBox="0 0 320 190" aria-hidden="true"><rect width="320" height="190" ${F('sky-2')}/>
+    <rect y="130" width="320" height="60" ${F('dirt')}/><rect y="126" width="320" height="7" ${F('grass')}/><g class="art" stroke-width="3" stroke-linejoin="round">`;
+  if (d > 0 && wh === 0) s += `<rect x="150" y="130" width="120" height="${d.toFixed(1)}" ${F('dirt-deep')}/>`;
+  if (pile > 0) s += `<path d="M268 132Q292 ${(130 - pile).toFixed(1)} 316 132Z" ${F('dirt')}/>`;
+  if (conc > 0 && wh === 0) s += `<rect x="150" y="${(166 - conc).toFixed(1)}" width="120" height="${conc.toFixed(1)}" ${F('concrete')}/>`;
+  if (step >= 2) s += `<rect x="148" y="126" width="124" height="8" ${F('concrete')}/>`;
+  if (wh > 0) {
+    s += `<rect x="156" y="${(126 - wh).toFixed(1)}" width="108" height="${wh.toFixed(1)}" ${F(proj.color)}/>`;
+    for (const wy of [68, 96]) for (const wx of [170, 202, 234]) if (126 - wh <= wy) s += `<rect x="${wx}" y="${wy}" width="16" height="16" ${F('glass')}/>`;
+  }
+  if (step === 3 || done) { const off = done ? 0 : (1 - f) * 60; s += `<polygon points="148,${(56 - off).toFixed(1)} 210,${(20 - off).toFixed(1)} 272,${(56 - off).toFixed(1)}" ${F('roof')}/>`; }
+  if (done) s += `<path d="M210 20V2" fill="none"/><path d="M210 3L228 8L210 13Z" ${F('star')}/>`;
+  s += '</g>';
+  if (!done) s += `<svg class="truck-wrap" x="0" y="64" width="160" height="120" viewBox="0 0 120 90"><g class="art" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">${truckParts(JOBS[step].truck, q.color || 'marigold')}</g></svg>`;
+  return s + '</svg>';
+}
+function avatarSVG(p){
+  if (p.theme === 'soccer') return jerseySVG(p.color, (p.name || '?').trim().charAt(0).toUpperCase() || '?');
+  if (p.theme === 'anime') return heroSVG(p.hero, p.color);
+  return truckSVG('dump', p.color);
+}
+const avatar = (p, cls) => `<span class="avatar ${cls}">${avatarSVG(p)}</span>`;
 
 /* ---------- question generators ---------- */
 function choicesFor(ans, k, {min = 0, max = Infinity, extra = []} = {}){
@@ -438,30 +566,28 @@ function choicesFor(ans, k, {min = 0, max = Infinity, extra = []} = {}){
   while (out.size < k && guard++ < 80) { const c = ans + rnd(-8, 8); if (c >= min && c <= max) out.add(c); }
   return shuffle([...out]);
 }
-function Q(parts, ans, spoken, aid = null, show = false, copt = {}){
-  return {disp:{t:'expr', parts}, ans, spoken, kind:'num', aid, aidShown:show, choices:choicesFor(ans, 4, copt)};
-}
+function Q(parts, ans, spoken, aid = null, show = false, copt = {}){ return {disp:{t:'expr', parts}, ans, spoken, kind:'num', aid, aidShown:show, choices:choicesFor(ans, 4, copt)}; }
 const addAid = (a, b) => ({t:'dots', a, b});
 const takeAid = (total, remove) => ({t:'take', total, remove});
 const NUMW = ['zero','one','two','three','four','five','six','seven','eight','nine'];
 const DENW = {2:'half',3:'third',4:'quarter',5:'fifth',10:'tenth'};
 const fracWords = (n, d) => d === 2 ? 'one half' : `${NUMW[n]} ${DENW[d]}${n > 1 ? 's' : ''}`;
 
-function genCount(t){
-  const obj = pick(OBJECTS), color = pick(COLORS);
-  if (t === 3 && coin()) { const n = rnd(1, 10); return {disp:{t:'numeral', n}, ans:n, label:'Find', spoken:`Find ${n}.`, kind:'group', color, choices:choicesFor(n, 4, {min:1, max:10})}; }
+function genCount(t, theme){
+  const obj = pick(OBJ_BY_THEME[theme] || OBJ_BY_THEME.trucks), color = OBJ_COLOR[obj] || pick(COLORS);
+  if (t === 3 && coin()) { const n = rnd(1, 10); return {disp:{t:'numeral', n}, ans:n, label:'Find', spoken:`Find ${n}.`, kind:'group', color:pick(COLORS), choices:choicesFor(n, 4, {min:1, max:10})}; }
   if (t === 4 && coin()) { const s = rnd(1, 16); return {disp:{t:'seq', nums:[s, s + 1, s + 2]}, ans:s + 3, label:'What comes next?', spoken:`${s}, ${s + 1}, ${s + 2}. What comes next?`, kind:'num', choices:choicesFor(s + 3, 4, {min:1, max:20})}; }
   const n = [rnd(1, 3), rnd(1, 5), rnd(1, 10), rnd(3, 10), rnd(8, 20)][t];
   const k = t <= 1 ? 3 : 4, max = [4, 6, 12, 12, 22][t];
   return {disp:{t:'count', n, obj, color}, ans:n, label:'How many?', spoken:'How many?', kind:'num', mini:t <= 3, choices:choicesFor(n, k, {min:1, max})};
 }
 function genAdd10(t){
-  const add = (lo, cap, show) => { const a = rnd(lo, cap - 1), b = rnd(lo === 0 ? 0 : 1, cap - a); return Q([a, '+', b, '=', '?'], a + b, `${a} plus ${b}`, addAid(a, b), show); };
+  const add = (cap, show) => { const a = rnd(1, cap - 1), b = rnd(1, cap - a); return Q([a, '+', b, '=', '?'], a + b, `${a} plus ${b}`, addAid(a, b), show); };
   const sub = show => { const a = rnd(2, 10), b = rnd(1, a); return Q([a, MINUS, b, '=', '?'], a - b, `${a} take away ${b}`, takeAid(a, b), show); };
-  if (t === 0) return add(1, 5, true);
-  if (t === 1) return add(1, 10, true);
+  if (t === 0) return add(5, true);
+  if (t === 1) return add(10, true);
   if (t === 2) return sub(true);
-  return coin() ? add(1, 10, false) : sub(false);
+  return coin() ? add(10, false) : sub(false);
 }
 function genAdd20(t){
   const add = () => { const a = rnd(4, 12), b = rnd(Math.max(2, 11 - a), Math.min(9, 20 - a)); return Q([a, '+', b, '=', '?'], a + b, `${a} plus ${b}`, addAid(a, b)); };
@@ -482,10 +608,7 @@ function genAdd100(t){
     if (r === 2) { const a = 10 * rnd(2, 10); return S(a, 10 * rnd(1, a / 10 - 1)); }
     const a = rnd(11, 69); return A(a, 10 * rnd(1, Math.floor((99 - a) / 10)));
   }
-  if (t === 1) {
-    if (coin()) { const a = rnd(12, 89); return A(a, rnd(2, Math.min(9, 99 - a))); }
-    return S(rnd(12, 99), rnd(2, 9));
-  }
+  if (t === 1) { if (coin()) { const a = rnd(12, 89); return A(a, rnd(2, Math.min(9, 99 - a))); } return S(rnd(12, 99), rnd(2, 9)); }
   if (t === 2) {
     if (coin()) { const at = rnd(1, 7), bt = rnd(1, 8 - at), ao = rnd(0, 8), bo = rnd(0, 9 - ao); return A(10 * at + ao, 10 * bt + bo); }
     const at = rnd(2, 9), bt = rnd(1, at - 1), ao = rnd(1, 9), bo = rnd(0, ao); return S(10 * at + ao, 10 * bt + bo);
@@ -499,8 +622,7 @@ function genTimes(t){
   else if (t === 1) { a = coin(.7) ? pick([3, 4]) : pick([2, 5, 10]); b = rnd(1, 10); }
   else if (t === 2) { a = rnd(6, 9); b = rnd(2, 10); }
   else { a = rnd(2, 12); b = rnd(2, 12); }
-  const p = a * b;
-  const aid = p <= 72 ? {t:'array', rows:Math.min(a, b), cols:Math.max(a, b)} : null;
+  const p = a * b, aid = p <= 72 ? {t:'array', rows:Math.min(a, b), cols:Math.max(a, b)} : null;
   if (t === 3 && coin(.25)) return Q([a, TIMES, '?', '=', p], b, `${a} times what makes ${p}?`, aid, false, {min:1, extra:[b + 1, b - 1, b + 2].filter(x => x > 0)});
   const [x, y] = coin() ? [a, b] : [b, a];
   return Q([x, TIMES, y, '=', '?'], p, `${x} times ${y}`, aid, false, {min:0, extra:[a * (b + 1), a * (b - 1), (a + 1) * b, (a - 1) * b, a + b].filter(v => v > 0 && v !== p)});
@@ -525,131 +647,130 @@ function genMix(t){
   return Q([pc + '%', 'of', base, '=', '?'], ans, `${pc} percent of ${base}`, null, false, {min:1, extra:[base / 10, base / 2, base / 4, ans + base / 10].filter(x => Number.isInteger(x) && x > 0 && x !== ans)});
 }
 const GEN = {count:genCount, add10:genAdd10, add20:genAdd20, add100:genAdd100, times:genTimes, divide:genDivide, mix:genMix};
-function gen(level, tier){
-  const q = GEN[level](clamp(tier, 0, maxTier(level)));
+function gen(level, tier, theme = 'trucks'){
+  const q = GEN[level](clamp(tier, 0, maxTier(level)), theme);
   q.key = JSON.stringify([q.disp, q.ans]);
   return q;
 }
 
-/* ---------- local storage ---------- */
-const KEY = 'pips-star-jar-v1';
+/* ---------- player data ---------- */
+function normQuest(x){
+  x = (x && typeof x === 'object') ? x : {};
+  const r = (x.record && typeof x.record === 'object') ? x.record : {};
+  const q = {power:clamp(num(x.power), 0, FULL), prog:clamp(num(x.prog), 0, FULL - 1), goals:clamp(num(x.goals), 0, FULL), mission:num(x.mission), step:clamp(num(x.step), 0, 3),
+    wins:clamp(num(x.wins), 0, 4), level:num(x.level), record:{w:num(r.w), d:num(r.d), l:num(r.l)},
+    done:Array.isArray(x.done) ? x.done.slice(-300).filter(d => d && typeof d === 'object').map(d => ({i:num(d.i), m:['gold','silver','bronze'].includes(d.m) ? d.m : 'gold'})) : []};
+  if (q.power + q.prog > FULL) q.power = FULL - q.prog;
+  return q;
+}
 function normalize(d){
   if (!d || typeof d !== 'object') return null;
   const id = String(d.id || '');
   if (!/^[A-Za-z0-9]{4,40}$/.test(id)) return null;
-  const p = {id, name:String(d.name || 'Player').slice(0, 16), color:COLORS.includes(d.color) ? d.color : 'sea', shape:SHAPES.includes(d.shape) ? d.shape : 'circle',
-    age:AGES.includes(d.age) ? d.age : 5, stars:num(d.stars), created:num(d.created), updatedAt:num(d.updatedAt), mode:d.mode === 'keypad' ? 'keypad' : 'choices',
-    speak:!!d.speak, start:LV[d.start] ? d.start : 'count', bugs:[], levels:{}};
-  if (Array.isArray(d.bugs)) p.bugs = d.bugs.slice(0, 400).filter(b => b && Number.isFinite(+b.seed)).map(b => ({seed:(+b.seed) >>> 0, perfect:!!b.perfect, level:LV[b.level] ? b.level : 'count', at:num(b.at)}));
+  const p = {id, name:String(d.name || 'Player').slice(0, 16), color:COLORS.includes(d.color) ? d.color : 'sea', theme:THEME_IDS.includes(d.theme) ? d.theme : 'trucks',
+    hero:clamp(num(d.hero), 0, HEROES.length - 1), age:AGES.includes(d.age) ? d.age : 5, stars:num(d.stars), created:num(d.created), updatedAt:num(d.updatedAt),
+    mode:d.mode === 'keypad' ? 'keypad' : 'choices', speak:!!d.speak, start:LV[d.start] ? d.start : 'count', world:LV[d.world] ? d.world : (LV[d.start] ? d.start : 'count'),
+    levels:{}, quest:normQuest(d.quest)};
   if (d.levels && typeof d.levels === 'object') for (const l of LEVELS) {
     const x = d.levels[l.id];
-    if (x && typeof x === 'object') p.levels[l.id] = {tier:clamp(num(x.tier), 0, l.steps.length - 1), streak:clamp(num(x.streak), 0, 99), misses:clamp(num(x.misses), 0, 99), stars:num(x.stars), rounds:num(x.rounds), best:clamp(num(x.best), 0, ROUND_LEN), mastered:!!x.mastered};
+    if (x && typeof x === 'object') p.levels[l.id] = {tier:clamp(num(x.tier), 0, l.steps.length - 1), streak:clamp(num(x.streak), 0, 99), misses:clamp(num(x.misses), 0, 99), stars:num(x.stars)};
   }
   return p;
 }
 function loadLocal(){
   try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const d = JSON.parse(raw);
-      if (d && Array.isArray(d.players)) return {players:d.players.map(x => { const p = normalize(x); if (p) p.synced = !!x.synced; return p; }).filter(Boolean), muted:!!d.muted};
-    }
+    const d = JSON.parse(localStorage.getItem(LOCAL_KEY) || 'null');
+    if (d && Array.isArray(d.players)) return {players:d.players.map(normalize).filter(Boolean), muted:!!d.muted};
   } catch (e) {}
   return {players:[], muted:false};
 }
 const S = loadLocal();
-function saveLocal(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
-const toDoc = p => { const {synced, ...rest} = p; return JSON.parse(JSON.stringify(rest)); };
+function saveLocal(){ try { localStorage.setItem(LOCAL_KEY, JSON.stringify(S)); } catch (e) {} }
+const lv = (p, id) => p.levels[id] || (p.levels[id] = {tier:0, streak:0, misses:0, stars:0});
 
-/* ---------- family save (artifact db) ---------- */
-const hasRuntime = !!(W.claude && typeof W.claude.use === 'function');
-const sync = {db:null, writable:null, state:hasRuntime ? 'connecting' : 'local', first:false, timer:null, chains:{}};
-const SYNC_TEXT = {connecting:'Connecting to family save…', synced:'Saved for the whole family', local:'Saved on this device', readonly:'Saved on this device only',
-  offline:"Can't reach family save yet, saving here", error:'Family save hit a snag, saving here', full:'Family save is full, saving here'};
-const canWrite = () => !!sync.db && sync.writable !== false;
+/* ---------- family sync ---------- */
+let family = '';
+try { family = localStorage.getItem(FAMILY_KEY) || ''; } catch (e) {}
+const hashJoin = (location.hash.match(/join=([A-Za-z0-9-]{6,40})/) || [])[1];
+if (hashJoin) {
+  family = hashJoin.replace(/-/g, '').toUpperCase();
+  try { localStorage.setItem(FAMILY_KEY, family); } catch (e) {}
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+}
+const sync = {state:family ? 'syncing' : 'local', timers:{}, chain:Promise.resolve(), pulling:false, joinErr:''};
+const SYNC_TEXT = {local:'Saved on this device', syncing:'Connecting to family save…', synced:'Saved for the whole family', offline:"Can't reach family save, saving here for now", badcode:"Family code didn't work"};
+async function rpc(fn, body){
+  const r = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {method:'POST', headers:{apikey:SB_KEY, 'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const txt = await r.text(); let j = null;
+  try { j = txt ? JSON.parse(txt) : null; } catch (e) {}
+  if (!r.ok) { const e = new Error((j && j.message) || 'Request failed'); e.code = j && j.code; throw e; }
+  return j;
+}
 function setSync(s){ sync.state = s; const el = document.getElementById('sync'); if (el) el.outerHTML = syncChip(); }
-
-async function initSync(){
-  if (!hasRuntime) return;
-  let db = null, user = null;
-  try { [db, user] = await Promise.all([W.claude.use('db'), W.claude.use('user')]); } catch (e) {}
-  if (!db) { setSync('local'); return; }
-  sync.db = db;
-  if (user) { try { sync.writable = await user.can('data.write'); } catch (e) {} }
-  sync.timer = setTimeout(() => { if (!sync.first) setSync('offline'); }, 10000);
-  db.collection('players').onSnapshot(snap => {
-    const docs = snap.docs.filter(d => d.exists).map(d => normalize({...d.data(), id:d.id})).filter(Boolean);
-    const auth = !snap.metadata.fromCache;
-    mergeRemote(docs, auth);
-    if (auth) { sync.first = true; clearTimeout(sync.timer); if (sync.state === 'connecting' || sync.state === 'offline') setSync(canWrite() ? 'synced' : 'readonly'); }
-    saveLocal();
-    refresh();
-  }, err => {
-    clearTimeout(sync.timer);
-    sync.db = null;
-    setSync(err && err.code === 'revoked' ? 'local' : 'error');
-  });
-}
-function mergeRemote(docs, auth){
-  const ids = new Set();
-  for (const r of docs) {
-    ids.add(r.id);
-    const i = S.players.findIndex(p => p.id === r.id);
-    if (i < 0) { S.players.push({...r, synced:true}); continue; }
-    const l = S.players[i];
-    if (r.updatedAt > l.updatedAt) S.players[i] = {...r, synced:true};
-    else { l.synced = true; if (r.updatedAt < l.updatedAt) pushPlayer(l); }
-  }
-  if (auth) {
-    S.players = S.players.filter(p => ids.has(p.id) || !p.synced);
-    for (const p of S.players) if (!ids.has(p.id)) pushPlayer(p);
-    if (pid && !S.players.some(p => p.id === pid) && view !== 'form') { pid = null; round = null; view = 'home'; }
-  }
-}
-function chain(id, fn){
-  const prev = sync.chains[id] || Promise.resolve();
-  sync.chains[id] = prev.then(() => writeWithRetry(fn)).catch(() => {});
-}
-async function writeWithRetry(fn){
-  try { await fn(); if (sync.state !== 'synced' && sync.first) setSync('synced'); }
-  catch (e) {
-    const code = e && e.code;
-    if (code === 'unavailable') {
-      await new Promise(r => setTimeout(r, 600 + Math.random() * 900));
-      try { await fn(); } catch (e2) { setSync('error'); }
-      return;
-    }
-    if (code === 'invalid_argument' || code === 'not_granted' || code === 'transform_error') { sync.writable = false; setSync('readonly'); return; }
-    if (code === 'quota_exceeded') { setSync('full'); return; }
-    if (code === 'revoked') { sync.db = null; setSync('local'); return; }
-    setSync('error');
-  }
-}
+const toDoc = p => JSON.parse(JSON.stringify(p));
 function pushPlayer(p){
-  if (!canWrite()) return;
-  const body = toDoc(p), id = p.id;
-  chain(id, () => sync.db.doc('players/' + id).set(body));
+  if (!family) return;
+  clearTimeout(sync.timers[p.id]);
+  sync.timers[p.id] = setTimeout(() => {
+    const body = {p_code:family, p_id:p.id, p_data:toDoc(p), p_updated_at:p.updatedAt};
+    sync.chain = sync.chain.then(() => rpc('kmg_save_player', body)).then(() => { if (sync.state !== 'synced') setSync('synced'); })
+      .catch(e => setSync(e.code === '28000' ? 'badcode' : 'offline'));
+  }, 700);
 }
-function deleteRemote(id){ if (canWrite()) chain(id, () => sync.db.doc('players/' + id).delete()); }
+function deleteRemote(id){
+  if (!family) return;
+  const body = {p_code:family, p_id:id, p_updated_at:Date.now()};
+  sync.chain = sync.chain.then(() => rpc('kmg_delete_player', body)).catch(() => setSync('offline'));
+}
 function savePlayer(p){ p.updatedAt = Date.now(); saveLocal(); pushPlayer(p); }
+async function pull(){
+  if (!family || sync.pulling) return;
+  sync.pulling = true;
+  try {
+    const rows = await rpc('kmg_list_players', {p_code:family});
+    const seen = new Set();
+    for (const r of Array.isArray(rows) ? rows : []) {
+      seen.add(r.id);
+      const i = S.players.findIndex(p => p.id === r.id);
+      if (r.deleted) { if (i >= 0) S.players.splice(i, 1); continue; }
+      const remote = normalize({...(r.data || {}), id:r.id, updatedAt:r.updated_at});
+      if (!remote) continue;
+      if (i < 0) S.players.push(remote);
+      else if (remote.updatedAt > S.players[i].updatedAt) S.players[i] = remote;
+      else if (remote.updatedAt < S.players[i].updatedAt) pushPlayer(S.players[i]);
+    }
+    for (const p of S.players) if (!seen.has(p.id)) { if (!p.updatedAt) p.updatedAt = Date.now(); pushPlayer(p); }
+    if (pid && !P()) { pid = null; act = null; round = null; if (view !== 'form') view = 'home'; }
+    saveLocal(); setSync('synced'); refresh();
+  } catch (e) {
+    setSync(e.code === '28000' ? 'badcode' : 'offline');
+  } finally { sync.pulling = false; }
+}
+async function joinFamily(code){
+  const c = String(code || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  if (c.length < 6) { sync.joinErr = 'Type the whole family code.'; render(); return; }
+  try {
+    await rpc('kmg_list_players', {p_code:c});
+    family = c; sync.joinErr = ''; showSync = false;
+    try { localStorage.setItem(FAMILY_KEY, c); } catch (e) {}
+    setSync('syncing'); await pull(); render();
+  } catch (e) {
+    sync.joinErr = e.code === '28000' ? "That code didn't work. Check it and try again." : "Couldn't reach the family save. Check the internet connection.";
+    render();
+  }
+}
+const prettyCode = c => c.replace(/(.{4})(?=.)/g, '$1-');
+const familyLink = () => `${location.origin}${location.pathname}#join=${prettyCode(family)}`;
 
 /* ---------- app state ---------- */
-let view = 'home', pid = null, round = null, draft = null, confirmDel = false, nextTimer = null, showSyncInfo = false;
+let view = 'home', pid = null, round = null, act = null, draft = null, confirmDel = false, nextTimer = null, showSync = false, showWorlds = false;
 const app = document.getElementById('app');
 const P = () => S.players.find(p => p.id === pid);
-function lv(p, id){
-  if (!p.levels[id]) p.levels[id] = {tier:0, streak:0, misses:0, stars:0, rounds:0, best:0, mastered:false};
-  return p.levels[id];
-}
 
 /* ---------- sound & speech (only after a tap) ---------- */
 let AC = null;
 function ac(){
-  try {
-    if (!AC) { const C = W.AudioContext || W.webkitAudioContext; if (!C) return null; AC = new C(); }
-    if (AC.state === 'suspended') AC.resume();
-    return AC;
-  } catch (e) { return null; }
+  try { if (!AC) { const C = W.AudioContext || W.webkitAudioContext; if (!C) return null; AC = new C(); } if (AC.state === 'suspended') AC.resume(); return AC; } catch (e) { return null; }
 }
 function tone(f, t0, d, type = 'triangle', g = .16){
   const c = ac(); if (!c) return;
@@ -665,28 +786,44 @@ function sfx(k){
   if (k === 'tap') tone(880, 0, .06, 'sine', .04);
   else if (k === 'yes') { tone(523, 0, .18); tone(659, .09, .18); tone(784, .18, .3); }
   else if (k === 'no') { tone(392, 0, .22, 'sine', .08); tone(330, .16, .3, 'sine', .07); }
-  else if (k === 'up') [523, 659, 784, 1047].forEach((f, i) => tone(f, .3 + i * .08, .25));
+  else if (k === 'full') [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * .08, .28));
+  else if (k === 'engine') { tone(110, 0, .25, 'sawtooth', .06); tone(165, .05, .2, 'square', .03); }
+  else if (k === 'kick') tone(220, 0, .1, 'square', .07);
+  else if (k === 'goal') [659, 784, 1047].forEach((f, i) => tone(f, i * .1, .3));
+  else if (k === 'save') { tone(300, 0, .2, 'sine', .07); tone(250, .12, .25, 'sine', .06); }
+  else if (k === 'blast') { tone(880, 0, .12, 'sawtooth', .05); tone(1320, .06, .18, 'triangle', .1); }
   else if (k === 'fanfare') [523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, i * .12, .3));
 }
 function say(t){
   if (S.muted || !('speechSynthesis' in W)) return;
-  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.rate = .9; u.pitch = 1.15; speechSynthesis.speak(u); } catch (e) {}
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.rate = .9; u.pitch = 1.1; speechSynthesis.speak(u); } catch (e) {}
 }
-function sayQ(){ const p = P(); if (p && p.speak && round && round.q) say(round.q.spoken); }
+const sayIf = t => { const p = P(); if (p && p.speak) say(t); };
 
 /* ---------- small renderers ---------- */
 const muteBtn = () => `<button class="icon-btn" id="mute" data-act="mute" aria-label="${S.muted ? 'Turn sound on' : 'Turn sound off'}" aria-pressed="${S.muted}">${icon(S.muted ? 'mute' : 'sound')}</button>`;
-const backBtn = to => `<button class="icon-btn" data-act="back" data-to="${to}" aria-label="Back">${icon('back')}</button>`;
+const backBtn = (to, label = 'Back') => `<button class="icon-btn" data-act="back" data-to="${to}" aria-label="${label}">${icon('back')}</button>`;
+function powerBar(p, pop = false){
+  const t = THEMES[p.theme], q = p.quest;
+  return `<div class="power" style="--pc:var(--${t.pc})"><span class="power-lab">${t.power}</span><span class="cells ${pop ? 'pop' : ''}" aria-label="${t.power} ${q.power} of ${FULL}">${Array.from({length:FULL}, (_, i) => `<i class="${i < q.power ? 'on' : ''}"></i>`).join('')}</span></div>`;
+}
 function syncChip(){
   const s = sync.state;
-  const info = s === 'synced' ? 'Players, stars and glowbugs show up on every device that opens this page signed in to Claude.'
-    : s === 'connecting' ? 'Checking for players saved on other devices.'
-    : 'To share progress between devices, open this page signed in to Claude, with an editor invite from whoever shared it. Until then, progress stays in this browser.';
-  return `<div class="sync" id="sync"><button class="sync-b" data-s="${s}" data-act="sync-info" aria-expanded="${showSyncInfo}"><span class="dot"></span>${SYNC_TEXT[s]}</button>${showSyncInfo ? `<p class="sync-info">${info}</p>` : ''}</div>`;
+  let panel = '';
+  if (showSync) {
+    if (family && s !== 'badcode') {
+      panel = `<div class="sync-panel"><p>Players, stars and progress show up on every phone or tablet that has joined with this family code: <span class="code">${prettyCode(family)}</span></p>
+        <div class="join-row"><button class="btn small" data-act="copy-link">Copy family link</button></div><p id="copy-note" hidden style="overflow-wrap:anywhere"></p></div>`;
+    } else {
+      panel = `<div class="sync-panel"><p>Enter the family code to share players and progress with the family's other phones and tablets.</p>
+        <div class="join-row"><input id="joincode" class="field" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH-JKLM"><button class="btn small primary" data-act="join">Join</button></div>
+        ${sync.joinErr ? `<p class="err">${esc(sync.joinErr)}</p>` : ''}</div>`;
+    }
+  }
+  return `<div class="sync" id="sync"><button class="sync-b" data-s="${s}" data-act="sync-info" aria-expanded="${showSync}"><span class="dot"></span>${SYNC_TEXT[s]}${!family ? ' · Join family' : ''}</button>${panel}</div>`;
 }
 const dots = (n, color, cls = '') => n === 0 ? `<span class="dots zero ${cls}"></span>` : `<span class="dots ${cls}" style="--c:var(--${color})">${'<i></i>'.repeat(n)}</span>`;
 const blocks = n => `<span class="blocks"><span class="rods">${'<i class="rod"></i>'.repeat(Math.floor(n / 10))}</span><span class="ones">${'<i></i>'.repeat(n % 10)}</span></span>`;
-
 function renderAid(a){
   switch (a.t) {
     case 'dots': return `<div class="aid-row">${dots(a.a, 'sea')}<span class="aop">+</span>${dots(a.b, 'marigold')}</div>`;
@@ -703,15 +840,12 @@ function tok(p){
   const op = ['+', MINUS, TIMES, DIV, '='].includes(p);
   return `<span class="tok ${op ? 'op' : ''} ${p === 'of' ? 'word' : ''}">${esc(p)}</span>`;
 }
-function slot(q, r){
-  const v = r.answered ? q.ans : (r.typed || '?');
-  return `<span class="slot ${r.answered ? (r.correct ? 'good' : 'reveal') : ''}">${esc(v)}</span>`;
-}
+const slot = (q, r) => `<span class="slot ${r.answered ? (r.correct ? 'good' : 'reveal') : ''}">${esc(r.answered ? q.ans : (r.typed || '?'))}</span>`;
 function renderDisp(q, r){
   const d = q.disp;
   if (d.t === 'count') {
     const reveal = r.answered && !r.correct;
-    return `<div class="objs ${d.n > 10 ? 'many' : d.n <= 3 ? 'few' : ''}${r.fresh ? 'enter' : ''}" style="--cols:${Math.min(d.n, 5)}" role="img" aria-label="${d.n} things">${Array.from({length:d.n}, (_, i) => `<span class="obj" style="--i:${i}">${shapeSVG(d.obj, d.color)}${reveal ? `<b class="num">${i + 1}</b>` : ''}</span>`).join('')}</div>`;
+    return `<div class="objs ${d.n > 10 ? 'many' : d.n <= 3 ? 'few' : ''} ${r.fresh ? 'enter' : ''}" style="--cols:${Math.min(d.n, 5)}" role="img" aria-label="${d.n} things">${Array.from({length:d.n}, (_, i) => `<span class="obj" style="--i:${i}">${shapeSVG(d.obj, d.color)}${reveal ? `<b class="num">${i + 1}</b>` : ''}</span>`).join('')}</div>`;
   }
   if (d.t === 'numeral') return `<div class="bignum">${d.n}</div>`;
   if (d.t === 'seq') return `<div class="expr">${d.nums.map(n => `<span class="tok tile">${n}</span>`).join('')}${slot(q, r)}</div>`;
@@ -727,97 +861,126 @@ function renderChoices(q, r){
 function renderPad(r){
   return `<div class="pad">${['1','2','3','4','5','6','7','8','9','del','0','ok'].map(k => {
     const label = k === 'del' ? 'Delete' : k === 'ok' ? 'Check answer' : k;
-    const dis = r.answered || (k === 'ok' && !r.typed);
-    return `<button class="key ${k === 'ok' ? 'ok' : ''} ${k === 'del' ? 'del' : ''}" data-act="key" data-k="${k}" aria-label="${label}" ${dis ? 'disabled' : ''}>${k === 'del' ? icon('back') : k === 'ok' ? icon('check') : k}</button>`;
+    return `<button class="key ${k === 'ok' ? 'ok' : ''} ${k === 'del' ? 'del' : ''}" data-act="key" data-k="${k}" aria-label="${label}" ${(r.answered || (k === 'ok' && !r.typed)) ? 'disabled' : ''}>${k === 'del' ? icon('back') : k === 'ok' ? icon('check') : k}</button>`;
   }).join('')}</div>`;
 }
-function playerCard(p){
-  return `<button class="player" data-act="open" data-id="${p.id}">${avatar(p, 'av')}<span class="pname">${esc(p.name)}</span><span class="pmeta">${icon('star', 'fill')} ${p.stars} &middot; ${p.bugs.length} glowbug${p.bugs.length === 1 ? '' : 's'}</span></button>`;
+
+/* ---------- theme text ---------- */
+function missionInfo(p){
+  const q = p.quest;
+  if (p.theme === 'soccer') {
+    const team = TEAMS[(q.mission * 4 + q.step) % TEAMS.length];
+    return {title:CUPS[q.mission % CUPS.length], sub:`Match ${q.step + 1} of 4 vs ${team.name}`, verb:'Take penalties!', team};
+  }
+  if (p.theme === 'anime') {
+    const ch = CHAPTERS[q.mission % CHAPTERS.length], mon = MONSTERS[(q.mission * 4 + q.step) % MONSTERS.length];
+    return {title:ch.name, sub:`Stop ${q.step + 1} of 4: stop the ${mon}`, verb:'Start the battle!', ch, mon};
+  }
+  const proj = PROJECTS[q.mission % PROJECTS.length], job = JOBS[q.step];
+  return {title:`Build the ${proj.name.toLowerCase()}`, sub:`Job ${q.step + 1} of 4: ${job.title}`, verb:job.verb, proj, job};
 }
-function ageNote(age){
-  const [l, t] = AGE_START[age] || ['count', 0];
-  return `Starts in ${LV[l].name}, step ${t + 1}. Any world can be picked later, and steps adjust as they play.`;
-}
+const canAct = p => p.quest.power >= FULL - p.quest.prog;
 
 /* ---------- screens ---------- */
 function renderHome(){
   const ps = [...S.players].sort((a, b) => a.created - b.created);
   return `
-  <header class="top"><div class="brand">${bugSVG(PIP, 'pip-hero')}<div><h1>Pip's Star Jar</h1><p class="sub">Math games for ages 3 to 12, from counting to percentages.</p></div></div>${muteBtn()}</header>
+  <header class="top"><div><h1>Power-Up Math</h1><p class="sub">Solve math to power up your trucks, your soccer team or your hero.</p></div>${muteBtn()}</header>
+  <div class="hero-strip" aria-hidden="true">${truckSVG('excavator', 'marigold')}${jerseySVG('sea', '9')}${heroSVG(0, 'berry')}</div>
   <section class="block"><h2>Who's playing?</h2>
-    <div class="players">${ps.map(playerCard).join('')}<button class="player add" data-act="add-player">${icon('plus')}<span>Add player</span></button></div>
-    ${ps.length ? '' : '<p class="empty-note">Add each child once with their name and age. Pip starts them at the right level and remembers their stars.</p>'}
+    <div class="players">${ps.map(p => `<button class="player" data-act="open" data-id="${p.id}">${avatar(p, 'av')}<span class="pname">${esc(p.name)}</span><span class="pmeta">${icon('star', 'fill')} ${p.stars} &middot; ${THEMES[p.theme].name}</span></button>`).join('')}
+      <button class="player add" data-act="add-player">${icon('plus')}<span>Add player</span></button></div>
+    ${ps.length ? '' : `<p class="empty-note">Add each kid once with their name, age and favourite theme. They'll start at the right math level.</p>`}
     ${syncChip()}
-  </section>
-  <section class="block"><h2>Seven worlds</h2>
-    <div class="peek">${LEVELS.map(l => `<div class="peek-item" style="--wc:var(--${l.color})"><span class="badge">${l.ex}</span><span><b>${l.name}</b><small>${l.ages}</small></span></div>`).join('')}</div>
   </section>`;
 }
 function renderForm(){
   const d = draft, editing = !!d.id;
+  const themeArt = {trucks:truckSVG('dump', d.color), soccer:jerseySVG(d.color, (d.name || '?').trim().charAt(0).toUpperCase() || '?'), anime:heroSVG(d.hero, d.color)};
   return `
-  <header class="top">${backBtn(editing ? 'map' : 'home')}<h2 class="title">${editing ? 'Edit player' : 'New player'}</h2><span style="width:52px"></span></header>
+  <header class="top">${backBtn(editing ? 'hub' : 'home')}<h2 class="title">${editing ? 'Edit player' : 'New player'}</h2><span style="width:52px"></span></header>
   <div class="form">
     <div class="preview">${avatar(d, 'av-big')}<span id="pv-name">${esc(d.name || 'Name')}</span></div>
     <label class="lab" for="pname">Name</label>
     <input id="pname" class="field" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Type a name" value="${esc(d.name)}">
+    <div class="lab">Pick a theme</div>
+    <div class="themes">${THEME_IDS.map(t => `<button class="theme-b ${d.theme === t ? 'on' : ''}" data-act="pick" data-k="theme" data-v="${t}" aria-pressed="${d.theme === t}">${themeArt[t]}<span>${THEMES[t].name}</span></button>`).join('')}</div>
+    ${d.theme === 'anime' ? `<div class="lab">Pick a hero</div><div class="themes">${HEROES.map((h, i) => `<button class="theme-b ${d.hero === i ? 'on' : ''}" data-act="pick" data-k="hero" data-v="${i}" aria-pressed="${d.hero === i}">${heroSVG(i, d.color)}<span>${h.name}</span></button>`).join('')}</div>` : ''}
     <div class="lab">Colour</div>
     <div class="swatches">${COLORS.map(c => `<button class="sw ${d.color === c ? 'on' : ''}" data-act="pick" data-k="color" data-v="${c}" style="--c:var(--${c})" aria-label="${c}" aria-pressed="${d.color === c}"></button>`).join('')}</div>
-    <div class="lab">Shape</div>
-    <div class="shapes">${SHAPES.map(s => `<button class="shp ${d.shape === s ? 'on' : ''}" data-act="pick" data-k="shape" data-v="${s}" aria-label="${s}" aria-pressed="${d.shape === s}">${shapeSVG(s, d.color)}</button>`).join('')}</div>
     <div class="lab">Age</div>
     <div class="ages">${AGES.map(a => `<button class="age ${d.age === a ? 'on' : ''}" data-act="pick" data-k="age" data-v="${a}" aria-pressed="${d.age === a}">${a === 12 ? '12+' : a}</button>`).join('')}</div>
-    <p class="hint-text">${ageNote(d.age)}</p>
+    <p class="hint-text">${(() => { const [l, t] = AGE_START[d.age]; return `Math starts at ${LV[l].name}, step ${t + 1}. It gets easier or harder as they play.`; })()}</p>
     <button class="btn primary wide" id="save-btn" data-act="save-player" ${d.name.trim() ? '' : 'disabled'}>${editing ? 'Save changes' : 'Add player'}</button>
     ${editing ? `<button class="btn ghost wide" data-act="del-player">${confirmDel ? `Tap again to remove ${esc(d.name)} and their progress` : 'Remove player'}</button>` : ''}
   </div>`;
 }
-function worldCard(p, l){
-  const L = p.levels[l.id], tier = L ? L.tier : 0, rec = p.start === l.id;
-  return `<button class="world" data-act="play" data-level="${l.id}" style="--wc:var(--${l.color})">
-    <span class="badge">${l.ex}</span>
-    <span class="wtext"><b>${l.name}</b><small>${l.ages} &middot; Step ${tier + 1}: ${l.steps[tier]}</small></span>
-    <span class="wside"><span class="steps" aria-label="Step ${tier + 1} of ${l.steps.length}">${l.steps.map((_, i) => `<i class="${L && i <= tier ? 'on' : ''}"></i>`).join('')}</span><span class="wstars">${icon('star', 'fill')}${L ? L.stars : 0}</span></span>
-    ${rec ? '<span class="ribbon">Start here</span>' : ''}${L && L.mastered ? `<span class="crown" title="Mastered">${crownSVG}</span>` : ''}
-  </button>`;
+function missionCard(p){
+  const q = p.quest, m = missionInfo(p);
+  let scene = '';
+  if (p.theme === 'trucks') scene = `<div class="scene">${siteScene({...q, color:p.color}, q.prog)}</div>`;
+  else if (p.theme === 'soccer') scene = `<div class="vs"><span class="team">${jerseySVG(p.color, (p.name || '?').charAt(0).toUpperCase())}${esc(p.name)}</span><span class="vtxt">vs</span><span class="team">${jerseySVG(m.team.color, m.team.name.charAt(0))}${m.team.name}</span></div>`;
+  else scene = `<div class="vs"><span class="team">${heroSVG(p.hero, p.color)}${HEROES[p.hero].name}</span><span class="vtxt">vs</span><span class="team">${monsterSVG(m.ch.color)}${m.mon}</span></div><div class="trail">${[0,1,2,3].map(i => `${i ? '<span class="path"></span>' : ''}<span class="stop ${i < q.step ? 'on' : i === q.step ? 'now' : ''}">${i < q.step ? icon('check') : i + 1}</span>`).join('')}</div>`;
+  const ready = canAct(p);
+  return `<div class="mission">
+    <div class="mission-head"><h3>${esc(m.title)}</h3><small>${p.theme === 'soccer' ? `${q.wins} win${q.wins === 1 ? '' : 's'} so far` : ''}</small></div>
+    ${scene}
+    <div class="stepdots" aria-hidden="true">${[0,1,2,3].map(i => `<i class="${i < q.step ? 'on' : i === q.step ? 'now' : ''}"></i>`).join('')}</div>
+    <p class="act-sub" style="text-align:left">${esc(m.sub)}</p>
+    ${powerBar(p)}
+    ${ready ? `<button class="btn go big wide" data-act="action">${esc(m.verb)}</button>` : `<button class="btn primary big wide" data-act="charge">${icon('bolt')} Charge up with math</button>`}
+  </div>`;
 }
-function jar(p){
-  if (!p.bugs.length) return `<div class="jar-lid"></div><div class="jar empty">${bugSVG(PIP, 'ghost')}<p>Finish a round to catch a glowbug.</p></div>`;
-  const shown = p.bugs.slice(0, 47), more = p.bugs.length - shown.length;
-  return `<div class="jar-lid"></div><div class="jar">${shown.map(b => `<span class="jbug">${bugSVG(bugParams(b.seed), '', b.perfect)}<span>${bugName(b.seed)}</span></span>`).join('')}${more > 0 ? `<span class="jmore">+${more} more</span>` : ''}</div>`;
+function shelf(p){
+  const q = p.quest;
+  if (!q.done.length) return `<div class="shelf empty">${p.theme === 'trucks' ? 'Finish a building and it moves into your town here.' : p.theme === 'soccer' ? 'Finish a cup and your trophy goes here.' : 'Clear a world and its badge goes here.'}</div>`;
+  const items = q.done.slice().reverse().slice(0, 48).map(d => {
+    if (p.theme === 'trucks') { const pr = PROJECTS[d.i % PROJECTS.length]; return `<span class="shelf-item">${buildingSVG(pr.color)}<span>${pr.name}</span></span>`; }
+    if (p.theme === 'soccer') return `<span class="shelf-item">${trophySVG(d.m)}<span>${CUPS[d.i % CUPS.length]}</span></span>`;
+    const ch = CHAPTERS[d.i % CHAPTERS.length]; return `<span class="shelf-item">${badgeSVG(ch.color, d.i + 1)}<span>${ch.name}</span></span>`;
+  }).join('');
+  return `<div class="shelf">${items}</div>`;
+}
+function worldCard(p, l){
+  const L = p.levels[l.id], tier = L ? L.tier : 0;
+  return `<button class="world ${p.world === l.id ? 'on' : ''}" data-act="set-world" data-level="${l.id}" style="--wc:var(--${l.color})">
+    <span class="badge">${l.ex}</span><span class="wtext"><b>${l.name}</b><small>${l.ages} &middot; Step ${tier + 1}: ${l.steps[tier]}</small></span>
+    <span class="steps" aria-hidden="true">${l.steps.map((_, i) => `<i class="${i <= tier ? 'on' : ''}"></i>`).join('')}</span>
+    ${p.start === l.id ? '<span class="ribbon">Start here</span>' : ''}</button>`;
 }
 const seg = (k, v, label, cur) => `<button class="seg-b ${cur === v ? 'on' : ''}" data-act="set" data-k="${k}" data-v="${v}" aria-pressed="${cur === v}">${label}</button>`;
-function renderMap(){
-  const p = P();
+function renderHub(){
+  const p = P(), w = LV[p.world], L = p.levels[p.world], tier = L ? L.tier : 0;
+  const shelfTitle = p.theme === 'trucks' ? 'Your town' : p.theme === 'soccer' ? 'Trophy shelf' : 'Hero badges';
+  const r = p.quest.record;
   return `
-  <header class="top">${backBtn('home')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">${icon('star', 'fill')} ${p.stars} stars &middot; ${p.bugs.length} glowbug${p.bugs.length === 1 ? '' : 's'}</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
-  <section class="block"><h2>Pick a world</h2><div class="worlds">${LEVELS.map(l => worldCard(p, l)).join('')}</div></section>
-  <section class="block"><h2>Glowbug jar</h2>${jar(p)}</section>
+  <header class="top">${backBtn('home', 'Back to players')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">${icon('star', 'fill')} ${p.stars} stars${p.theme === 'anime' ? ` &middot; Level ${p.quest.level + 1}` : ''}</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
+  <section class="block">${missionCard(p)}</section>
+  <section class="block"><h2>Math level</h2>
+    <div class="worldrow"><span class="badge" style="--wc:var(--${w.color})">${w.ex}</span><span class="wtext"><b>${w.name}</b><small>Step ${tier + 1} of ${w.steps.length}: ${w.steps[tier]}</small></span><button class="btn small" data-act="toggle-worlds" aria-expanded="${showWorlds}">${showWorlds ? 'Close' : 'Change'}</button></div>
+    ${showWorlds ? `<div class="worlds">${LEVELS.map(l => worldCard(p, l)).join('')}</div>` : ''}
+  </section>
+  <section class="block"><h2>${shelfTitle}</h2>${shelf(p)}${p.theme === 'soccer' && (r.w + r.d + r.l) ? `<p class="record">Matches: ${r.w} won, ${r.d} drawn, ${r.l} lost</p>` : ''}</section>
   <section class="block"><h2>Settings for ${esc(p.name)}</h2>
     <div class="set-row"><span>Answer with</span><div class="seg">${seg('mode', 'choices', 'Big buttons', p.mode)}${seg('mode', 'keypad', 'Number pad', p.mode)}</div></div>
     <div class="set-row"><span>Read questions aloud</span><div class="seg">${seg('speak', 'on', 'On', p.speak ? 'on' : 'off')}${seg('speak', 'off', 'Off', p.speak ? 'on' : 'off')}</div></div>
     ${syncChip()}
   </section>`;
 }
-function renderPlay(){
+function renderCharge(){
   const p = P(), r = round, q = r.q, l = LV[r.level];
   const keypad = p.mode === 'keypad' && r.level !== 'count' && q.kind === 'num';
-  const pips = Array.from({length:ROUND_LEN}, (_, i) => i < r.results.length ? (r.results[i] ? `<span class="pip hit">${icon('star', 'fill')}</span>` : '<span class="pip miss"></span>') : `<span class="pip ${i === r.idx ? 'now' : ''}"></span>`).join('');
   let aid = '';
   if (q.aid && (q.aidShown || r.hint || (r.answered && !r.correct))) aid = `<div class="aid">${renderAid(q.aid)}</div>`;
-  else if (q.aid && !r.answered) aid = `<button class="btn small hint" data-act="hint">${icon('bulb')} Show me</button>`;
+  else if (q.aid && !r.answered) aid = `<button class="btn small" data-act="hint">${icon('bulb')} Show me</button>`;
   let fb = '';
   if (r.answered) {
-    const msg = r.correct ? r.msg : q.kind === 'group' ? `Nice try! This group has <b>${q.ans}</b>.` : `Nice try! It's <b>${q.ans}</b>.`;
-    fb = `<div class="fb ${r.correct ? 'good' : 'soft'}">${bugSVG(PIP, 'fb-pip ' + (r.correct ? 'hop' : 'tilt'))}<span class="fb-msg">${msg}</span><button class="btn primary next" data-act="next" aria-label="Next question">${icon('next')}</button></div>`;
+    const full = p.quest.power >= FULL - p.quest.prog;
+    const msg = r.correct ? (full ? 'Full power!' : r.msg) : q.kind === 'group' ? `Nice try! This group has <b>${q.ans}</b>.` : `Nice try! It's <b>${q.ans}</b>.`;
+    fb = `<div class="fb ${r.correct ? 'good' : 'soft'}"><span class="fb-msg">${msg}</span><button class="btn ${full ? 'go' : 'primary'} next" data-act="${full ? 'action' : 'next'}" aria-label="${full ? 'Go' : 'Next question'}">${full ? 'Go!' : icon('next')}</button></div>`;
   }
   return `<div class="play">
-    <header class="bar">
-      <button class="icon-btn" data-act="quit" aria-label="Stop and go back">${icon('x')}</button>
-      <div class="pips" aria-label="Question ${Math.min(r.idx + 1, ROUND_LEN)} of ${ROUND_LEN}">${pips}</div>
-      <button class="icon-btn" data-act="say" aria-label="Read the question out loud">${icon('talk')}</button>
-      ${muteBtn()}
-    </header>
+    <header class="bar"><button class="icon-btn" data-act="quit" aria-label="Back to base">${icon('x')}</button>${powerBar(p, r.answered && r.correct)}<button class="icon-btn" data-act="say" aria-label="Read the question out loud">${icon('talk')}</button>${muteBtn()}</header>
     <div class="stage">
       <div class="wtag" style="--wc:var(--${l.color})">${esc(l.name)} &middot; Step ${r.tier + 1} of ${l.steps.length}</div>
       ${q.label ? `<div class="qlabel">${q.label}</div>` : ''}
@@ -827,49 +990,91 @@ function renderPlay(){
     <div class="answers">${keypad ? renderPad(r) : renderChoices(q, r)}</div>
   </div>`;
 }
-function renderResults(){
-  const p = P(), r = round, d = r.done, l = LV[r.level], L = lv(p, r.level);
-  const idx = LEVELS.indexOf(l), nxt = LEVELS[idx + 1];
-  const name = bugName(d.bug.seed);
+function renderAction(){
+  const p = P(), q = p.quest, m = missionInfo(p), a = act;
+  let scene = '', controls = '', title = '', sub = '';
+  if (a.done) {
+    controls = `<div class="done-panel"><button class="btn primary big wide" data-act="charge">${icon('bolt')} Charge up again</button><button class="btn wide" data-act="back" data-to="hub">Back to base</button></div>`;
+  }
+  if (p.theme === 'trucks') {
+    title = a.done ? a.done.title : JOBS[q.step].title;
+    sub = a.done ? a.done.sub : `Tap ${JOBS[q.step].verb.replace('!', '')} to use your fuel. ${FULL - q.prog} left.`;
+    const showStep = a.done ? a.done.step : q.step, showProg = a.done ? FULL : q.prog;
+    scene = `<div class="scene act-scene ${a.anim ? 'work' : ''}">${siteScene({...q, step:showStep, mission:a.done ? a.done.mission : q.mission, color:p.color}, showProg)}</div>`;
+    if (!a.done) controls = `<button class="btn go big wide" data-act="work">${esc(JOBS[q.step].verb)}</button>`;
+  } else if (p.theme === 'soccer') {
+    const team = a.done ? a.done.team : m.team;
+    title = a.done ? a.done.title : `Penalties vs ${team.name}`;
+    sub = a.done ? a.done.sub : 'Tap a spot in the goal to shoot.';
+    const kicks = a.kicks || [];
+    scene = `<div class="pitch" id="pitch">
+      <svg viewBox="0 0 320 220" preserveAspectRatio="none" aria-hidden="true"><rect width="320" height="220" ${F('grass')}/>${[0,1,2,3,4,5].map(i => `<rect x="0" y="${i * 40}" width="320" height="20" ${F('grass-2')} opacity=".5"/>`).join('')}
+        <rect x="40" y="22" width="240" height="140" fill="none" stroke-width="2" opacity=".35" style="stroke:var(--post)"/>
+        ${Array.from({length:11}, (_, i) => `<path d="M${40 + i * 24} 22V162" stroke-width="1" opacity=".3" style="stroke:var(--post)"/>`).join('')}${Array.from({length:6}, (_, i) => `<path d="M40 ${22 + i * 28}H280" stroke-width="1" opacity=".3" style="stroke:var(--post)"/>`).join('')}
+        <path d="M40 164V22H280V164" fill="none" stroke-width="8" style="stroke:var(--post)"/><path d="M0 164H320" stroke-width="3" style="stroke:var(--post)" opacity=".7"/><circle cx="160" cy="198" r="4" style="fill:var(--post)"/></svg>
+      <div class="keeper" id="keeper" ${a.shot ? `style="left:${ZONES[a.shot.kz][0]}%;top:${ZONES[a.shot.kz][1] + 6}%;transform:translate(-50%,-50%) rotate(${(a.shot.kz % 3 - 1) * 35}deg)"` : ''}>${keeperSVG(team.color)}</div>
+      <div class="kball" id="kball" ${a.shot ? `style="left:${ZONES[a.shot.z][0]}%;top:${ZONES[a.shot.z][1]}%;transform:translate(-50%,-50%) scale(.6)"` : ''}>${shapeSVG('ball', 'ball')}</div>
+      ${a.done ? '' : [0,1,2,3,4,5].map(z => { const [x, y] = ZONES[z]; return `<button class="zone" data-act="kick" data-z="${z}" style="left:${x}%;top:${y}%" aria-label="Shoot ${['top left','top middle','top right','bottom left','bottom middle','bottom right'][z]}" ${a.busy ? 'disabled' : ''}></button>`; }).join('')}
+      ${a.msg ? `<div class="kick-msg">${a.msg}</div>` : ''}
+    </div><div class="scoreline" aria-label="${q.goals} goals">${Array.from({length:FULL}, (_, i) => `<i class="${kicks[i] === 1 ? 'g' : kicks[i] === 0 ? 's' : ''}"></i>`).join('')}</div>`;
+  } else {
+    const mon = a.done ? a.done.mon : m.mon, ch = a.done ? a.done.ch : m.ch;
+    title = a.done ? a.done.title : `Stop the ${mon}!`;
+    sub = a.done ? a.done.sub : `Tap Power blast to use your power. ${FULL - q.prog} left.`;
+    const hp = a.done ? 0 : FULL - q.prog;
+    const auraC = ['star', 'sea', 'berry', 'rose', 'mint'][q.level % 5];
+    scene = `<div class="arena ${a.anim ? 'blast' : ''}" id="arena"><span class="lvl">Level ${q.level + 1}</span>
+      <div class="fighter me">${heroSVG(p.hero, p.color, auraC)}</div>
+      <div class="fighter mon ${a.done ? 'gone' : ''}">${monsterSVG(ch.color)}</div>
+      <div class="hp" aria-label="${hp} hearts left">${Array.from({length:FULL}, (_, i) => `<i class="${i < hp ? '' : 'off'}"></i>`).join('')}</div>
+      <div class="beam"></div></div>`;
+    if (!a.done) controls = `<button class="btn go big wide" data-act="blast">${icon('bolt')} Power blast!</button>`;
+  }
+  return `<div class="play">
+    <header class="bar"><button class="icon-btn" data-act="back" data-to="hub" aria-label="Back to base">${icon('x')}</button>${powerBar(p)}${muteBtn()}</header>
+    <div class="stage"><h2 class="act-title">${esc(title)}</h2>${scene}<p class="act-sub">${esc(sub)}</p></div>
+    <div class="answers">${controls}</div>
+  </div>`;
+}
+const ZONES = [[25, 28], [50, 28], [75, 28], [25, 57], [50, 57], [75, 57]];
+function renderReward(){
+  const p = P(), r = act.reward;
+  let art = '';
+  if (p.theme === 'trucks') art = buildingSVG(PROJECTS[r.i % PROJECTS.length].color);
+  else if (p.theme === 'soccer') art = trophySVG(r.m);
+  else art = badgeSVG(CHAPTERS[r.i % CHAPTERS.length].color, r.i + 1);
   return `<div class="results">
-    <div class="rstars" aria-label="${d.stars} stars out of ${ROUND_LEN}">${Array.from({length:ROUND_LEN}, (_, i) => `<span class="rs ${i < d.stars ? 'on' : ''}" style="--i:${i}">${icon('star', 'fill')}</span>`).join('')}</div>
-    <h2 class="rtitle">${d.stars} star${d.stars === 1 ? '' : 's'}!</h2>
-    <div class="catch">${bugSVG(bugParams(d.bug.seed), 'caught', d.bug.perfect)}</div>
-    <p class="rmsg">${d.bug.perfect ? `A perfect round! <b>${name}</b> flew into ${esc(p.name)}'s jar wearing a crown.` : `<b>${name}</b> the glowbug flew into ${esc(p.name)}'s jar.`}</p>
-    ${d.tierTo > d.tierFrom ? `<p class="rnote">${icon('up')} Up to step ${d.tierTo + 1}: ${l.steps[d.tierTo]}</p>` : ''}
-    <div class="ractions">
-      <button class="btn primary" data-act="play" data-level="${l.id}">Play again</button>
-      ${L.mastered && nxt ? `<button class="btn" data-act="play" data-level="${nxt.id}">Try ${nxt.name}</button>` : ''}
-      <button class="btn" data-act="go-map">All worlds</button>
-    </div>
+    <h2 class="rtitle">${esc(r.title)}</h2>
+    <div class="reward-art">${art}</div>
+    <p class="rmsg">${esc(r.msg)}</p>
+    <div class="ractions"><button class="btn primary big" data-act="charge">${icon('bolt')} ${esc(r.next)}</button><button class="btn" data-act="back" data-to="hub">Back to base</button></div>
   </div>`;
 }
 function render(){
-  if ((view === 'map' || view === 'play' || view === 'results') && !P()) view = 'home';
-  if ((view === 'play' || view === 'results') && !round) view = 'map';
-  if (view === 'results' && !round.done) view = 'map';
+  if (view !== 'home' && view !== 'form' && !P()) view = 'home';
+  if (view === 'charge' && !round) view = 'hub';
+  if ((view === 'action' || view === 'reward') && !act) view = 'hub';
+  if (view === 'reward' && !act.reward) view = 'hub';
   if (view === 'form' && !draft) view = 'home';
-  document.documentElement.classList.toggle('playing', view === 'play');
-  app.innerHTML = view === 'form' ? renderForm() : view === 'map' ? renderMap() : view === 'play' ? renderPlay() : view === 'results' ? renderResults() : renderHome();
+  document.documentElement.classList.toggle('playing', view === 'charge' || view === 'action');
+  app.innerHTML = view === 'form' ? renderForm() : view === 'hub' ? renderHub() : view === 'charge' ? renderCharge() : view === 'action' ? renderAction() : view === 'reward' ? renderReward() : renderHome();
   if (round) round.fresh = false;
 }
-function refresh(){ if (view === 'home' || view === 'map') render(); }
+function refresh(){ if (view === 'home' || view === 'hub') render(); }
 function go(v){ view = v; render(); try { W.scrollTo(0, 0); } catch (e) {} }
 
-/* ---------- game flow ---------- */
-function startRound(level){
-  const p = P(); if (!p || !LV[level]) return go('home');
+/* ---------- charging (math) ---------- */
+function startCharge(){
+  const p = P(); if (!p) return go('home');
   clearTimeout(nextTimer);
-  const L = lv(p, level);
-  round = {level, idx:0, stars:0, results:[], tierStart:L.tier, tier:L.tier, q:null, lastKey:''};
-  nextQ();
-  go('play');
-  sayQ();
+  if (canAct(p)) return startAction();
+  round = {level:p.world, lastKey:''};
+  nextQ(); go('charge'); sayIf(round.q.spoken);
 }
 function nextQ(){
-  const L = lv(P(), round.level);
+  const p = P(), L = lv(p, round.level);
   let q, g = 0;
-  do { q = gen(round.level, L.tier); } while (q.key === round.lastKey && g++ < 8);
+  do { q = gen(round.level, L.tier, p.theme); } while (q.key === round.lastKey && g++ < 8);
   Object.assign(round, {q, lastKey:q.key, tier:L.tier, answered:false, picked:null, correct:null, typed:'', hint:false, msg:'', fresh:true});
 }
 function answer(v){
@@ -878,51 +1083,136 @@ function answer(v){
   const q = round.q, ok = v === q.ans, L = lv(p, round.level);
   let up = false;
   Object.assign(round, {answered:true, picked:v, correct:ok, msg:ok ? pick(PRAISE) : ''});
-  round.results.push(ok);
   if (ok) {
-    round.stars++; L.misses = 0;
+    p.stars++; L.stars++; L.misses = 0;
     if (!round.hint) L.streak++;
     if (L.streak >= 3 && L.tier < maxTier(round.level)) { L.tier++; L.streak = 0; up = true; }
+    p.quest.power = Math.min(FULL - p.quest.prog, p.quest.power + 1);
   } else {
     L.streak = 0; L.misses++;
     if (L.misses >= 2 && L.tier > 0) { L.tier--; L.misses = 0; }
   }
-  sfx(ok ? 'yes' : 'no');
+  savePlayer(p);
+  const full = canAct(p);
+  sfx(ok ? (full ? 'full' : 'yes') : 'no');
   render();
   if (ok) {
     burst(app.querySelector('.choice.good') || app.querySelector('.slot'));
-    if (up) { sfx('up'); toast(`${icon('up')} Step up! ${LV[round.level].steps[L.tier]}`); }
-    if (p.speak) say(round.msg);
-    nextTimer = setTimeout(advance, up ? 1700 : 1200);
-  } else if (p.speak) say(`Nice try. It's ${q.ans}.`);
+    if (up) toast(`${icon('up')} Math step up!`);
+    sayIf(full ? 'Full power! Go!' : round.msg);
+    if (!full) nextTimer = setTimeout(advance, up ? 1500 : 1100);
+  } else sayIf(`Nice try. It's ${q.ans}.`);
 }
 function advance(){
   clearTimeout(nextTimer);
-  if (!round || !round.answered || view !== 'play') return;
-  round.idx++;
-  if (round.idx >= ROUND_LEN) return finish();
-  nextQ(); render(); sayQ();
+  if (!round || !round.answered || view !== 'charge') return;
+  if (canAct(P())) return startAction();
+  nextQ(); render(); sayIf(round.q.spoken);
 }
-function finish(){
-  const p = P(), r = round, L = lv(p, r.level);
-  const bug = {seed:((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0), perfect:r.stars === ROUND_LEN, level:r.level, at:Date.now()};
-  p.bugs.unshift(bug); if (p.bugs.length > 400) p.bugs.length = 400;
-  p.stars += r.stars; L.stars += r.stars; L.rounds++; L.best = Math.max(L.best, r.stars);
-  if (L.tier === maxTier(r.level) && r.stars >= 8) L.mastered = true;
-  r.done = {bug, stars:r.stars, tierFrom:r.tierStart, tierTo:L.tier};
+
+/* ---------- actions (mini-games) ---------- */
+function startAction(){
+  const p = P(); if (!p) return go('home');
+  clearTimeout(nextTimer); round = null;
+  if (!canAct(p)) return startCharge();
+  act = {busy:false, kicks:[], msg:'', anim:false, done:null, reward:null};
+  go('action');
+  const m = missionInfo(p);
+  sayIf(p.theme === 'trucks' ? `${JOBS[p.quest.step].title}. Tap ${JOBS[p.quest.step].verb}` : p.theme === 'soccer' ? 'Tap a spot in the goal to shoot.' : `Stop the ${m.mon}! Tap power blast.`);
+}
+function finishStep(p, done){
+  const q = p.quest;
+  q.prog = 0; q.power = 0; q.goals = 0;
+  q.step++;
+  if (q.step >= 4) {
+    const i = q.mission, rec = {i};
+    if (p.theme === 'soccer') rec.m = q.wins >= 3 ? 'gold' : q.wins >= 1 ? 'silver' : 'bronze';
+    q.done.push(rec);
+    q.mission++; q.step = 0; q.wins = 0;
+    if (p.theme === 'trucks') act.reward = {...rec, title:`${PROJECTS[i % PROJECTS.length].name} built!`, msg:`It's now part of ${p.name}'s town. Time for the next project.`, next:'Start the next project'};
+    else if (p.theme === 'soccer') act.reward = {...rec, title:`${CUPS[i % CUPS.length]}: ${rec.m}!`, msg:`${p.name}'s team finished the cup. A new cup starts now.`, next:'Start the next cup'};
+    else act.reward = {...rec, title:`${CHAPTERS[i % CHAPTERS.length].name} cleared!`, msg:`${HEROES[p.hero].name} earned a badge and is now level ${q.level + 1}.`, next:'Go to the next world'};
+  }
+  act.done = done;
   savePlayer(p);
-  go('results');
-  sfx('fanfare');
-  if (p.speak) say(`${r.stars} stars! You caught ${bugName(bug.seed)}.`);
 }
-function quit(){
-  clearTimeout(nextTimer);
-  const p = P();
-  if (p && round && round.results.length) { p.stars += round.stars; lv(p, round.level).stars += round.stars; savePlayer(p); }
-  round = null;
-  try { speechSynthesis.cancel(); } catch (e) {}
-  go('map');
+function work(){
+  const p = P(); if (!p || !act || act.busy || act.done) return;
+  const q = p.quest; if (q.power <= 0) return startCharge();
+  act.busy = true; act.anim = true;
+  q.power--; q.prog++;
+  sfx('engine');
+  if (q.prog >= FULL) {
+    const step = q.step, mission = q.mission, job = JOBS[step];
+    finishStep(p, {title:job.done, sub:step === 3 ? 'The building is finished!' : 'Charge up to start the next job.', step:step === 3 ? 4 : step, mission});
+    render(); burst(app.querySelector('.scene')); sfx('fanfare'); sayIf(job.done);
+    setTimeout(() => { act && (act.anim = false); }, 300);
+    if (act.reward) setTimeout(() => { if (view === 'action' && act && act.reward) go('reward'); }, 1800);
+    act.busy = false; return;
+  }
+  savePlayer(p); render();
+  setTimeout(() => { if (act) { act.busy = false; act.anim = false; } }, 220);
 }
+function kick(z){
+  const p = P(); if (!p || !act || act.busy || act.done) return;
+  const q = p.quest; if (q.power <= 0) return startCharge();
+  act.busy = true; act.msg = '';
+  const saved = Math.random() < (p.age <= 5 ? .18 : p.age <= 8 ? .25 : .3);
+  const kz = saved ? z : pick([0,1,2,3,4,5].filter(x => x !== z && (Math.random() < .6 ? Math.abs(x % 3 - z % 3) <= 1 : true)));
+  render();
+  sfx('kick');
+  const ball = document.getElementById('kball'), keeper = document.getElementById('keeper');
+  requestAnimationFrame(() => {
+    if (act) act.shot = {z, kz};
+    if (ball) { ball.style.left = ZONES[z][0] + '%'; ball.style.top = ZONES[z][1] + '%'; ball.style.transform = 'translate(-50%,-50%) scale(.6)'; }
+    if (keeper) { keeper.style.left = ZONES[kz][0] + '%'; keeper.style.top = (ZONES[kz][1] + 6) + '%'; keeper.style.transform = `translate(-50%,-50%) rotate(${(kz % 3 - 1) * 35}deg)`; }
+  });
+  setTimeout(() => {
+    if (!act) return;
+    q.power--; q.prog++;
+    act.kicks.push(saved ? 0 : 1);
+    if (!saved) q.goals++;
+    act.msg = saved ? 'Saved!' : 'GOAL!';
+    sfx(saved ? 'save' : 'goal');
+    if (q.prog >= FULL) {
+      const team = TEAMS[(q.mission * 4 + q.step) % TEAMS.length];
+      const og = rnd(0, p.age <= 5 ? 2 : 3), g = q.goals;
+      const res = g > og ? 'w' : g === og ? 'd' : 'l';
+      q.record[res]++; if (res === 'w') q.wins++;
+      const title = res === 'w' ? `You won ${g}–${og}!` : res === 'd' ? `A draw, ${g}–${og}` : `Close one, ${g}–${og}`;
+      finishStep(p, {title, sub:`${team.name} scored ${og}. ${res === 'l' ? 'Next match is a new chance!' : 'Charge up for the next match.'}`, team});
+      render(); if (res === 'w') { burst(app.querySelector('.pitch')); sfx('fanfare'); }
+      sayIf(title);
+      if (act.reward) setTimeout(() => { if (view === 'action' && act && act.reward) go('reward'); }, 2000);
+    } else {
+      savePlayer(p); render();
+      if (!saved) burst(app.querySelector('.kick-msg'));
+      setTimeout(() => { if (act && !act.done) { act.busy = false; act.msg = ''; act.shot = null; render(); } }, 1000);
+    }
+  }, 450);
+}
+function blast(){
+  const p = P(); if (!p || !act || act.busy || act.done) return;
+  const q = p.quest; if (q.power <= 0) return startCharge();
+  act.busy = true;
+  q.power--; q.prog++;
+  sfx('blast');
+  act.anim = false; render(); void app.offsetWidth; act.anim = true;
+  const arena = document.getElementById('arena'); if (arena) arena.classList.add('blast');
+  setTimeout(() => {
+    if (!act) return;
+    act.anim = false;
+    if (q.prog >= FULL) {
+      const m = missionInfo(p);
+      q.level++;
+      finishStep(p, {title:`${m.mon} stopped!`, sub:`${HEROES[p.hero].name} is now level ${q.level + 1}. Charge up for the next stop.`, mon:m.mon, ch:m.ch});
+      render(); burst(app.querySelector('.arena')); sfx('fanfare'); sayIf(`${m.mon} stopped!`);
+      if (act.reward) setTimeout(() => { if (view === 'action' && act && act.reward) go('reward'); }, 2000);
+    } else { savePlayer(p); render(); }
+    if (act) act.busy = false;
+  }, 460);
+}
+function quitCharge(){ clearTimeout(nextTimer); round = null; try { speechSynthesis.cancel(); } catch (e) {} go('hub'); }
 
 /* ---------- effects ---------- */
 function burst(el){
@@ -930,22 +1220,14 @@ function burst(el){
   const r = el.getBoundingClientRect(), fx = document.getElementById('fx');
   for (let i = 0; i < 12; i++) {
     const s = document.createElement('span'), a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 80;
-    s.className = 'spark';
-    s.style.left = (r.left + r.width / 2) + 'px'; s.style.top = (r.top + r.height / 2) + 'px';
-    s.style.setProperty('--dx', (Math.cos(a) * d).toFixed(0) + 'px');
-    s.style.setProperty('--dy', (Math.sin(a) * d - 30).toFixed(0) + 'px');
+    s.className = 'spark'; s.style.left = (r.left + r.width / 2) + 'px'; s.style.top = (r.top + r.height / 2) + 'px';
+    s.style.setProperty('--dx', (Math.cos(a) * d).toFixed(0) + 'px'); s.style.setProperty('--dy', (Math.sin(a) * d - 30).toFixed(0) + 'px');
     s.style.setProperty('--c', `var(--${pick(['star', 'marigold', 'mint', 'rose'])})`);
-    s.innerHTML = icon('star', 'fill');
-    fx.appendChild(s);
-    setTimeout(() => s.remove(), 900);
+    s.innerHTML = icon('star', 'fill'); fx.appendChild(s); setTimeout(() => s.remove(), 900);
   }
 }
 let toastTimer = null;
-function toast(html){
-  const t = document.getElementById('toast');
-  t.innerHTML = html; t.hidden = false;
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 1600);
-}
+function toast(html){ const t = document.getElementById('toast'); t.innerHTML = html; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 1600); }
 function updateSlot(){
   const s = app.querySelector('.slot'); if (s) s.textContent = round.typed || '?';
   const ok = app.querySelector('.key.ok'); if (ok) ok.disabled = !round.typed;
@@ -956,22 +1238,27 @@ app.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   if (!el || el.disabled) return;
   ac();
-  const act = el.dataset.act;
-  switch (act) {
-    case 'add-player': draft = {name:'', color:pick(COLORS), shape:pick(SHAPES), age:5}; confirmDel = false; sfx('tap'); go('form'); break;
-    case 'open': pid = el.dataset.id; sfx('tap'); go('map'); break;
-    case 'edit': { const p = P(); if (!p) break; draft = {id:p.id, name:p.name, color:p.color, shape:p.shape, age:p.age}; confirmDel = false; sfx('tap'); go('form'); break; }
-    case 'pick': draft[el.dataset.k] = el.dataset.k === 'age' ? Number(el.dataset.v) : el.dataset.v; confirmDel = false; sfx('tap'); render(); break;
+  const a = el.dataset.act;
+  switch (a) {
+    case 'add-player': draft = {name:'', color:pick(COLORS), theme:'trucks', hero:0, age:5}; confirmDel = false; sfx('tap'); go('form'); break;
+    case 'open': pid = el.dataset.id; showWorlds = false; sfx('tap'); go('hub'); break;
+    case 'edit': { const p = P(); if (!p) break; draft = {id:p.id, name:p.name, color:p.color, theme:p.theme, hero:p.hero, age:p.age}; confirmDel = false; sfx('tap'); go('form'); break; }
+    case 'pick': { const k = el.dataset.k; draft[k] = (k === 'age' || k === 'hero') ? Number(el.dataset.v) : el.dataset.v; confirmDel = false; sfx('tap'); render(); break; }
     case 'save-player': saveForm(); break;
     case 'del-player': {
       if (!confirmDel) { confirmDel = true; render(); break; }
-      const id = draft.id;
-      S.players = S.players.filter(p => p.id !== id); saveLocal(); deleteRemote(id);
+      const id = draft.id; S.players = S.players.filter(p => p.id !== id); saveLocal(); deleteRemote(id);
       pid = null; draft = null; go('home'); break;
     }
-    case 'back': if (el.dataset.to === 'map' && !P()) go('home'); else go(el.dataset.to); break;
-    case 'play': startRound(el.dataset.level); break;
-    case 'go-map': round = null; go('map'); break;
+    case 'back': {
+      const to = el.dataset.to;
+      if (view === 'charge') { quitCharge(); break; }
+      act = null; round = null;
+      if (to === 'hub' && !P()) go('home'); else { go(to); if (to === 'home') pull(); }
+      break;
+    }
+    case 'charge': act = null; sfx('tap'); startCharge(); break;
+    case 'action': sfx('tap'); startAction(); break;
     case 'choose': answer(Number(el.dataset.v)); break;
     case 'key': {
       if (!round || round.answered) break;
@@ -984,7 +1271,10 @@ app.addEventListener('click', e => {
     case 'next': advance(); break;
     case 'hint': round.hint = true; sfx('tap'); render(); break;
     case 'say': if (round && round.q) { if (S.muted) toast('Sound is off'); else say(round.q.spoken); } break;
-    case 'quit': quit(); break;
+    case 'quit': quitCharge(); break;
+    case 'work': work(); break;
+    case 'kick': kick(Number(el.dataset.z)); break;
+    case 'blast': blast(); break;
     case 'mute': {
       S.muted = !S.muted; saveLocal();
       if (S.muted) { try { speechSynthesis.cancel(); } catch (e) {} } else sfx('tap');
@@ -997,7 +1287,17 @@ app.addEventListener('click', e => {
       if (el.dataset.k === 'speak') { p.speak = el.dataset.v === 'on'; if (p.speak) say(`Hi ${p.name}!`); }
       savePlayer(p); sfx('tap'); render(); break;
     }
-    case 'sync-info': showSyncInfo = !showSyncInfo; setSync(sync.state); break;
+    case 'toggle-worlds': showWorlds = !showWorlds; sfx('tap'); render(); break;
+    case 'set-world': { const p = P(); if (!p || !LV[el.dataset.level]) break; p.world = el.dataset.level; lv(p, p.world); showWorlds = false; savePlayer(p); sfx('tap'); render(); break; }
+    case 'sync-info': showSync = !showSync; sync.joinErr = ''; setSync(sync.state); if (showSync && !family) { const f = document.getElementById('joincode'); if (f) f.focus(); } break;
+    case 'join': { const f = document.getElementById('joincode'); joinFamily(f ? f.value : ''); break; }
+    case 'copy-link': {
+      const link = familyLink(), note = document.getElementById('copy-note');
+      const show = msg => { if (note) { note.textContent = msg; note.hidden = false; } };
+      const manual = () => show(`Copy this link: ${link}`);
+      try { navigator.clipboard.writeText(link).then(() => show('Copied. Send it to anyone in the family.'), manual); } catch (err) { manual(); }
+      break;
+    }
   }
 });
 app.addEventListener('input', e => {
@@ -1008,15 +1308,19 @@ app.addEventListener('input', e => {
 });
 app.addEventListener('keydown', e => {
   if (e.target.id === 'pname' && e.key === 'Enter' && draft && draft.name.trim()) { e.preventDefault(); saveForm(); }
+  if (e.target.id === 'joincode' && e.key === 'Enter') { e.preventDefault(); joinFamily(e.target.value); }
 });
 document.addEventListener('keydown', e => {
-  if (view !== 'play' || !round || (e.target && e.target.tagName === 'INPUT')) return;
-  if (round.answered) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advance(); } return; }
+  if (view !== 'charge' || !round || (e.target && e.target.tagName === 'INPUT')) return;
+  if (round.answered) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); canAct(P()) ? startAction() : advance(); } return; }
   if (!app.querySelector('.slot')) return;
   if (/^[0-9]$/.test(e.key)) { if (round.typed.length < 4) { round.typed = (round.typed === '0' ? '' : round.typed) + e.key; updateSlot(); } }
   else if (e.key === 'Backspace') { round.typed = round.typed.slice(0, -1); updateSlot(); }
   else if (e.key === 'Enter' && round.typed) { e.preventDefault(); answer(Number(round.typed)); }
 });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pull(); });
+setInterval(() => { if (document.visibilityState === 'visible' && (view === 'home' || view === 'hub')) pull(); }, 45000);
+
 function saveForm(){
   const d = draft, name = d.name.trim().slice(0, 16);
   if (!name) return;
@@ -1024,28 +1328,21 @@ function saveForm(){
   if (d.id) {
     const p = S.players.find(x => x.id === d.id); if (!p) return go('home');
     const ageChanged = p.age !== d.age;
-    Object.assign(p, {name, color:d.color, shape:d.shape, age:d.age});
-    if (ageChanged) { p.start = start; if (!p.levels[start]) { lv(p, start).tier = tier; } }
+    Object.assign(p, {name, color:d.color, theme:d.theme, hero:d.hero, age:d.age});
+    if (ageChanged) { p.start = start; p.world = start; if (!p.levels[start]) lv(p, start).tier = tier; }
     savePlayer(p); pid = p.id;
   } else {
-    const p = {id:uid(), name, color:d.color, shape:d.shape, age:d.age, stars:0, bugs:[], levels:{}, mode:'choices', speak:d.age <= 6, start, created:Date.now(), updatedAt:0, synced:false};
+    const p = normalize({id:uid(), name, color:d.color, theme:d.theme, hero:d.hero, age:d.age, start, world:start, speak:d.age <= 6, created:Date.now()});
     lv(p, start).tier = tier;
     S.players.push(p); savePlayer(p); pid = p.id;
   }
-  draft = null; sfx('tap'); go('map');
+  draft = null; sfx('tap'); go('hub');
 }
 
-/* ---------- boot (keeps the current round across live page updates) ---------- */
-const H = W.claude && W.claude.hot;
-try { if (H && typeof H.snapshot === 'function') H.snapshot(() => ({view, pid, round, draft})); } catch (e) {}
-function start(data){
-  if (data && typeof data === 'object' && data.view) {
-    ({view, pid, round, draft} = {view:data.view, pid:data.pid || null, round:data.round || null, draft:data.draft || null});
-  }
-  render();
-  initSync();
-}
-W.__pipTest = {gen, LEVELS};
-if (H && typeof H.ready === 'function') H.ready(start); else start((H && H.data) || {});
+W.__pumTest = {gen, LEVELS, normalize};
+render();
+pull();
 })();
 </script>
+</body>
+</html>
