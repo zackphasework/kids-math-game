@@ -10,14 +10,14 @@ Each kid picks a theme. Every theme has 3 worlds of 5 levels, and level 5 of eac
 2. Math is built into the gameplay: math gates on the road, passing to the right shirt number, and breaking enemy shields.
 3. When fuel, stamina or energy runs out, a quick math refill gets you going again.
 
-- **Trucks: Big Rig Rescue.** A behind-the-truck road racer. Steer across three lanes and brake for curves. Dodge cones, rocks, potholes, tractors, oncoming cars, falling boulders, ice and narrow bridges, and beat the clock. Each boss is a race against a rival truck that throws barrels.
+- **Trucks: Big Rig Builders.** The kid runs a construction company and builds Main Street, one building per job (house, gas station, mechanic, school, and a River Bridge boss). Each job is a set of steps: dig the foundation with the excavator, bring each load (pick the right truck, load the exact amount the math question asks for, then drive it through the answer lanes and dodge obstacles so the cargo stays on), and drop the final piece with the tower crane. Finished buildings stay in the town and give bonuses (bigger fuel tank, a bumper, crossed-out wrong lanes). Coins buy garage upgrades and paint. The Hills and Big City are next.
 - **Soccer: Striker Rush.** A top-down attacking game. Drag to dribble past blockers, chasers and slide tackles, break defensive walls with math passes, and shoot past a keeper who gets better every level. Bosses have giant keepers and defenders.
 - **Hero: Sky Quest.** A side-scrolling runner. Jump and slide past gaps, bats, spikes, turrets, moving platforms and smoke, break goblin shields with math, and reach the portal. Bosses have three phases, and each phase's shield breaks with math.
 
 ## How it's built
 
 - Plain HTML, CSS and JavaScript. There's no build step and no libraries, and it's hosted on Netlify, which deploys every push to `main`.
-- `js/core.js` holds shared helpers, UI art and sound. `js/math.js` has the question generators and quiz panel, `js/store.js` handles saves and family sync, and `js/levels.js` defines the campaigns and upgrades, and `js/engine.js` is the canvas runner. `js/trucks.js`, `js/soccer.js` and `js/hero.js` are the three games, and `js/app.js` has the screens.
+- `js/core.js` holds shared helpers, UI art and sound. `js/math.js` has the question generators and quiz panel, `js/store.js` handles saves and family sync, and `js/levels.js` defines the campaigns and upgrades, and `js/engine.js` is the canvas runner. `js/rig.js` has the Big Rig Builders jobs, art, town map and the loading, site and crane mini-games, `js/trucks.js` is its delivery drive, `js/soccer.js` and `js/hero.js` are the other two games, and `js/app.js` has the screens.
 - Progress is saved in each browser and synced through Supabase, using `kmg_`-prefixed tables and functions in the IAh project.
 - There's no sign-in. A device joins a family by opening the family link (`#join=CODE`) or typing the family code once. The code is never stored in this repo.
 - The Supabase key in `js/store.js` is the public publishable key. The `kmg_` tables have row-level security and no policies, so they're only reachable through the `kmg_list_players`, `kmg_save_player` and `kmg_delete_player` functions, and each of those requires a valid family code.

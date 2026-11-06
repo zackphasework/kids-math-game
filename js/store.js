@@ -9,7 +9,10 @@ const LOCAL_KEY = 'pum-save-v3';
 const store = PUM.store = {};
 
 function normUp(x) {
-  x = (x && typeof x === 'object') ? x : {};
+  x = (x && typeof x === 'object') ? Object.assign({}, x) : {};
+  /* Old truck upgrades carry over: armor becomes suspension, turbo becomes the bigger bed. */
+  if (x.suspension == null && x.armor != null) x.suspension = x.armor;
+  if (x.bed == null && x.turbo != null) x.bed = x.turbo;
   const o = {};
   for (const t of Object.keys(PUM.CAMPAIGN.upgrades)) for (const u of PUM.CAMPAIGN.upgrades[t]) o[u.k] = clamp(num(x[u.k]), 0, PUM.CAMPAIGN.maxUp);
   return o;
@@ -24,6 +27,18 @@ function normProg(x) {
   }
   return o;
 }
+const RIG_TRUCKS = ['dump', 'flatbed', 'mixer', 'crane'];
+function normRig(x) {
+  x = (x && typeof x === 'object') ? x : {};
+  const pt = (x.paint && typeof x.paint === 'object') ? x.paint : {}, paint = {};
+  for (const k of RIG_TRUCKS) paint[k] = PUM.COLORS.includes(pt[k]) ? pt[k] : null;
+  let job = null;
+  const j = x.job;
+  if (j && typeof j === 'object') job = {i:clamp(num(j.i), 0, PUM.CAMPAIGN.count - 1), stage:clamp(num(j.stage), 0, 12),
+    cargo:(Array.isArray(j.cargo) ? j.cargo : []).slice(0, 12).map(v => clamp(Number(v) || 0, 0, 1)),
+    ok:num(j.ok), n:num(j.n), coins:num(j.coins), crane:clamp(num(j.crane), 0, 3), msg:String(j.msg || '').slice(0, 120)};
+  return {v:num(x.v), paint, job};
+}
 store.normalize = function (d) {
   if (!d || typeof d !== 'object') return null;
   const id = String(d.id || '');
@@ -34,7 +49,9 @@ store.normalize = function (d) {
     age:PUM.AGES.includes(d.age) ? d.age : 5, stars:num(d.stars), mp:num(d.mp), mpTotal:num(d.mpTotal),
     created:num(d.created), updatedAt:num(d.updatedAt), mode:d.mode === 'keypad' ? 'keypad' : 'choices', speak:!!d.speak,
     start:LV[d.start] ? d.start : 'count', world:LV[d.world] ? d.world : (LV[d.start] ? d.start : 'count'),
-    levels:{}, up:normUp(d.up), prog:normProg(d.prog)};
+    levels:{}, up:normUp(d.up), prog:normProg(d.prog), rig:normRig(d.rig)};
+  /* Big Rig Builders replaced the old truck race: truck progress starts fresh once. */
+  if (p.rig.v < 1) { p.prog.trucks = normProg({}).trucks; p.rig.v = 1; p.rig.job = null; }
   if (d.levels && typeof d.levels === 'object') for (const l of PUM.LEVELS) {
     const x = d.levels[l.id];
     if (x && typeof x === 'object') p.levels[l.id] = {tier:clamp(num(x.tier), 0, l.steps.length - 1), streak:clamp(num(x.streak), 0, 999), misses:clamp(num(x.misses), 0, 99), stars:num(x.stars)};

@@ -7,10 +7,10 @@ const L = PUM.CAMPAIGN = {};
 L.upgrades = {
   trucks: [
     {k:'engine', name:'Engine', what:'Higher top speed, so you beat the clock.'},
-    {k:'armor', name:'Armor', what:'Take more bumps before breaking down.'},
-    {k:'tires', name:'Tires', what:'Sharper steering. Grip on curves and ice.'},
+    {k:'tires', name:'Tires', what:'Sharper steering. Grip on curves and wet roads.'},
+    {k:'bed', name:'Bigger bed', what:'Carry extra, so every delivery pays more coins.'},
+    {k:'suspension', name:'Suspension', what:'Less cargo falls off when you crash or hit a pothole.'},
     {k:'tank', name:'Fuel tank', what:'Drive farther before you need a refill.'},
-    {k:'turbo', name:'Turbo', what:'Stronger, longer boosts from math gates.'},
   ],
   soccer: [
     {k:'speed', name:'Speed', what:'Run faster past defenders.'},
@@ -35,26 +35,27 @@ const POWER = [0, 1, 2, 3, 4, 5, 6, 8, 9, 11, 12, 14, 16, 18, 20];
 
 L.trucks = {
   worlds:[
-    {name:'Countryside', color:'leaf', sky:['#69C2F0', '#D6F0FF'], grass:['#7CC765', '#6DB857'], boss:'Crusher'},
-    {name:'Red Canyon', color:'marigold', sky:['#F59A5B', '#FFE1B8'], grass:['#D9A066', '#CC9059'], boss:'Mud Monster'},
-    {name:'Snowy Peaks', color:'sea', sky:['#7FA8E8', '#E6F0FF'], grass:['#EEF4FA', '#DCE6F0'], boss:'Ice King'},
+    {name:'Main Street', color:'leaf', sky:['#69C2F0', '#D6F0FF'], grass:['#7CC765', '#6DB857'], boss:'River Bridge'},
+    {name:'The Hills', color:'marigold', sky:['#F59A5B', '#FFE1B8'], grass:['#D9A066', '#CC9059'], boss:'Mountain Tunnel'},
+    {name:'Big City', color:'sea', sky:['#7FA8E8', '#E6F0FF'], grass:['#9AA6B5', '#8C98A8'], boss:'Skyscraper'},
   ],
+  /* Each level is one building job. Road settings are for each trip of the job. */
   levels:[
-    {name:'First delivery', cargo:'bricks', len:650, curve:.3, hills:.2, obs:{cone:.5}, gates:2, nw:'Steer around the cones!'},
-    {name:'Rocky road', cargo:'pipes', len:750, curve:.4, hills:.3, obs:{cone:.4, rock:.4}, gates:3, nw:'New: rocks. Hitting one damages your truck.'},
-    {name:'Pothole lane', cargo:'windows', len:850, curve:.5, hills:.4, obs:{cone:.3, rock:.3, hole:.5}, gates:3, nw:'New: potholes slow you right down.'},
-    {name:'Big hill run', cargo:'beams', len:950, curve:.6, hills:.8, obs:{cone:.4, rock:.5, hole:.5}, gates:4, nw:'Hills and sharp curves. Brake before the corners!'},
-    {name:'Race Crusher', cargo:'bricks', len:900, curve:.5, hills:.5, obs:{cone:.3, rock:.3}, gates:4, boss:true, nw:'BOSS: Crusher throws barrels. Dodge them and pass him!'},
-    {name:'Canyon farms', cargo:'hay', len:900, curve:.5, hills:.5, obs:{rock:.4, tractor:.5}, gates:3, nw:'New: slow tractors. Pass them on the side.'},
-    {name:'Two-way traffic', cargo:'pipes', len:1000, curve:.6, hills:.5, obs:{rock:.3, tractor:.4, car:.5}, gates:4, nw:'New: cars coming the other way!'},
-    {name:'Falling rocks', cargo:'steel', len:1050, curve:.6, hills:.6, obs:{tractor:.3, car:.4, boulder:.5}, gates:4, nw:'New: boulders fall from the cliffs. Watch for shadows.'},
-    {name:'Canyon rush', cargo:'beams', len:1150, curve:.8, hills:.7, obs:{rock:.4, hole:.4, tractor:.4, car:.5, boulder:.4}, gates:5, nw:'Everything at once. Upgrade first!'},
-    {name:'Race Mud Monster', cargo:'bricks', len:1050, curve:.7, hills:.6, obs:{rock:.3, car:.3, hole:.4}, gates:5, boss:true, nw:'BOSS: Mud Monster throws mud and barrels.'},
-    {name:'Icy road', cargo:'logs', len:1050, curve:.7, hills:.6, obs:{rock:.3, ice:.6}, gates:4, nw:'New: ice. Your steering slides, so go easy.'},
-    {name:'Narrow bridges', cargo:'steel', len:1150, curve:.7, hills:.7, obs:{car:.4, ice:.4, bridge:.6}, gates:5, nw:'New: narrow bridges. Stay on the road!'},
-    {name:'Blizzard pass', cargo:'beams', len:1250, curve:.8, hills:.8, obs:{rock:.4, car:.4, ice:.5, bridge:.4, boulder:.3}, gates:5, nw:'A long, twisty pass.'},
-    {name:'Mountain madness', cargo:'windows', len:1350, curve:.9, hills:.9, obs:{cone:.3, rock:.4, hole:.4, tractor:.3, car:.5, ice:.4, bridge:.4, boulder:.4}, gates:6, nw:'The hardest road yet.'},
-    {name:'Race the Ice King', cargo:'bricks', len:1250, curve:.9, hills:.8, obs:{rock:.3, car:.3, ice:.5, bridge:.3}, gates:6, boss:true, nw:'FINAL BOSS: the Ice King’s snowplow.'},
+    {name:'House', len:480, curve:.3, hills:.2, obs:{cone:.5}, gates:2, nw:'Steer around the cones!'},
+    {name:'Gas station', len:540, curve:.4, hills:.3, obs:{cone:.4, rock:.45}, gates:2, nw:'New: rocks. Crash into one and cargo falls off.'},
+    {name:'Mechanic', len:600, curve:.5, hills:.4, obs:{cone:.3, rock:.35, hole:.5}, gates:3, nw:'New: potholes, and the cement mixer. Concrete sets, so be quick!'},
+    {name:'School', len:640, curve:.65, hills:.8, obs:{cone:.35, rock:.5, hole:.5}, gates:3, nw:'Hills and sharp curves. Brake before the corners!'},
+    {name:'River Bridge', len:560, curve:.5, hills:.4, obs:{cone:.3, rock:.35, hole:.35, ice:.6, bridge:.45}, gates:3, boss:true, storm:true, nw:'BOSS: a storm is coming! Wet roads are slippery and the river is rising.'},
+    {name:'Quarry', soon:true, len:600, curve:.5, hills:.5, obs:{rock:.4, tractor:.5}, gates:3, nw:''},
+    {name:'Soccer field', soon:true, len:640, curve:.6, hills:.5, obs:{rock:.3, tractor:.4, car:.5}, gates:3, nw:''},
+    {name:'Hospital', soon:true, len:680, curve:.6, hills:.6, obs:{tractor:.3, car:.4, boulder:.5}, gates:4, nw:''},
+    {name:'Fire station', soon:true, len:720, curve:.8, hills:.7, obs:{rock:.4, hole:.4, tractor:.4, car:.5, boulder:.4}, gates:4, nw:''},
+    {name:'Mountain Tunnel', soon:true, len:700, curve:.7, hills:.6, obs:{rock:.3, car:.3, hole:.4}, gates:4, boss:true, rival:true, nw:''},
+    {name:'Train station', soon:true, len:700, curve:.7, hills:.6, obs:{rock:.3, ice:.6}, gates:4, nw:''},
+    {name:'Apartment tower', soon:true, len:740, curve:.7, hills:.7, obs:{car:.4, ice:.4, bridge:.6}, gates:4, nw:''},
+    {name:'Shopping mall', soon:true, len:780, curve:.8, hills:.8, obs:{rock:.4, car:.4, ice:.5, bridge:.4, boulder:.3}, gates:5, nw:''},
+    {name:'Stadium', soon:true, len:820, curve:.9, hills:.9, obs:{cone:.3, rock:.4, hole:.4, tractor:.3, car:.5, ice:.4, bridge:.4, boulder:.4}, gates:5, nw:''},
+    {name:'Skyscraper', soon:true, len:800, curve:.9, hills:.8, obs:{rock:.3, car:.3, ice:.5, bridge:.3}, gates:5, boss:true, rival:true, nw:''},
   ],
 };
 L.soccer = {

@@ -1,9 +1,9 @@
-/* Power-Up Math: screens (players, base and upgrades, world map, training), and the game shell:
-   HUD, controls, in-game math banner and answer buttons, and mid-game refills. */
+/* Power-Up Math: screens (players, base and upgrades, world map, training, and the Big Rig Builders
+   town, garage and job site), and the game shell: HUD, controls, in-game math banner and refills. */
 (function () {
 'use strict';
 const {esc, pick, clamp} = PUM.util;
-const icon = PUM.icon, store = PUM.store, S = store.S, A = PUM.audio, CP = PUM.CAMPAIGN;
+const icon = PUM.icon, store = PUM.store, S = store.S, A = PUM.audio, CP = PUM.CAMPAIGN, R = PUM.RIG;
 const app = document.getElementById('app');
 const shell = document.getElementById('game');
 
@@ -29,16 +29,19 @@ PUM.fx = {
 /* ---------- state ---------- */
 let view = 'home', pid = null, draft = null, confirmDel = false, showSync = false, showWorlds = false, sel = null;
 let quiz = null, train = null, play = null, result = null;
+let townSel = null, townConfirm = false, jobFrom = null, jobResult = null, bg = null;
 const P = () => S.players.find(p => p.id === pid);
 const assistOf = p => p.age <= 5 ? 2 : p.age <= 7 ? 1 : 0;
 const UPS = p => CP.upgrades[p.theme];
 const camp = p => CP[p.theme];
+const isRig = p => p && p.theme === 'trucks';
+const curName = p => isRig(p) ? 'coins' : 'math points';
 
 /* ---------- small renderers ---------- */
 const muteBtn = () => `<button class="icon-btn" id="mute" data-act="mute" aria-label="${S.muted ? 'Turn sound on' : 'Turn sound off'}" aria-pressed="${S.muted}">${icon(S.muted ? 'mute' : 'sound')}</button>`;
 const backBtn = (to, label = 'Back') => `<button class="icon-btn" data-act="back" data-to="${to}" aria-label="${label}">${icon('back')}</button>`;
 const avatar = (p, cls) => `<span class="avatar ${cls}">${PUM.avatarSVG(p)}</span>`;
-const mpChip = p => `<span class="mp-chip" id="mp-chip">${icon('bolt')} <b>${p.mp}</b> math points</span>`;
+const mpChip = p => `<span class="mp-chip" id="mp-chip">${icon(isRig(p) ? 'coin' : 'bolt', isRig(p) ? 'coin' : '')} <b>${p.mp}</b> ${curName(p)}</span>`;
 const starsRow = (n, size = '') => `<span class="mini-stars ${size}">${[0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">${icon('star', 'fill')}</i>`).join('')}</span>`;
 function syncChip() {
   const s = store.sync.state, fam = store.family();
@@ -50,7 +53,7 @@ function syncChip() {
   return `<div class="sync" id="sync"><button class="sync-b" data-s="${s}" data-act="sync-info" aria-expanded="${showSync}"><span class="dot"></span>${store.SYNC_TEXT[s]}${!fam ? ' · Join family' : ''}</button>${panel}</div>`;
 }
 store.sync.onChange = () => { const el = document.getElementById('sync'); if (el) el.outerHTML = syncChip(); };
-store.sync.onPulled = () => { if (pid && !P()) { pid = null; if (view !== 'form') view = 'home'; } if (view === 'home' || view === 'base' || view === 'map') render(); };
+store.sync.onPulled = () => { if (pid && !P()) { pid = null; if (view !== 'form') view = 'home'; } if (view === 'home' || view === 'base' || view === 'map' || view === 'garage') render(); };
 
 /* ---------- screens ---------- */
 function renderHome() {
@@ -59,7 +62,7 @@ function renderHome() {
   <header class="top"><div><h1>Power-Up Math</h1><p class="sub">Solve math to power up your trucks, your soccer team or your hero.</p></div>${muteBtn()}</header>
   <div class="hero-strip" aria-hidden="true">${PUM.truckSVG('excavator', 'marigold')}${PUM.jerseySVG('sea', '9')}${PUM.heroSVG(0, 'berry')}</div>
   <section class="block"><h2>Who's playing?</h2>
-    <div class="players">${ps.map(p => { const pr = p.prog[p.theme]; return `<button class="player" data-act="open" data-id="${p.id}">${avatar(p, 'av')}<span class="pname">${esc(p.name)}</span><span class="pmeta">${PUM.THEMES[p.theme].name} &middot; level ${pr.unlocked + 1}</span></button>`; }).join('')}
+    <div class="players">${ps.map(p => { const pr = p.prog[p.theme]; return `<button class="player" data-act="open" data-id="${p.id}">${avatar(p, 'av')}<span class="pname">${esc(p.name)}</span><span class="pmeta">${PUM.THEMES[p.theme].name} &middot; ${isRig(p) ? `${R.builtCount(p)} built` : `level ${pr.unlocked + 1}`}</span></button>`; }).join('')}
       <button class="player add" data-act="add-player">${icon('plus')}<span>Add player</span></button></div>
     ${ps.length ? '' : `<p class="empty-note">Add each kid once with their name, age and favourite theme. They'll start at the right math level.</p>`}
     ${syncChip()}
@@ -93,7 +96,7 @@ function upgradeCards(p) {
     return `<div class="upg ${max ? 'max' : ''}">
       <div class="upg-head"><b>${u.name}</b><span class="pips" aria-label="Level ${lvl} of ${CP.maxUp}">${Array.from({length:CP.maxUp}, (_, i) => `<i class="${i < lvl ? 'on' : ''}"></i>`).join('')}</span></div>
       <p>${u.what}</p>
-      ${max ? '<span class="upg-max">Maxed out</span>' : `<button class="btn small ${can ? 'go' : ''}" data-act="upgrade" data-k="${u.k}" ${can ? '' : 'aria-disabled="true"'}>${icon('bolt')} ${can ? `Upgrade · ${cost}` : `Need ${cost}`}</button>`}
+      ${max ? '<span class="upg-max">Maxed out</span>' : `<button class="btn small ${can ? 'go' : ''}" data-act="upgrade" data-k="${u.k}" ${can ? '' : 'aria-disabled="true"'}>${icon(isRig(p) ? 'coin' : 'bolt', isRig(p) ? 'coin' : '')} ${can ? `Upgrade · ${cost}` : `Need ${cost}`}</button>`}
     </div>`;
   }).join('');
 }
@@ -114,6 +117,11 @@ function renderBase() {
     <button class="btn primary wide" data-act="train">${icon('brain')} Earn math points</button>
   </section>
   <section class="block"><h2>Upgrade your ${th.base.toLowerCase()}</h2><p class="hint-text" style="margin:-6px 0 12px">Spend math points to get stronger. Harder levels need more power.</p><div class="upgs">${upgradeCards(p)}</div></section>
+  ${renderSettings(p)}`;
+}
+function renderSettings(p) {
+  const w = PUM.LV[p.world], L = p.levels[p.world], tier = L ? L.tier : 0;
+  return `
   <section class="block"><h2>Math level</h2>
     <div class="worldrow"><span class="badge" style="--wc:var(--${w.color})">${w.ex}</span><span class="wtext"><b>${w.name}</b><small>Step ${tier + 1} of ${w.steps.length}: ${w.steps[tier]}</small></span><button class="btn small" data-act="toggle-worlds" aria-expanded="${showWorlds}">${showWorlds ? 'Close' : 'Change'}</button></div>
     ${showWorlds ? `<div class="worlds">${PUM.LEVELS.map(l => { const LL = p.levels[l.id], tr = LL ? LL.tier : 0; return `<button class="world ${p.world === l.id ? 'on' : ''}" data-act="set-world" data-level="${l.id}" style="--wc:var(--${l.color})"><span class="badge">${l.ex}</span><span class="wtext"><b>${l.name}</b><small>${l.ages} &middot; Step ${tr + 1}: ${l.steps[tr]}</small></span>${p.start === l.id ? '<span class="ribbon">Start here</span>' : ''}</button>`; }).join('')}</div>` : ''}
@@ -165,10 +173,10 @@ function renderTrain() {
 function renderTrainDone() {
   const p = P(), t = train;
   return `<div class="results">
-    <h2 class="rtitle">+${t.earned} math points!</h2>
+    <h2 class="rtitle">+${t.earned} ${curName(p)}!</h2>
     <div class="reward-art">${PUM.avatarSVG(p)}</div>
-    <p class="rmsg">${t.res.filter(Boolean).length} of ${t.len} right. You have ${p.mp} math points to spend at your ${PUM.THEMES[p.theme].base.toLowerCase()}.</p>
-    <div class="ractions"><button class="btn go big" data-act="back" data-to="base">${icon('bolt')} Spend them</button><button class="btn" data-act="train">Earn more</button></div>
+    <p class="rmsg">${t.res.filter(Boolean).length} of ${t.len} right. You have ${p.mp} ${curName(p)} to spend at your ${PUM.THEMES[p.theme].base.toLowerCase()}.</p>
+    <div class="ractions"><button class="btn go big" data-act="${isRig(p) ? 'garage' : 'back'}" data-to="base">${icon(isRig(p) ? 'coin' : 'bolt', isRig(p) ? 'coin' : '')} Spend them</button><button class="btn" data-act="train">Earn more</button>${isRig(p) ? '<button class="btn" data-act="back" data-to="base">Back to town</button>' : ''}</div>
   </div>`;
 }
 function renderResult() {
@@ -189,14 +197,198 @@ function renderResult() {
 function render() {
   if (view !== 'home' && view !== 'form' && !P()) view = 'home';
   if (view === 'form' && !draft) view = 'home';
+  if (view === 'job' && !(P().rig && P().rig.job)) view = 'base';
+  if (view === 'jobDone' && !jobResult) view = 'base';
   document.documentElement.classList.toggle('playing', view === 'train');
   app.hidden = view === 'game';
+  stopBg();
   if (view === 'game') return;
-  app.innerHTML = view === 'form' ? renderForm() : view === 'base' ? renderBase() : view === 'map' ? renderMap() : view === 'train' ? renderTrain() : view === 'trainDone' ? renderTrainDone() : view === 'result' ? renderResult() : renderHome();
+  const rig = isRig(P());
+  app.innerHTML = view === 'form' ? renderForm() : view === 'base' ? (rig ? renderTown() : renderBase()) : view === 'garage' ? renderGarage() : view === 'job' ? renderJob() : view === 'jobDone' ? renderJobDone()
+    : view === 'map' ? renderMap() : view === 'train' ? renderTrain() : view === 'trainDone' ? renderTrainDone() : view === 'result' ? renderResult() : renderHome();
+  afterRender();
   if (view === 'train' && quiz) { quiz.destroy(); quiz = null; }
   if (view === 'train') { quiz = PUM.Quiz(document.getElementById('quiz-mount'), {player:P, onAnswer:onTrainAnswer, onAdvance:advanceTrain}); quiz.next(); }
 }
 function go(v) { if (quiz && v !== 'train') { quiz.destroy(); quiz = null; } view = v; render(); try { window.scrollTo(0, 0); } catch (e) {} }
+
+/* ---------- Big Rig Builders: town, garage, job site ---------- */
+function stopBg() { if (bg) { bg.stop(); bg = null; } }
+function bgRun(canvas, game) { stopBg(); bg = PUM.engine.Runner(canvas, game); bg.start(); }
+function drawTruckCanvases() {
+  const p = P();
+  app.querySelectorAll('canvas[data-truck]').forEach(c => {
+    const r = c.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+    c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr);
+    const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const k = c.dataset.truck, s = Math.min(r.width * .9, r.height * 1.6);
+    R.drawTruck(ctx, k, r.width / 2 + s * .1 * (k === 'crane' ? 1 : 0), r.height - 6, s, R.paint(p, k), {load:c.dataset.mat ? 4 : 0, mat:c.dataset.mat || null, t:1});
+  });
+}
+function afterRender() {
+  const p = P(); if (!p) return;
+  if (view === 'base' && isRig(p)) {
+    const c = document.getElementById('town'); if (!c) return;
+    const w = c.parentElement.clientWidth || 360; c.style.height = R.townHeight(w) + 'px';
+    const cur = p.rig.job ? p.rig.job.i : Math.min(p.prog.trucks.unlocked, R.ACTIVE - 1);
+    let t = 0, lots = [], down = null;
+    bgRun(c, {
+      update(dt) { t += dt; }, draw(ctx, W, H) { lots = R.drawTown(ctx, W, H, p, t, cur); },
+      pointer(type, x, y) {
+        if (type === 'down') down = [x, y];
+        if (type === 'up' && down && Math.hypot(x - down[0], y - down[1]) < 12) {
+          const hit = lots.find(l => Math.hypot(l.x - x, l.y - y) < l.r);
+          if (hit) { A.ac(); selectLot(hit.i); }
+          down = null;
+        }
+      },
+    });
+    c.style.touchAction = 'pan-y';
+  }
+  if (view === 'job' || view === 'jobDone') {
+    const c = document.getElementById('site'); if (!c) return;
+    const j = view === 'job' ? p.rig.job : null, i = j ? j.i : jobResult.i, J = R.job(i);
+    bgRun(c, PUM.games.site({job:J, stage:j ? j.stage : J.steps.length, from:view === 'job' ? jobFrom : J.steps.length - 1, color:R.paint(p, 'dump'), party:view === 'jobDone'}));
+    jobFrom = null;
+  }
+  if (view === 'garage' || view === 'job') drawTruckCanvases();
+}
+function selectLot(i) {
+  const p = P(), pr = p.prog.trucks, J = R.job(i);
+  if (J.soon) { PUM.fx.toast('Coming soon!'); return; }
+  if (i > pr.unlocked) { PUM.fx.toast('Finish the building before this one to unlock it'); A.sfx('no'); return; }
+  townSel = i; townConfirm = false; A.sfx('tap'); render();
+}
+function renderTown() {
+  const p = P(), pr = p.prog.trucks, j = p.rig.job;
+  let sheet = '';
+  if (townSel != null) {
+    const i = townSel, J = R.job(i), built = R.built(p, i), pw = CP.power(p), weak = pw < J.power, mine = j && j.i === i;
+    const steps = J.steps.map((st, k) => `<li class="${mine && k < j.stage ? 'done' : mine && k === j.stage ? 'now' : ''}"><span class="snum">${mine && k < j.stage ? icon('check') : k + 1}</span>${esc(R.stepLabel(st, J))}</li>`).join('');
+    const btn = mine ? `<button class="btn go big wide" data-act="job-go" data-i="${i}">${icon('play')} Keep building (step ${j.stage + 1} of ${J.steps.length})</button>`
+      : (j && townConfirm) ? `<button class="btn go big wide" data-act="job-start" data-i="${i}">Yes, start over</button><p class="hint-text warn">Your work on the ${esc(R.job(j.i).name.toLowerCase())} will be lost.</p>`
+      : `<button class="btn go big wide" data-act="job-start" data-i="${i}">${icon('play')} ${built ? 'Build it again for more stars' : 'Start this job'}</button>`;
+    sheet = `<div class="sheet" id="sheet" role="dialog" aria-label="${esc(J.name)}">
+      <button class="icon-btn sheet-x" data-act="close-sheet" aria-label="Close">${icon('x')}</button>
+      <span class="kicker">Job ${i + 1} of ${R.ACTIVE} &middot; Main Street${J.boss ? ' &middot; BOSS' : ''}</span>
+      <h3>${esc(J.name)} ${built ? starsRow(pr.stars[i]) : ''}</h3>
+      <ol class="steps mini">${steps}</ol>
+      <p class="goal">${icon('star', 'fill')} ${esc(J.givesText)}</p>
+      <p class="act-sub">${esc(J.nw)}</p>
+      <div class="power-row ${weak ? 'weak' : ''}"><span>${icon('bolt')} Your power <b>${pw}</b></span><span>Recommended <b>${J.power}</b></span></div>
+      ${weak ? '<p class="hint-text warn">This job is tough at your power. Upgrade your trucks at the garage first!</p>' : ''}
+      ${btn}
+    </div>`;
+  }
+  return `
+  <header class="top">${backBtn('home', 'Back to players')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">Big Rig Builders &middot; ${R.builtCount(p)} of ${R.ACTIVE} built</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
+  <div class="town-bar">${mpChip(p)}<button class="btn small" data-act="garage">${icon('wrench')} Garage</button><button class="btn small primary" data-act="train">${icon('brain')} Practice yard</button></div>
+  <div class="town-wrap"><canvas id="town" aria-label="Main Street. Tap a building lot to see the job."></canvas></div>
+  ${sheet}
+  ${renderSettings(p)}`;
+}
+function renderGarage() {
+  const p = P();
+  const cards = R.TRUCKS.map(t => {
+    const own = R.owns(p, t.k), cur = R.paint(p, t.k);
+    const sw = own ? `<div class="swatches small">${PUM.COLORS.map(c => `<button class="sw ${cur === c ? 'on' : ''}" data-act="paint" data-k="${t.k}" data-v="${c}" style="--c:var(--${c})" aria-label="Paint the ${t.name.toLowerCase()} ${c}" aria-pressed="${cur === c}"></button>`).join('')}</div>` : `<span class="lock-note">${t.need >= 5 ? 'Unlocks in the Hills' : `Unlocks after ${t.need} buildings`}</span>`;
+    return `<div class="truck-card ${own ? '' : 'locked'}"><canvas data-truck="${t.k}" aria-hidden="true"></canvas><b>${t.name}</b><small>${t.carries}. ${t.how}.</small>${sw}</div>`;
+  }).join('');
+  return `<header class="top">${backBtn('base', 'Back to town')}<h2 class="title">Garage</h2>${mpChip(p)}</header>
+  <section class="block"><h2>Your trucks</h2><p class="hint-text" style="margin:-6px 0 12px">Tap a colour to paint a truck. Each paint job costs ${R.paintCost} coins.</p><div class="truck-cards">${cards}</div></section>
+  <section class="block"><h2>Upgrades</h2><p class="hint-text" style="margin:-6px 0 12px">Upgrades work on every truck. Harder jobs need more power.</p><div class="upgs">${upgradeCards(p)}</div></section>
+  <button class="btn primary wide" data-act="train">${icon('brain')} Earn coins at the practice yard</button>`;
+}
+function renderJob() {
+  const p = P(), j = p.rig.job, J = R.job(j.i), step = J.steps[j.stage];
+  const steps = J.steps.map((st, k) => `<li class="${k < j.stage ? 'done' : k === j.stage ? 'now' : ''}"><span class="snum">${k < j.stage ? icon('check') : k + 1}</span>${esc(R.stepLabel(st, J))}</li>`).join('');
+  let act = '';
+  if (step === 'dig') act = `<button class="btn go big wide" data-act="rig-dig">${icon('play')} Dig the foundation</button><p class="hint-text">Work the excavator. Dig exactly the right number of scoops.</p>`;
+  else if (step === 'crane') act = `<button class="btn go big wide" data-act="rig-crane">${icon('play')} Lift the ${R.PIECE[J.piece]} into place</button><p class="hint-text">The crane swings. Tap at the right moment to drop it on top.</p>`;
+  else {
+    const M = R.MATS[step];
+    act = `<h3 class="next-load">Next load: ${esc(M.name)}</h3><p class="hint-text">Which truck carries ${esc(M.name)}? Tap it.</p>
+      <div class="truck-pick">${R.TRUCKS.filter(t => R.owns(p, t.k) && t.k !== 'crane').map(t => `<button class="pick-truck" data-act="pick-truck" data-k="${t.k}" aria-label="${t.name}"><canvas data-truck="${t.k}" aria-hidden="true"></canvas><span>${t.name}</span></button>`).join('')}</div>`;
+  }
+  return `<header class="top">${backBtn('base', 'Back to town')}<h2 class="title">${esc(J.name)}</h2>${mpChip(p)}</header>
+    <div class="site-card"><canvas id="site" aria-label="The ${esc(J.name.toLowerCase())} building site"></canvas></div>
+    ${j.msg ? `<p class="trip-msg">${esc(j.msg)}</p>` : ''}
+    <ol class="steps">${steps}</ol>
+    <div class="job-act">${act}</div>`;
+}
+function renderJobDone() {
+  const p = P(), r = jobResult, J = R.job(r.i);
+  return `<div class="results">
+    <h2 class="rtitle">${esc(J.name)} built!</h2>
+    <div class="rstars">${[0, 1, 2].map(i => `<span class="rs ${i < r.stars ? 'on' : ''}" style="--i:${i}">${icon('star', 'fill')}</span>`).join('')}</div>
+    <div class="site-card"><canvas id="site" aria-label="The finished ${esc(J.name.toLowerCase())}"></canvas></div>
+    <p class="rmsg">${esc(J.givesText)}</p>
+    ${r.newTrucks.map(t => `<p class="unlock">${icon('star', 'fill')} New truck: the ${esc(t.toLowerCase())}!</p>`).join('')}
+    <p class="rnote">${icon('coin', 'coin')} +${r.coins} coins this job &middot; ${Math.round(r.cargo * 100)}% of the cargo delivered</p>
+    <p class="stars-help">Stars: 1 for building it, 1 for keeping most of the cargo on, 1 for getting most of the math right.</p>
+    <div class="ractions"><button class="btn go big" data-act="back" data-to="base">Back to town</button><button class="btn primary" data-act="garage">Go to the garage</button></div>
+  </div>`;
+}
+function rigJob() { const p = P(); return p && p.rig.job; }
+function rigAdvance() { const p = P(), j = p.rig.job, J = R.job(j.i); jobFrom = j.stage; j.stage++; j.msg = ''; store.savePlayer(p); if (j.stage >= J.steps.length) rigComplete(); else go('job'); }
+function rigComplete() {
+  const p = P(), j = p.rig.job, i = j.i, J = R.job(i), pr = p.prog.trucks;
+  const cargo = j.cargo.length ? j.cargo.reduce((a, b) => a + b, 0) / j.cargo.length : 1, math = j.n ? j.ok / j.n : 1;
+  const stars = 1 + (cargo >= .8 ? 1 : 0) + (math >= .66 ? 1 : 0);
+  const before = R.TRUCKS.filter(t => R.owns(p, t.k)).map(t => t.k);
+  pr.stars[i] = Math.max(pr.stars[i], stars);
+  if (pr.unlocked === i && i < R.ACTIVE - 1) pr.unlocked = i + 1;
+  const bonus = stars * 2 + (J.boss ? 5 : 0);
+  p.mp += bonus; p.mpTotal += bonus;
+  jobResult = {i, stars, coins:j.coins + bonus, cargo, newTrucks:R.TRUCKS.filter(t => R.owns(p, t.k) && !before.includes(t.k)).map(t => t.name)};
+  p.rig.job = null; townSel = Math.min(pr.unlocked, R.ACTIVE - 1);
+  store.savePlayer(p); A.sfx('fanfare');
+  go('jobDone');
+}
+const LOADKEYS = {'+':'add1', '=':'add1', ArrowUp:'add1', '-':'less', ArrowDown:'less', Enter:'done'};
+function loaderCtrl(p) { return `<div class="load-ctl"><button class="ctl less" data-ctl="less" aria-label="One less">&minus;1</button>${R.scoops(p).map(n => `<button class="ctl add ${n > 1 ? 'big' : ''}" data-ctl="add${n}" aria-label="Add ${n}">+${n}</button>`).join('')}<button class="ctl done" data-ctl="done">${icon('check')}<span>Done</span></button></div>`; }
+const truckCtrl = () => `<button class="ctl steer" data-ctl="left" aria-label="Steer left">${icon('back')}</button><button class="ctl brake" data-ctl="brake" aria-label="Brake"><span>Brake</span></button><button class="ctl steer" data-ctl="right" aria-label="Steer right">${icon('next')}</button>`;
+function rigLoad(mat, truck) {
+  const p = P(), j = p.rig.job, dig = mat === 'dirt';
+  openShell({cls:'loader', ctrl:loaderCtrl(p), gauge:false, keymap:LOADKEYS, onExit:() => go('job'),
+    make:api => PUM.games.load({player:p, assist:assistOf(p), mat, dig, color:R.paint(p, truck), api}),
+    onFinish:r => {
+      const mp = play ? play.mp : 0; stopGame();
+      j.n++; if (r.exact) j.ok++; j.coins += mp;
+      if (dig) { rigAdvance(); return; }
+      store.savePlayer(p); rigDrive(mat, truck);
+    }});
+}
+function rigDrive(mat, truck) {
+  const p = P(), j = p.rig.job;
+  openShell({cls:'trucks', ctrl:truckCtrl(), gauge:true, keymap:KEYMAP.trucks, onExit:() => { j.msg = 'You stopped the trip. Load up and go again!'; store.savePlayer(p); go('job'); },
+    make:api => PUM.games.trucks({player:p, assist:assistOf(p), levelIndex:j.i, api, trip:{mat, truck, color:R.paint(p, truck)}}),
+    onFinish:r => {
+      const mp = play ? play.mp : 0; stopGame();
+      j.coins += mp;
+      if (r.ok) {
+        j.n += r.gates || 0; j.ok += r.gatesOk || 0;
+        const pay = Math.max(1, Math.round((5 + j.i) * r.cargo * (1 + .25 * p.up.bed)));
+        p.mp += pay; p.mpTotal += pay; j.coins += pay; j.cargo.push(r.cargo);
+        PUM.fx.toast(`${icon('coin', 'coin')} Delivered! +${pay} coins`);
+        rigAdvance();
+      } else {
+        j.msg = r.reason === 'lost' ? 'The whole load fell off! Load up and try again. Slow down for potholes and dodge the rocks.'
+          : truck === 'mixer' ? 'Oh no, the concrete set before you got there! Load up and try again.' : "Time's up! Load up and try again. Upgrade your engine to go faster.";
+        store.savePlayer(p); go('job');
+      }
+    }});
+}
+function rigCrane() {
+  const p = P(), j = p.rig.job, J = R.job(j.i);
+  openShell({cls:'crane', ctrl:`<span></span><button class="ctl drop" data-ctl="drop">${icon('down')}<span>Drop</span></button>`, gauge:false, keymap:{' ':'drop', Enter:'drop', ArrowDown:'drop'}, onExit:() => go('job'),
+    make:api => PUM.games.crane({player:p, assist:assistOf(p), job:J, api}),
+    onFinish:r => {
+      stopGame();
+      j.crane = r.grade; p.mp += r.grade; p.mpTotal += r.grade; j.coins += r.grade;
+      rigAdvance();
+    }});
+}
 
 /* ---------- training ---------- */
 function startTrain() { train = {n:0, len:10, res:[], earned:0}; go('train'); }
@@ -215,9 +407,9 @@ function advanceTrain() {
 }
 
 /* ---------- game shell ---------- */
-function hudHTML(p) {
+function hudHTML(p, cfg = {}) {
   const th = PUM.THEMES[p.theme];
-  const ctrl = p.theme === 'trucks'
+  const ctrl = cfg.ctrl != null ? cfg.ctrl : p.theme === 'trucks'
     ? `<button class="ctl steer" data-ctl="left" aria-label="Steer left">${icon('back')}</button><button class="ctl brake" data-ctl="brake" aria-label="Brake"><span>Brake</span></button><button class="ctl steer" data-ctl="right" aria-label="Steer right">${icon('next')}</button>`
     : p.theme === 'soccer'
       ? `<span></span><span class="ctl-col"><button class="ctl power" data-ctl="power" id="power-btn" aria-label="Power shot">${icon('bolt')}<span>Power</span></button><button class="ctl shoot" data-ctl="shoot" id="shoot-btn" aria-label="Shoot"><span>Shoot</span></button></span>`
@@ -225,29 +417,36 @@ function hudHTML(p) {
   return `<canvas id="gc" aria-label="${th.game}"></canvas>
     <div class="hud">
       <button class="icon-btn" data-g="exit" aria-label="Stop and go back">${icon('x')}</button>
-      <div class="gauge" style="--pc:var(--${th.pc})"><span class="gl">${th.fuel}</span><span class="gbar"><i id="g-fuel"></i></span></div>
-      <span class="hud-mp">${icon('bolt')}<b id="g-mp">0</b></span>
+      ${cfg.gauge === false ? '<span style="flex:1"></span>' : `<div class="gauge" style="--pc:var(--${th.pc})"><span class="gl">${th.fuel}</span><span class="gbar"><i id="g-fuel"></i></span></div>`}
+      <span class="hud-mp">${icon(isRig(p) ? 'coin' : 'bolt', isRig(p) ? 'coin' : '')}<b id="g-mp">0</b></span>
     </div>
     <div class="hud2" id="hud2"></div>
     <div class="qbanner" id="qbanner" hidden></div>
     <div class="choose" id="choose" hidden></div>
-    <div class="controls ${p.theme}">${ctrl}</div>
+    <div class="controls ${cfg.cls || p.theme}">${ctrl}</div>
     <div class="overlay" id="overlay" hidden></div>`;
 }
 function startGame(levelIndex) {
   const p = P(); if (!p) return go('home');
   const pr = p.prog[p.theme];
   if (levelIndex > pr.unlocked) return;
+  openShell({cls:p.theme, ctrl:null, gauge:true, keymap:KEYMAP[p.theme], level:levelIndex, onExit:() => go('map'), onFinish:r => finishGame(r),
+    make:api => PUM.games[p.theme]({player:p, assist:assistOf(p), levelIndex, api})});
+  pr.plays++;
+}
+function openShell(cfg) {
+  const p = P(); if (!p) return go('home');
   if (quiz) { quiz.destroy(); quiz = null; }
   view = 'game'; render();
-  shell.hidden = false; shell.innerHTML = hudHTML(p);
+  const toastEl = document.getElementById('toast'); if (toastEl) toastEl.hidden = true;
+  shell.hidden = false; shell.innerHTML = hudHTML(p, cfg);
   document.documentElement.classList.add('in-game');
   const api = {
     hud: h => hud(h),
     addMp: n => { p.mp += n; p.mpTotal += n; play.mp += n; const el = document.getElementById('g-mp'); if (el) el.textContent = play.mp; },
     toast: m => PUM.fx.toast(esc(m)),
     needRefuel: reason => openRefuel(reason),
-    finish: r => finishGame(r),
+    finish: r => cfg.onFinish(r),
     showQuestion: (q, hint) => { const b = document.getElementById('qbanner'); if (!b) return; b.innerHTML = `<span class="qb-hint">${esc(hint || '')}</span><span class="qb-q">${PUM.questionHTML(q)}</span>`; b.hidden = false; b.classList.remove('ok', 'bad'); if (p.speak) A.say(q.spoken); },
     hideQuestion: ok => { const b = document.getElementById('qbanner'); if (!b) return; b.classList.add(ok ? 'ok' : 'bad'); setTimeout(() => { b.hidden = true; }, 900); },
     answer: (ok, q) => { const r = PUM.recordAnswer(p, ok, false); play.mp += r.mp; const el = document.getElementById('g-mp'); if (el) el.textContent = play.mp; if (r.up) PUM.fx.toast(`${icon('up')} Math step up!`); if (p.speak) A.say(ok ? pick(['Yes!', 'Great!', 'Nice!']) : `It was ${q.ans}`); A.sfx(ok ? 'yes' : 'no'); store.savePlayer(p); return r; },
@@ -261,12 +460,11 @@ function startGame(levelIndex) {
       play.choosing = {q, options, cb};
     },
   };
-  const game = PUM.games[p.theme]({player:p, assist:assistOf(p), levelIndex, api});
+  const game = cfg.make(api);
   const canvas = document.getElementById('gc');
   const runner = PUM.engine.Runner(canvas, game);
-  play = {game, runner, mp:0, reason:null, refuelQuiz:null, last:{}, level:levelIndex};
+  play = {game, runner, mp:0, reason:null, refuelQuiz:null, last:{}, level:cfg.level, keymap:cfg.keymap || {}, onExit:cfg.onExit};
   runner.start(); game.onStart && game.onStart();
-  pr.plays++;
   const ctlDown = e => { const b = e.target.closest('[data-ctl]'); if (!b) return; e.preventDefault(); A.ac(); b.classList.add('down'); game.setControl && game.setControl(b.dataset.ctl, true); try { b.setPointerCapture(e.pointerId); } catch (_) {} };
   const ctlUp = e => { const b = e.target.closest('[data-ctl]'); if (!b) return; b.classList.remove('down'); game.setControl && game.setControl(b.dataset.ctl, false); };
   shell.addEventListener('pointerdown', ctlDown); shell.addEventListener('pointerup', ctlUp); shell.addEventListener('pointercancel', ctlUp);
@@ -276,12 +474,13 @@ function hud(h) {
   if (!play) return;
   const last = play.last, set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
   const fuel = h.fuel != null ? h.fuel : h.energy;
-  if (Math.abs((last.fuel || 0) - fuel) > .004) { last.fuel = fuel; set('g-fuel', el => { el.style.width = (clamp(fuel, 0, 1) * 100).toFixed(1) + '%'; el.classList.toggle('low', fuel < .25); }); }
+  if (fuel != null && Math.abs((last.fuel || 0) - fuel) > .004) { last.fuel = fuel; set('g-fuel', el => { el.style.width = (clamp(fuel, 0, 1) * 100).toFixed(1) + '%'; el.classList.toggle('low', fuel < .25); }); }
   const chips = [];
+  if (h.cargo != null) chips.push(`<span class="chip">Load <span class="cbar"><i class="${h.cargo < .5 ? 'low' : ''}" style="width:${(h.cargo * 100).toFixed(0)}%"></i></span></span>`);
   if (h.hp != null) chips.push(`<span class="chip">${'<i class="wrench"></i>'.repeat(Math.max(0, h.hp))}${'<i class="wrench off"></i>'.repeat(Math.max(0, h.hpMax - h.hp))}</span>`);
   if (h.hearts != null) chips.push(`<span class="chip">${'<i class="heart"></i>'.repeat(Math.max(0, h.hearts))}${'<i class="heart off"></i>'.repeat(Math.max(0, h.max - h.hearts))}</span>`);
   if (h.goals != null) chips.push(`<span class="chip big">${icon('star', 'fill')} ${h.goals} / ${h.need} goals</span>`);
-  if (h.time != null) chips.push(`<span class="chip time ${h.time <= 10 ? 'low' : ''}">${Math.floor(h.time / 60)}:${String(h.time % 60).padStart(2, '0')}</span>`);
+  if (h.time != null) chips.push(`<span class="chip time ${h.time <= 10 ? 'low' : ''}">${h.timeLabel ? esc(h.timeLabel) + ' ' : ''}${Math.floor(h.time / 60)}:${String(h.time % 60).padStart(2, '0')}</span>`);
   if (h.rival) chips.push(`<span class="chip ${h.rival.ahead ? 'low' : 'good'}">${h.rival.ahead ? `${esc(h.rival.name)} ahead` : 'You lead!'}</span>`);
   if (h.boss) chips.push(`<span class="chip">${esc(h.boss.name)} <span class="bossbar"><i style="width:${(h.boss.hp / h.boss.max * 100).toFixed(0)}%"></i></span></span>`);
   if (h.orbs != null && !h.boss) chips.push(`<span class="chip">${h.orbs} orbs</span>`);
@@ -368,7 +567,7 @@ app.addEventListener('click', e => {
   const a = el.dataset.act;
   switch (a) {
     case 'add-player': draft = {name:'', color:pick(PUM.COLORS), theme:'trucks', hero:0, age:5}; confirmDel = false; A.sfx('tap'); go('form'); break;
-    case 'open': pid = el.dataset.id; showWorlds = false; A.sfx('tap'); go('base'); break;
+    case 'open': { pid = el.dataset.id; showWorlds = false; A.sfx('tap'); const p = P(); townSel = isRig(p) ? (p.rig.job ? p.rig.job.i : Math.min(p.prog.trucks.unlocked, R.ACTIVE - 1)) : null; go('base'); break; }
     case 'edit': { const p = P(); if (!p) break; draft = {id:p.id, name:p.name, color:p.color, theme:p.theme, hero:p.hero, age:p.age}; confirmDel = false; A.sfx('tap'); go('form'); break; }
     case 'pick': { const k = el.dataset.k; draft[k] = (k === 'age' || k === 'hero') ? Number(el.dataset.v) : el.dataset.v; confirmDel = false; A.sfx('tap'); render(); break; }
     case 'save-player': saveForm(); break;
@@ -383,11 +582,35 @@ app.addEventListener('click', e => {
     case 'map': { const p = P(); sel = p.prog[p.theme].unlocked; A.sfx('tap'); go('map'); break; }
     case 'sel-level': { const p = P(), i = Number(el.dataset.i); if (i > p.prog[p.theme].unlocked) { PUM.fx.toast('Beat the level before to unlock this one'); A.sfx('no'); break; } sel = i; A.sfx('tap'); render(); const c = document.getElementById('lvl-card'); if (c) c.scrollIntoView({block:'nearest'}); break; }
     case 'start': A.sfx('tap'); startGame(Number(el.dataset.i)); break;
+    case 'garage': A.sfx('tap'); go('garage'); break;
+    case 'close-sheet': townSel = null; A.sfx('tap'); render(); break;
+    case 'job-go': A.sfx('tap'); go('job'); break;
+    case 'job-start': {
+      const p = P(), i = Number(el.dataset.i), j = p.rig.job;
+      if (j && j.i !== i && !townConfirm) { townConfirm = true; render(); break; }
+      p.rig.job = {i, stage:0, cargo:[], ok:0, n:0, coins:0, crane:0, msg:''}; townConfirm = false;
+      store.savePlayer(p); A.sfx('whistle'); jobFrom = null; go('job'); break;
+    }
+    case 'rig-dig': A.sfx('tap'); rigLoad('dirt', 'dump'); break;
+    case 'rig-crane': A.sfx('tap'); rigCrane(); break;
+    case 'pick-truck': {
+      const p = P(), j = p.rig.job, step = R.job(j.i).steps[j.stage], M = R.MATS[step], k = el.dataset.k;
+      if (!M) break;
+      if (M.truck !== k) { A.sfx('no'); PUM.fx.toast(`The ${R.truckName(k).toLowerCase()} can't carry ${M.name}. Try another truck!`); if (p.speak) A.say(`${M.name} goes in the ${R.truckName(M.truck).toLowerCase()}`); el.classList.add('nope'); setTimeout(() => el.classList.remove('nope'), 500); break; }
+      A.sfx('up'); rigLoad(step, k); break;
+    }
+    case 'paint': {
+      const p = P(), k = el.dataset.k, c = el.dataset.v;
+      if (!R.owns(p, k) || R.paint(p, k) === c) break;
+      if (p.mp < R.paintCost) { PUM.fx.toast(`Painting costs ${R.paintCost} coins. Earn more at the practice yard!`); A.sfx('no'); break; }
+      p.mp -= R.paintCost; p.rig.paint[k] = c; store.savePlayer(p); A.sfx('up'); render();
+      PUM.fx.burst(app.querySelector(`canvas[data-truck="${k}"]`)); break;
+    }
     case 'upgrade': {
       const p = P(), k = el.dataset.k, lvl = p.up[k];
       if (lvl >= CP.maxUp) break;
       const cost = CP.cost[lvl];
-      if (p.mp < cost) { PUM.fx.toast(`Need ${cost - p.mp} more math points. Tap Earn math points!`); A.sfx('no'); break; }
+      if (p.mp < cost) { PUM.fx.toast(isRig(p) ? `Need ${cost - p.mp} more coins. Earn them at the practice yard or on jobs!` : `Need ${cost - p.mp} more math points. Tap Earn math points!`); A.sfx('no'); break; }
       p.mp -= cost; p.up[k]++; store.savePlayer(p); A.sfx('up');
       PUM.fx.toast(`${icon('up')} ${UPS(p).find(u => u.k === k).name} level ${p.up[k]}!`);
       render(); PUM.fx.burst(app.querySelector(`[data-k="${k}"]`) || app.querySelector('.upgs'));
@@ -415,7 +638,7 @@ app.addEventListener('click', e => {
 });
 shell.addEventListener('click', e => {
   const el = e.target.closest('[data-g]'); if (!el) return;
-  if (el.dataset.g === 'exit') { stopGame(); go('map'); }
+  if (el.dataset.g === 'exit') { const ex = play && play.onExit; stopGame(); if (ex) ex(); else go('base'); }
   if (el.dataset.g === 'resume') closeRefuel();
 });
 app.addEventListener('input', e => {
@@ -438,11 +661,11 @@ document.addEventListener('keydown', e => {
   if (view === 'train' && quiz) { quiz.key(e); return; }
   if (play) {
     if (play.refuelQuiz) { play.refuelQuiz.key(e); return; }
-    const p = P(), c = p && KEYMAP[p.theme][e.key];
+    const c = play.keymap[e.key];
     if (c && !e.repeat) { e.preventDefault(); A.ac(); play.game.setControl && play.game.setControl(c, true); }
   }
 });
-document.addEventListener('keyup', e => { if (play && !play.refuelQuiz) { const p = P(), c = p && KEYMAP[p.theme][e.key]; if (c) play.game.setControl && play.game.setControl(c, false); } });
+document.addEventListener('keyup', e => { if (play && !play.refuelQuiz) { const c = play.keymap[e.key]; if (c) play.game.setControl && play.game.setControl(c, false); } });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') { store.pull(); if (play && !play.refuelQuiz && play.runner.paused) play.runner.resume(); }
   else if (play && !play.refuelQuiz) { play.runner.pause(); A.engineSet(0, 0); }
@@ -467,7 +690,7 @@ function saveForm() {
   draft = null; A.sfx('tap'); go('base');
 }
 
-PUM.app = {go, P, get play() { return play; }, startGame};
+PUM.app = {go, P, get play() { return play; }, startGame, rigLoad, rigDrive, rigCrane, get view() { return view; }};
 render();
 store.pull();
 })();
