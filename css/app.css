@@ -448,3 +448,5 @@ html.in-game #toast{top:auto; bottom:calc(env(safe-area-inset-bottom, 0px) + 150
 .ctl.done{background:#22A06B; color:#FFFFFF; font-size:16px !important}
 .ctl.done .ic{width:30px; height:30px}
 .ctl.drop{background:#22A06B; color:#FFFFFF; width:clamp(110px, 32vw, 150px); height:clamp(110px, 32vw, 150px)}
+
+.hud-mp b, .mp-chip b{font-family:Lexend, sans-serif; font-weight:800}

@@ -87,6 +87,12 @@ E.outlineText = (ctx, text, x, y, size, fill = '#fff', stroke = '#1D2540', align
   ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size * .16); ctx.strokeStyle = stroke; ctx.strokeText(text, x, y);
   ctx.fillStyle = fill; ctx.fillText(text, x, y);
 };
+/* Numbers in a plain, clear font (Sniglet's 0 reads like a ring). */
+E.numText = (ctx, text, x, y, size, fill = '#fff', stroke = '#1D2540', align = 'center') => {
+  ctx.font = `800 ${size}px Lexend, "Arial Rounded MT Bold", sans-serif`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size * .16); ctx.strokeStyle = stroke; ctx.strokeText(text, x, y); }
+  ctx.fillStyle = fill; ctx.fillText(text, x, y);
+};
 E.shade = (hex, amt) => {
   const m = /^#?([0-9a-f]{6})$/i.exec(String(hex).trim()); if (!m) return hex;
   const n = parseInt(m[1], 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255;

@@ -190,7 +190,7 @@ PUM.games.trucks = function (o) {
       else {
         g.state = 'finish'; say(rival ? `You beat ${rival.name}!` : 'Delivered!', 3); PUM.audio.sfx('fanfare');
         for (let i = 0; i < 50; i++) parts.add({x:Math.random() * W, y:-20 - Math.random() * 100, vx:(Math.random() - .5) * 60, vy:80 + Math.random() * 100, g:60, life:2.6, size:7, shape:'rect', vr:8, color:['#FFC233', '#E8577A', '#2F95D6', '#22A06B'][Math.floor(Math.random() * 4)], fade:false});
-        setTimeout(() => api.finish({ok:true, cargo:g.cargo, mp:g.mp, timeLeft:Math.round(g.time), gatesOk:g.gatesOk, gates:g.gatesDone}), 2600);
+        setTimeout(() => api.finish({ok:true, cargo:g.cargo, mp:g.mp, timeLeft:Math.round(g.time), gatesOk:g.gatesOk, gates:g.gatesDone}), 1500);
       }
     }
     PUM.audio.engineSet(clamp(pct, 0, 1.3) + (g.boost > 0 ? .4 : 0), g.brake ? .2 : 1);
@@ -276,7 +276,7 @@ PUM.games.trucks = function (o) {
       const crossed = !gt.done && gt.hint === i;
       ctx.fillStyle = gt.done ? (gt.opts[i] === gt.q.ans ? '#22A06B' : '#9AA0AA') : crossed ? '#9AA0AA' : ['#2F95D6', '#7357DB', '#E8577A'][i];
       E.rr(ctx, cx - bw / 2, by, bw, bh, u * .04); ctx.fill(); ctx.stroke();
-      if (gt.opts) { const fs = Math.min(bh * .72, bw * .9 / Math.max(1, String(gt.opts[i]).length * .55)); if (fs > 5) E.outlineText(ctx, String(gt.opts[i]), cx, by + bh / 2 + 1, fs, '#FFFFFF', P('ink')); }
+      if (gt.opts) { const fs = Math.min(bh * .72, bw * .9 / Math.max(1, String(gt.opts[i]).length * .55)); if (fs > 5) E.numText(ctx, String(gt.opts[i]), cx, by + bh / 2 + 1, fs * .92, '#FFFFFF', P('ink')); }
       if (crossed) { ctx.strokeStyle = '#C0392B'; ctx.lineWidth = Math.max(2, u * .025); ctx.beginPath(); ctx.moveTo(cx - bw * .4, by + bh * .15); ctx.lineTo(cx + bw * .4, by + bh * .85); ctx.moveTo(cx + bw * .4, by + bh * .15); ctx.lineTo(cx - bw * .4, by + bh * .85); ctx.stroke(); ctx.strokeStyle = P('ink'); ctx.lineWidth = Math.max(1.5, u * .012); }
     });
     ctx.restore();

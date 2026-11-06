@@ -330,7 +330,7 @@ function renderJobDone() {
   </div>`;
 }
 function rigJob() { const p = P(); return p && p.rig.job; }
-function rigAdvance() { const p = P(), j = p.rig.job, J = R.job(j.i); jobFrom = j.stage; j.stage++; j.msg = ''; store.savePlayer(p); if (j.stage >= J.steps.length) rigComplete(); else go('job'); }
+function rigAdvance(shown) { const p = P(), j = p.rig.job, J = R.job(j.i); jobFrom = shown ? null : j.stage; j.stage++; j.msg = ''; store.savePlayer(p); if (j.stage >= J.steps.length) rigComplete(); else go('job'); }
 function rigComplete() {
   const p = P(), j = p.rig.job, i = j.i, J = R.job(i), pr = p.prog.trucks;
   const cargo = j.cargo.length ? j.cargo.reduce((a, b) => a + b, 0) / j.cargo.length : 1, math = j.n ? j.ok / j.n : 1;
@@ -369,15 +369,22 @@ function rigDrive(mat, truck) {
       if (r.ok) {
         j.n += r.gates || 0; j.ok += r.gatesOk || 0;
         const pay = Math.max(1, Math.round((5 + j.i) * r.cargo * (1 + .25 * p.up.bed)));
-        p.mp += pay; p.mpTotal += pay; j.coins += pay; j.cargo.push(r.cargo);
-        PUM.fx.toast(`${icon('coin', 'coin')} Delivered! +${pay} coins`);
-        rigAdvance();
+        j.cargo.push(r.cargo); store.savePlayer(p);
+        rigUnload(mat, truck, r.cargo, pay);
       } else {
         j.msg = r.reason === 'lost' ? 'The whole load fell off! Load up and try again. Slow down for potholes and dodge the rocks.'
           : truck === 'mixer' ? 'Oh no, the concrete set before you got there! Load up and try again.' : "Time's up! Load up and try again. Upgrade your engine to go faster.";
         store.savePlayer(p); go('job');
       }
     }});
+}
+function rigUnload(mat, truck, cargo, pay) {
+  const p = P(), j = p.rig.job, J = R.job(j.i);
+  let game = null;
+  const done = paid => { const rest = pay - (paid || 0); if (rest > 0) { p.mp += rest; p.mpTotal += rest; } j.coins += pay; jobFrom = null; rigAdvance(true); };
+  openShell({cls:'unload', ctrl:'', gauge:false, keymap:{' ':'skip', Enter:'skip'}, onExit:() => done(game ? game.paid() : 0),
+    make:api => (game = PUM.games.unload({api, job:J, stage:j.stage, mat, truck, color:R.paint(p, truck), cargo, pay})),
+    onFinish:r => { stopGame(); done(r.paid); }});
 }
 function rigCrane() {
   const p = P(), j = p.rig.job, J = R.job(j.i);
@@ -690,7 +697,7 @@ function saveForm() {
   draft = null; A.sfx('tap'); go('base');
 }
 
-PUM.app = {go, P, get play() { return play; }, startGame, rigLoad, rigDrive, rigCrane, get view() { return view; }};
+PUM.app = {go, P, get play() { return play; }, startGame, rigLoad, rigDrive, rigCrane, rigUnload, get view() { return view; }};
 render();
 store.pull();
 })();

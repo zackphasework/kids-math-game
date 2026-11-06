@@ -75,13 +75,16 @@ R.drawTruck = function (ctx, kind, x, y, s, color, o = {}) {
   ctx.fillStyle = '#FFF4B0'; ctx.beginPath(); ctx.arc(x + s * .46, wy - s * .1, s * .02, 0, 7); ctx.fill();
   const bx0 = x - s * .47, bx1 = x + s * .14, base = wy - s * .07;
   if (kind === 'dump') {
-    const top = y - s * .43;
+    const top = y - s * .43, tip = o.tip || 0;
+    if (tip > 0) { ctx.fillStyle = P('metal'); ctx.fillRect(x - s * .05, base - s * .02 - tip * s * .2, s * .04, tip * s * .2 + s * .02); ctx.strokeRect(x - s * .05, base - s * .02 - tip * s * .2, s * .04, tip * s * .2 + s * .02); }
+    ctx.save(); ctx.translate(bx0 + s * .03, base); ctx.rotate(-tip * .7); ctx.translate(-(bx0 + s * .03), -base);
     if (load > 0) {
       const f = o.frac != null ? o.frac : 1 - Math.exp(-load / 8), mc = R.MATS[mat] ? R.MATS[mat].col : '#9AA0AA';
       ctx.fillStyle = mc; ctx.beginPath(); ctx.moveTo(bx0 + s * .02, top + s * .04); ctx.quadraticCurveTo((bx0 + bx1) / 2, top - f * s * .3, bx1 - s * .02, top + s * .04); ctx.closePath(); ctx.fill(); ctx.stroke();
     }
     ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(bx0, top); ctx.lineTo(bx1, top); ctx.lineTo(bx1 - s * .03, base); ctx.lineTo(bx0 + s * .05, base); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); for (const f of [.3, .6]) { ctx.moveTo(bx0 + s * .04, lerp(top, base, f)); ctx.lineTo(bx1 - s * .03, lerp(top, base, f)); } ctx.stroke();
+    ctx.restore(); ink(ctx, s);
   } else if (kind === 'flatbed') {
     ctx.fillStyle = P('metal'); ctx.fillRect(bx0, base - s * .05, bx1 - bx0, s * .05); ctx.strokeRect(bx0, base - s * .05, bx1 - bx0, s * .05);
     ctx.fillStyle = col; ctx.fillRect(bx1 - s * .02, base - s * .22, s * .03, s * .17); ctx.strokeRect(bx1 - s * .02, base - s * .22, s * .03, s * .17);
@@ -101,7 +104,8 @@ R.drawTruck = function (ctx, kind, x, y, s, color, o = {}) {
     ctx.beginPath(); ctx.ellipse(0, 0, s * .29, s * .13, 0, 0, 7); ctx.stroke();
     ctx.fillStyle = '#9AA0AA'; ctx.beginPath(); ctx.moveTo(-s * .29, -s * .05); ctx.lineTo(-s * .36, -s * .1); ctx.lineTo(-s * .36, s * .02); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
-    if (load > 0 && o.frac == null) E.outlineText(ctx, String(load), cx, cy - s * .01, s * .11, '#FFFFFF');
+    if (o.pour) { ctx.lineWidth = s * .05; ctx.strokeStyle = P('ink'); ctx.beginPath(); ctx.moveTo(x - s * .46, y - s * .3); ctx.lineTo(x - s * .66, y - s * .16); ctx.stroke(); ctx.lineWidth = s * .03; ctx.strokeStyle = '#9AA0AA'; ctx.beginPath(); ctx.moveTo(x - s * .46, y - s * .3); ctx.lineTo(x - s * .66, y - s * .16); ctx.stroke(); ink(ctx, s); }
+    if (load > 0 && o.frac == null) E.numText(ctx, String(load), cx, cy - s * .01, s * .1, '#FFFFFF');
   } else if (kind === 'crane') {
     ctx.fillStyle = P('metal'); ctx.fillRect(bx0, base - s * .05, bx1 - bx0, s * .05); ctx.strokeRect(bx0, base - s * .05, bx1 - bx0, s * .05);
     ctx.fillStyle = col; E.rr(ctx, x - s * .3, base - s * .14, s * .22, s * .1, s * .02); ctx.fill(); ctx.stroke();
@@ -315,6 +319,7 @@ function backdrop(ctx, W, gy, t, kind, signX) {
   ctx.fillStyle = kind === 'excavator' ? '#A39077' : '#7FB89E';
   ctx.beginPath(); ctx.moveTo(0, gy); for (let x = 0; x <= W; x += 8) ctx.lineTo(x, gy - 34 - Math.sin(x / 50 + 2) * 14); ctx.lineTo(W, gy); ctx.closePath(); ctx.fill();
   const label = kind === 'excavator' ? 'QUARRY' : kind === 'forklift' ? 'BRICK YARD' : kind === 'chute' ? 'CONCRETE PLANT' : 'BUILDING SITE';
+  if (signX === false) return;
   const sx = signX != null ? signX : W * .5, sy = gy - 150;
   ctx.fillStyle = '#7A5A3A'; ctx.fillRect(sx - 3, sy, 6, 150);
   ctx.fillStyle = '#1D2540'; E.rr(ctx, sx - 70, sy - 28, 140, 30, 8); ctx.fill();
@@ -426,11 +431,15 @@ PUM.games.load = function (o) {
       R.drawTruck(ctx, 'mixer', tx, l.gy, l.ts, color, {load:g.count, mat:'concrete', spin:g.spin, roll:g.roll});
     }
     /* counter sign */
-    const sx = W / 2, sy = l.gy + Math.min(70, (H - l.gy) * .45);
-    ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = P('ink'); ctx.lineWidth = 3; E.rr(ctx, sx - 90, sy - 26, 180, 52, 14); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = P('ink'); ctx.font = '700 14px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(isDig ? 'Dug' : 'Loaded', sx - 44, sy);
-    E.outlineText(ctx, String(g.count + (g.queue.length || g.anim ? '' : '')), sx + 30, sy + 1, 34, '#FFC233');
-    if (g.queue.length) E.outlineText(ctx, `+${g.queue.reduce((s, v) => s + v, 0)} coming`, sx, sy + 44, 18, '#FFFFFF');
+    const sx = W / 2, sy = l.gy + Math.min(80, (H - l.gy) * .42), bw2 = Math.min(W - 40, 260);
+    ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = P('ink'); ctx.lineWidth = 3; E.rr(ctx, sx - bw2 / 2, sy - 40, bw2, 80, 16); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#56607E'; ctx.font = '700 15px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(isDig ? 'Dug so far' : 'Loaded so far', sx, sy - 22);
+    const numS = String(g.count), unitS = g.count === 1 ? M.unit.replace(/s$/, '') : M.unit;
+    ctx.font = '800 38px Lexend, sans-serif'; const nw = ctx.measureText(numS).width; ctx.font = '700 20px Lexend, sans-serif'; const uw = ctx.measureText(' ' + unitS).width;
+    const x0 = sx - (nw + uw) / 2;
+    E.numText(ctx, numS, x0, sy + 10, 38, P('ink'), null, 'left');
+    ctx.fillStyle = P('ink'); ctx.font = '700 20px Lexend, sans-serif'; ctx.textAlign = 'left'; ctx.fillText(' ' + unitS, x0 + nw, sy + 13);
+    if (g.queue.length) { ctx.fillStyle = '#FFFFFF'; ctx.font = '700 17px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`+${g.queue.reduce((s, v) => s + v, 0)} more coming`, sx, sy + 58); }
     parts.draw(ctx);
     if (g.msgT > 0) { let fs = Math.min(40, W * .09); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const mw = ctx.measureText(g.msg).width; if (mw > W * .9) fs *= W * .9 / mw; E.outlineText(ctx, g.msg, W / 2, H * .36, fs, '#FFC233'); }
   }
@@ -508,5 +517,123 @@ PUM.games.crane = function (o) {
     setControl(name, on) { if (on && name === 'drop') drop(); },
     _debug: () => ({g, tol, sp}),
   };
+};
+
+/* ---------- delivery: back into the site, unload, build, get paid ---------- */
+R.DONE_LABEL = {gravel:'Gravel base laid!', dirt:'Ground ready!', bricks:'Brick walls going up!', concrete:'Concrete poured!', beams:'Steel beams in place!'};
+PUM.games.unload = function (o) {
+  const {api, job, stage, mat, truck, color, cargo, pay} = o;
+  const M = R.MATS[mat], n = job.steps.length, s0 = stage, s1 = stage + 1;
+  const T1 = 1.9, T2 = T1 + 2.1, T3 = T2 + 2.3, T4 = T3 + 2.0;
+  const ease = f => -Math.cos(clamp(f, 0, 1) * Math.PI) / 2 + .5, easeOut = f => 1 - Math.pow(1 - clamp(f, 0, 1), 3);
+  const g = {t:0, speed:1, paid:0, coins:[], boxes:[], pile:0, msg:'', msgT:0, msg2:'', beepT:0, brickT:0, s:s0, state:'run', endT:0, roll:0, spin:0, said:{}, shake:0};
+  const parts = E.Particles();
+  const boxN = Math.max(1, Math.ceil(cargo * 8));
+  let W = 0, H = 0;
+  const L = () => {
+    const gy = H * .66, bw = Math.min(W * .56, H * .4, 320), bx = Math.max(bw * .46 + 6, W * .3), ts = Math.min(W * .5, H * .3, 260);
+    const stopX = Math.min(W - ts * .5 - 4, bx + bw * .45 + ts * .62);
+    return {gy, bw, bx, ts, stopX, pileX:stopX - ts * .74, rearX:stopX - ts * .47};
+  };
+  const say = (m, t = 2.2, m2 = '') => { g.msg = m; g.msgT = t; g.msg2 = m2; };
+  const once = (k, f) => { if (!g.said[k]) { g.said[k] = true; f(); } };
+  function finish() { if (g.state === 'done') return; g.state = 'done'; while (g.paid < pay) { g.paid++; api.addMp(1); } api.finish({ok:true, paid:g.paid}); }
+  function update(dt) {
+    if (g.state === 'done') return;
+    dt *= g.speed; g.t += dt; parts.update(dt); if (g.msgT > 0) g.msgT -= dt; if (g.shake > 0) g.shake = Math.max(0, g.shake - dt * 20);
+    const l = L(), t = g.t;
+    /* 1: back into the site */
+    if (t < T1) {
+      g.roll -= dt * 9; g.beepT -= dt;
+      if (g.beepT <= 0 && t < T1 - .3) { g.beepT = .45; PUM.audio.tone(1150, 0, .16, 'square', .04); }
+      once('in', () => say(`Delivery for the ${job.name.toLowerCase()}!`, 1.8, 'Beep, beep, backing in...'));
+      const txNow = lerp(W + l.ts * .7, l.stopX, easeOut(t / T1));
+      if (Math.random() < .3) parts.add({x:txNow + l.ts * .45, y:l.gy - 6, vx:40, vy:-20, life:.6, size:6, grow:2, color:'rgba(160,140,110,.5)'});
+    }
+    /* 2: unload */
+    else if (t < T2) {
+      const u = (t - T1) / (T2 - T1);
+      once('unload', () => { PUM.audio.sfx('thud'); g.shake = 4; });
+      if (truck === 'dump') {
+        if (u > .25 && u < .9) { g.pile = Math.min(cargo, g.pile + dt * cargo / ((T2 - T1) * .6)); for (let k = 0; k < 3; k++) parts.add({x:l.rearX - 4 + Math.random() * 10, y:l.gy - l.ts * .3 + Math.random() * 10, vx:-40 - Math.random() * 70, vy:10 + Math.random() * 30, g:900, life:.3, size:3 + Math.random() * 4, color:Math.random() < .7 ? M.col : E.shade(M.col, -.25)}); if (Math.random() < .2) PUM.audio.noise(.12, .05, 500); }
+      } else if (truck === 'flatbed') {
+        const due = Math.floor(clamp(u / .8, 0, 1) * boxN);
+        while (g.boxes.length < due) { g.boxes.push({t:0, from:[l.stopX - l.ts * .25 + (g.boxes.length % 4) * l.ts * .06, l.gy - l.ts * .3], to:[l.pileX - l.ts * .05 + (g.boxes.length % 3) * l.ts * .07, l.gy - 6 - Math.floor(g.boxes.length / 3) * l.ts * .06]}); PUM.audio.sfx('jump'); }
+      } else {
+        g.spin += dt * 4;
+        if (u > .2 && u < .9) { g.pile = Math.min(cargo, g.pile + dt * cargo / ((T2 - T1) * .7)); for (let k = 0; k < 3; k++) parts.add({x:l.stopX - l.ts * .66 + Math.random() * 4, y:l.gy - l.ts * .16, vx:-20 - Math.random() * 30, vy:30 + Math.random() * 30, g:900, life:.3, size:4 + Math.random() * 3, color:Math.random() < .5 ? '#B9BFC7' : '#9AA0AA'}); }
+      }
+      if (u > .92) once('made', () => say(cargo >= .95 ? 'The whole load made it!' : `${Math.round(cargo * 100)}% of the load made it!`, 1.8));
+    }
+    /* 3: build */
+    else if (t < T3) {
+      const b = (t - T2) / (T3 - T2);
+      g.s = lerp(s0, s1, ease(b / .72));
+      if (truck !== 'flatbed') g.pile = Math.max(0, cargo * (1 - ease(b / .72)));
+      g.brickT -= dt;
+      if (g.brickT <= 0 && b < .66) {
+        g.brickT = .09;
+        const tx = l.bx + (Math.random() - .5) * l.bw * .6, ty = l.gy - l.bw * (.06 + .3 * Math.random() * ease(b / .72));
+        g.coins.push({kind:'brick', t:0, dur:.45, from:[l.pileX, l.gy - 10], to:[tx, ty]});
+      }
+      once('build', () => PUM.audio.sfx('brick'));
+      if (b > .72) once('built', () => { PUM.audio.sfx('up'); g.shake = 6; parts.burst(l.bx, l.gy - l.bw * .3, 26, {speed:240, color:['#FFC233', '#FFFFFF', '#22A06B', '#E8577A'], shape:'star', size:7, life:1}); for (let k = 0; k < 10; k++) parts.add({x:l.bx + (Math.random() - .5) * l.bw, y:l.gy - 4, vx:(Math.random() - .5) * 120, vy:-40 - Math.random() * 40, life:.9, size:8, grow:2, color:'rgba(185,150,110,.55)'}); say(R.DONE_LABEL[mat] || 'Built!', 2.4, s1 === n - 1 ? `Next: lift the ${R.PIECE[job.piece]} with the crane!` : ''); });
+    }
+    /* 4: get paid */
+    else if (t < T4) {
+      const p = (t - T3) / (T4 - T3);
+      const due = Math.floor(clamp(p / .55, 0, 1) * pay);
+      while (g.coins.filter(c => c.kind === 'coin').length < due) g.coins.push({kind:'coin', t:0, dur:.7, from:[l.stopX, l.gy - l.ts * .5], to:[W - 40, 28]});
+      g.payShow = true;
+    } else if (g.state === 'run') { g.state = 'wait'; g.speed = 1; }
+    if (g.state === 'wait') { g.endT += dt; if (g.endT > 3) finish(); }
+    for (const c of g.coins) { if (c.landed) continue; c.t += dt / c.dur; if (c.t >= 1) { c.landed = true; if (c.kind === 'coin') { g.paid++; api.addMp(1); PUM.audio.sfx('coin'); } else if (Math.random() < .3) PUM.audio.sfx('brick'); } }
+    for (const b of g.boxes) if (b.t < 1) { b.t = Math.min(1, b.t + dt / .4); if (b.t >= 1) PUM.audio.sfx('brick'); }
+  }
+  function arc(c) { const f = easeOut(c.t); return [lerp(c.from[0], c.to[0], c.t), lerp(c.from[1], c.to[1], f) - Math.sin(c.t * Math.PI) * 70]; }
+  function draw(ctx, w, h) {
+    W = w; H = h; const l = L(), t = g.t;
+    ctx.save(); if (g.shake) ctx.translate((Math.random() - .5) * g.shake, (Math.random() - .5) * g.shake);
+    const sky = ctx.createLinearGradient(0, 0, 0, l.gy); sky.addColorStop(0, job.storm ? '#8FA3B8' : '#69C2F0'); sky.addColorStop(1, '#D6F0FF'); ctx.fillStyle = sky; ctx.fillRect(-10, -10, W + 20, l.gy + 10);
+    backdrop(ctx, W, l.gy, t, 'site', false);
+    ctx.fillStyle = '#7CC765'; ctx.fillRect(-10, l.gy, W + 20, H - l.gy + 10);
+    R.drawBuilding(ctx, job, l.bx, l.gy, l.bw, g.s, {t, river:job.b === 'bridge' ? .3 : 0});
+    if (g.pile > .01) {
+      const pw = l.ts * .32 * Math.sqrt(g.pile), ph = l.ts * .2 * g.pile;
+      ctx.fillStyle = truck === 'mixer' ? '#B9BFC7' : M.col; ctx.strokeStyle = P('ink'); ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(l.pileX - pw, l.gy); ctx.quadraticCurveTo(l.pileX, l.gy - ph * 2, l.pileX + pw, l.gy); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    const unU = clamp((t - T1) / (T2 - T1), 0, 1), bU = clamp((t - T2) / (T3 - T2), 0, 1);
+    for (const [k, b] of g.boxes.entries()) {
+      if (truck === 'flatbed' && t > T2 && k >= Math.ceil(boxN * (1 - bU))) continue;
+      const f = easeOut(b.t), x = lerp(b.from[0], b.to[0], b.t), y = lerp(b.from[1], b.to[1], f) - Math.sin(b.t * Math.PI) * 50;
+      ctx.fillStyle = M.col; ctx.strokeStyle = P('ink'); ctx.lineWidth = 2;
+      if (mat === 'beams') { E.rr(ctx, x - l.ts * .12, y - l.ts * .04, l.ts * .24, l.ts * .04, 2); ctx.fill(); ctx.stroke(); }
+      else { ctx.fillRect(x - l.ts * .035, y - l.ts * .06, l.ts * .07, l.ts * .06); ctx.strokeRect(x - l.ts * .035, y - l.ts * .06, l.ts * .07, l.ts * .06); }
+    }
+    const inF = easeOut(clamp(t / T1, 0, 1)), tx = lerp(W + l.ts * .7, l.stopX, inF);
+    const tip = truck === 'dump' ? (t < T1 ? 0 : t < T2 ? ease(unU * 2.5) : 1 - ease(bU * 3)) : 0;
+    const frac = truck === 'dump' ? 1 - clamp((unU - .25) / .65, 0, 1) : truck === 'flatbed' ? 1 - g.boxes.length / boxN : 1;
+    R.drawTruck(ctx, truck, tx, l.gy, l.ts, color, {load:truck === 'mixer' ? 0 : 1, frac:cargo * frac, mat, tip, pour:truck === 'mixer' && t > T1 && t < T2, spin:g.spin, roll:g.roll});
+    for (const c of g.coins) {
+      if (c.landed) continue;
+      const [x, y] = arc(c);
+      if (c.kind === 'coin') { ctx.fillStyle = '#FFC233'; ctx.strokeStyle = P('ink'); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(x, y, 11 * Math.abs(Math.cos(c.t * 9)) + 2, 11, 0, 0, 7); ctx.fill(); ctx.stroke(); }
+      else { ctx.fillStyle = M.col; ctx.strokeStyle = P('ink'); ctx.lineWidth = 1.5; ctx.fillRect(x - 6, y - 4, 12, 8); ctx.strokeRect(x - 6, y - 4, 12, 8); }
+    }
+    parts.draw(ctx);
+    if (g.payShow) { const bx2 = l.stopX, by2 = l.gy - l.ts * .78, pop2 = 1 + .15 * Math.sin(Math.min(1, g.paid / Math.max(1, pay)) * Math.PI); ctx.save(); ctx.translate(bx2, by2); ctx.scale(pop2, pop2); ctx.fillStyle = '#FFC233'; ctx.strokeStyle = P('ink'); ctx.lineWidth = 3; E.rr(ctx, -62, -24, 124, 48, 24); ctx.fill(); ctx.stroke(); E.numText(ctx, `+${g.paid}`, -10, 1, 28, P('ink'), null); ctx.fillStyle = '#FFE07A'; ctx.beginPath(); ctx.arc(36, 0, 13, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore(); }
+    if (g.msgT > 0) {
+      let fs = Math.min(38, W * .085); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const mw = ctx.measureText(g.msg).width; if (mw > W * .92) fs *= W * .92 / mw;
+      const pop = 1 + Math.max(0, g.msgT - 1.9) * 1.2;
+      E.outlineText(ctx, g.msg, W / 2, H * .24, fs * pop, '#FFC233');
+      if (g.msg2) { ctx.font = '700 18px Lexend, sans-serif'; ctx.fillStyle = '#1D2540'; ctx.textAlign = 'center'; ctx.fillText(g.msg2, W / 2, H * .24 + fs * .95); }
+    }
+    if (g.state === 'wait') { const a = .6 + .4 * Math.sin(t * 5); ctx.globalAlpha = a; E.outlineText(ctx, 'Tap to keep building', W / 2, H * .84, Math.min(24, W * .06), '#FFFFFF'); ctx.globalAlpha = 1; }
+    else if (t > .5) { ctx.fillStyle = 'rgba(29,37,64,.45)'; ctx.font = '600 13px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Tap to speed up', W / 2, H * .88); }
+    ctx.restore();
+  }
+  function tap() { if (g.state === 'wait') finish(); else g.speed = 3; }
+  return {update, draw, resize(w, h) { W = w; H = h; }, pointer(type) { if (type === 'down') tap(); }, setControl(name, on) { if (on) tap(); }, paid:() => g.paid, _debug:() => ({g})};
 };
 })();
