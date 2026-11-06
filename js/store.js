@@ -5,19 +5,24 @@ const {num, clamp} = PUM.util;
 const SB_URL = 'https://fvixamvkxrzzhjbidhyy.supabase.co';
 const SB_KEY = 'sb_publishable_tuG4SkViIQPPvhN-RTbw3g_bfWeG1_G';
 const FAMILY_KEY = 'pum-family-code';
-const LOCAL_KEY = 'pum-save-v2';
+const LOCAL_KEY = 'pum-save-v3';
 const store = PUM.store = {};
 
-function normUp(x) { x = (x && typeof x === 'object') ? x : {}; const o = {}; for (const k of ['cap','rech','str','spec']) o[k] = clamp(num(x[k]), 0, PUM.UP_MAX); return o; }
+function normUp(x) {
+  x = (x && typeof x === 'object') ? x : {};
+  const o = {};
+  for (const t of Object.keys(PUM.CAMPAIGN.upgrades)) for (const u of PUM.CAMPAIGN.upgrades[t]) o[u.k] = clamp(num(x[u.k]), 0, PUM.CAMPAIGN.maxUp);
+  return o;
+}
 function normProg(x) {
   x = (x && typeof x === 'object') ? x : {};
-  const t = x.trucks || {}, s = x.soccer || {}, h = x.anime || {};
-  const list = (a, f) => Array.isArray(a) ? a.slice(-200).map(f).filter(Boolean) : [];
-  return {
-    trucks:{level:num(t.level), bricks:num(t.bricks), built:list(t.built, v => Number.isFinite(+v) ? num(v) : null), best:num(t.best)},
-    soccer:{season:num(s.season), match:clamp(num(s.match), 0, 4), w:num(s.w), d:num(s.d), l:num(s.l), sw:clamp(num(s.sw), 0, 5), trophies:list(s.trophies, v => (v && ['gold','silver','bronze'].includes(v.m)) ? {i:num(v.i), m:v.m} : null)},
-    anime:{world:num(h.world), badges:list(h.badges, v => Number.isFinite(+v) ? num(v) : null), best:num(h.best)},
-  };
+  const o = {};
+  for (const t of PUM.THEME_IDS) {
+    const v = (x[t] && typeof x[t] === 'object') ? x[t] : {};
+    const stars = Array.from({length:PUM.CAMPAIGN.count}, (_, i) => clamp(num(Array.isArray(v.stars) ? v.stars[i] : 0), 0, 3));
+    o[t] = {unlocked:clamp(num(v.unlocked), 0, PUM.CAMPAIGN.count - 1), stars, plays:num(v.plays)};
+  }
+  return o;
 }
 store.normalize = function (d) {
   if (!d || typeof d !== 'object') return null;

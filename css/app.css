@@ -314,9 +314,80 @@ svg{display:block}
 #fx{position:fixed; inset:0; pointer-events:none; z-index:50; overflow:hidden}
 #toast{position:fixed; left:50%; top:calc(env(safe-area-inset-top, 0px) + 110px); transform:translateX(-50%); z-index:60; display:flex; align-items:center; gap:6px; max-width:calc(100% - 32px); padding:8px 18px; border:3px solid #1D2540; border-radius:999px; background:#FFC233; color:#1D2540; box-shadow:0 4px 0 #1D2540; font:800 18px var(--display); text-align:center; pointer-events:none}
 #toast .ic{width:20px; height:20px}
+
+/* world map */
+.wmap{padding:14px; border:3px solid var(--line); border-radius:var(--r); background:var(--card); box-shadow:0 5px 0 var(--line)}
+.wmap h3{font-size:20px; margin-bottom:12px}
+.nodes{display:flex; align-items:center; gap:0}
+.node-path{flex:1; height:5px; min-width:6px; background:repeating-linear-gradient(90deg, var(--line-soft) 0 8px, transparent 8px 14px)}
+.node{position:relative; flex:none; width:clamp(46px, 13vw, 60px); height:clamp(46px, 13vw, 60px); border-radius:50%; border:3px solid var(--line); background:var(--wc); color:#FFFFFF; box-shadow:0 4px 0 var(--line); cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0}
+.node-n{font:800 20px var(--display); text-shadow:2px 0 0 var(--line),-2px 0 0 var(--line),0 2px 0 var(--line),0 -2px 0 var(--line)}
+.node.boss{width:clamp(56px, 16vw, 72px); height:clamp(56px, 16vw, 72px); background:var(--ink)}
+.node.boss .node-n{font-size:26px; text-shadow:none}
+.node.locked{background:var(--card-2); color:var(--ink-soft); box-shadow:none; border-style:dashed; cursor:default}
+.node.locked .node-n{text-shadow:none}
+.node.cur{animation:pulse 1.4s ease infinite}
+.node.sel{outline:4px solid var(--star); outline-offset:3px}
+.node .mini-stars{position:absolute; bottom:-14px}
+.mini-stars{display:inline-flex; gap:1px}
+.mini-stars i{display:block; width:18px; height:18px}
+.mini-stars i .ic{width:100%; height:100%}
+.mini-stars i:not(.on) .ic{fill:var(--line-soft); stroke:var(--line-soft)}
+.mini-stars.tiny i{width:13px; height:13px}
+.lvl-card{display:flex; flex-direction:column; gap:10px; padding:16px; border:4px solid var(--line); border-radius:var(--r); background:var(--leaf-soft); box-shadow:0 6px 0 var(--line)}
+.lvl-head{display:flex; justify-content:space-between; align-items:center}
+.lvl-card h3{font-size:clamp(26px, 7vw, 34px)}
+.goal{margin:0; display:flex; align-items:center; gap:6px; font-weight:700; font-size:17px}
+.goal .ic{width:22px; height:22px}
+.stars-help{margin:0; font-size:12.5px; color:var(--ink-soft)}
+.power-row{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:8px 12px; border-radius:14px; background:var(--card-2); font-size:14px}
+.power-row b{font:800 18px var(--display)}
+.power-row .ic{width:16px; height:16px; vertical-align:-2px}
+.power-row.weak{background:var(--wrong-soft)}
+.warn{color:var(--rose); font-weight:600}
+/* in-game question */
+.qbanner{position:absolute; top:calc(env(safe-area-inset-top, 0px) + 100px); left:0; right:0; margin:0 auto; width:min(92%, 480px); display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 14px; border:4px solid #1D2540; border-radius:20px; background:#FFFFFF; color:#1D2540; box-shadow:0 5px 0 #1D2540; pointer-events:none; z-index:3; animation:pop .3s cubic-bezier(.3,1.6,.6,1)}
+.qbanner.ok{background:#CDEFDD}
+.qbanner.bad{background:#FBE1E7}
+.qb-hint{font-size:13px; font-weight:700; color:#56607E}
+.qb-q{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center}
+.qb-expr{font:800 clamp(28px, 8vw, 40px) var(--display); font-variant-numeric:tabular-nums}
+.qb-slot{display:inline-block; min-width:1.2em; border:3px dashed #56607E; border-radius:8px; text-align:center; color:#56607E}
+.qb-frac{display:inline-flex; flex-direction:column; align-items:center; font-size:.7em; line-height:.9}
+.qb-frac sup,.qb-frac sub{font-size:1em; vertical-align:baseline}
+.qb-frac sup{border-bottom:3px solid currentColor}
+.qb-label{font:800 20px var(--display)}
+.qb-objs{display:flex; flex-wrap:wrap; gap:4px; justify-content:center; max-width:300px}
+.qb-obj{width:30px; height:30px}
+.qb-obj svg{width:100%; height:100%}
+.choose{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:0 12px; background:rgba(10,14,30,.35); z-index:10}
+.choose-card{width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; border:4px solid #1D2540; border-radius:22px; background:#FFFFFF; color:#1D2540; box-shadow:0 6px 0 #1D2540; animation:pop .3s cubic-bezier(.3,1.6,.6,1)}
+.choose-opts{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; width:100%}
+.choose-opts .choice{min-height:76px; background:#FFC233; color:#1D2540}
+/* game controls */
+.ctl.steer{background:#2F95D6; color:#FFFFFF}
+.ctl.steer .ic{width:44px; height:44px}
+.controls.trucks{align-items:flex-end}
+.controls.trucks .ctl.brake{width:clamp(80px, 22vw, 110px); height:clamp(80px, 22vw, 110px)}
+.ctl-col{display:flex; flex-direction:column; gap:12px; align-items:center; pointer-events:none}
+.ctl.shoot{background:#E8577A; color:#FFFFFF; opacity:.55}
+.ctl.shoot.ready{opacity:1; animation:pulse 1s ease infinite}
+.ctl.power{width:clamp(70px, 20vw, 92px); height:clamp(70px, 20vw, 92px); background:conic-gradient(#FF8A3D var(--pw, 0%), #D9DEE8 0); font-size:14px}
+.ctl.power.ready{background:#FF8A3D; animation:pulse 1s ease infinite}
+.hud2 .chip.big{font-size:15px}
+.hud2 .chip.time{font:800 16px var(--display); background:rgba(16,22,44,.85)}
+.hud2 .chip.low{background:#C0392B}
+.hud2 .chip.good{background:#22A06B}
+.wrench{display:inline-block; width:14px; height:14px; border-radius:4px; background:#FFC233; border:2px solid #1D2540}
+.wrench.off{background:transparent; border-color:rgba(255,255,255,.35)}
+.bossbar{display:inline-block; width:90px; height:10px; border-radius:5px; background:#4A2233; overflow:hidden; vertical-align:middle}
+.bossbar i{display:block; height:100%; background:#E8577A}
+
 @keyframes pop{from{transform:scale(.2); opacity:0} to{transform:none; opacity:1}}
 @keyframes pulse{40%{transform:scale(1.06)}}
 @keyframes blink{50%{opacity:.4}}
 @keyframes spark{to{transform:translate(var(--dx), var(--dy)) rotate(160deg) scale(.4); opacity:0}}
 @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation:none !important; transition:none !important} }
 @media (max-width:380px){ .badge{min-width:56px; height:46px; font-size:16px} .world{gap:10px; padding:12px 10px} .icon-btn{width:46px; height:46px} }
+
+html.in-game #toast{top:auto; bottom:calc(env(safe-area-inset-bottom, 0px) + 150px); font-size:16px}

@@ -139,6 +139,41 @@ function tok(p) {
   return `<span class="tok ${op ? 'op' : ''} ${p === 'of' ? 'word' : ''}">${esc(p)}</span>`;
 }
 
+/* ---------- shared answer bookkeeping: adaptive steps and math points ---------- */
+PUM.recordAnswer = function (p, ok, hinted) {
+  const L = p.levels[p.world] || (p.levels[p.world] = {tier:0, streak:0, misses:0, stars:0});
+  let up = false, mp = 0;
+  if (ok) {
+    p.stars++; L.stars++; L.misses = 0;
+    if (!hinted) L.streak++;
+    mp = 1 + (L.streak > 0 && L.streak % 3 === 0 ? 2 : 0);
+    if (L.streak >= 3 && L.streak % 3 === 0 && L.tier < PUM.maxTier(p.world)) { L.tier++; up = true; }
+    p.mp += mp; p.mpTotal += mp;
+  } else {
+    L.streak = 0; L.misses++;
+    if (L.misses >= 2 && L.tier > 0) { L.tier--; L.misses = 0; }
+  }
+  return {mp, up};
+};
+/* A question for in-game choices (lanes, teammates, attack buttons): n numeric options including the answer. */
+PUM.gateQuestion = function (p, n, bump = 0) {
+  const L = p.levels[p.world] || {tier:0};
+  let q, g = 0;
+  do { q = PUM.gen(p.world, Math.min(PUM.maxTier(p.world), L.tier + bump), p.theme); } while (q.kind === 'group' && g++ < 10);
+  if (q.kind === 'group') q = PUM.gen(p.world, Math.max(0, L.tier - 1), p.theme);
+  const opts = [q.ans, ...shuffle(q.choices.filter(c => c !== q.ans))].slice(0, n);
+  while (opts.length < n) { const c = q.ans + opts.length + 1; if (!opts.includes(c)) opts.push(c); }
+  return {q, options:shuffle(opts)};
+};
+/* Compact question for the in-game banner. */
+PUM.questionHTML = function (q) {
+  const d = q.disp;
+  if (d.t === 'count') return `<span class="qb-label">How many?</span><span class="qb-objs">${Array.from({length:d.n}, () => `<span class="qb-obj">${PUM.shapeSVG(d.obj, d.color)}</span>`).join('')}</span>`;
+  if (d.t === 'numeral') return `<span class="qb-expr">Find ${d.n}</span>`;
+  if (d.t === 'seq') return `<span class="qb-expr">${d.nums.join(', ')}, <span class="qb-slot">?</span></span>`;
+  return `<span class="qb-expr">${d.parts.map(p => p === '?' ? '<span class="qb-slot">?</span>' : (p && p.frac) ? `<span class="qb-frac"><sup>${p.frac[0]}</sup><sub>${p.frac[1]}</sub></span>` : esc(p)).join(' ')}</span>`;
+};
+
 /* ---------- quiz panel: used for training rounds and mid-game refuels ---------- */
 PUM.Quiz = function (mount, opts) {
   const self = {q:null, answered:false, picked:null, correct:null, typed:'', hint:false, msg:'', fresh:true, lastKey:'', timer:null, stopped:false};
@@ -158,19 +193,9 @@ PUM.Quiz = function (mount, opts) {
   self.answer = v => {
     if (self.answered || self.stopped) return;
     const p = player(); if (!p) return;
-    const q = self.q, ok = v === q.ans, L = lv(p, p.world);
-    let up = false, mp = 0;
+    const q = self.q, ok = v === q.ans;
     Object.assign(self, {answered:true, picked:v, correct:ok, msg:ok ? pick(PRAISE) : ''});
-    if (ok) {
-      p.stars++; L.stars++; L.misses = 0;
-      if (!self.hint) L.streak++;
-      mp = 1 + (L.streak > 0 && L.streak % 3 === 0 ? 2 : 0);
-      if (L.streak >= 3 && L.tier < PUM.maxTier(p.world) && L.streak % 3 === 0) { L.tier++; up = true; }
-      p.mp += mp; p.mpTotal += mp;
-    } else {
-      L.streak = 0; L.misses++;
-      if (L.misses >= 2 && L.tier > 0) { L.tier--; L.misses = 0; }
-    }
+    const {mp, up} = PUM.recordAnswer(p, ok, self.hint);
     PUM.audio.sfx(ok ? 'yes' : 'no');
     const res = opts.onAnswer ? opts.onAnswer(ok, {mp, up}) : null;
     self.render();

@@ -30,9 +30,9 @@ try { W.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()
 PUM.COLORS = ['rose','marigold','star','leaf','sea','berry','mint','plum'];
 PUM.AGES = [3,4,5,6,7,8,9,10,11,12];
 PUM.THEMES = {
-  trucks: {name:'Trucks', base:'Garage', game:'Delivery Rush', pc:'marigold', fuel:'Fuel'},
-  soccer: {name:'Soccer', base:'Clubhouse', game:'Striker Showdown', pc:'leaf', fuel:'Stamina'},
-  anime:  {name:'Hero',   base:'Hero base', game:'Sky Run', pc:'berry', fuel:'Energy'},
+  trucks: {name:'Trucks', base:'Garage', game:'Big Rig Rescue', pc:'marigold', fuel:'Fuel'},
+  soccer: {name:'Soccer', base:'Clubhouse', game:'Striker Rush', pc:'leaf', fuel:'Stamina'},
+  anime:  {name:'Hero',   base:'Hero base', game:'Sky Quest', pc:'berry', fuel:'Energy'},
 };
 PUM.THEME_IDS = Object.keys(PUM.THEMES);
 PUM.UPGRADES = {
