@@ -2,7 +2,7 @@
 
 A math game for Zack's kids, nieces and nephews (ages 3 to 12), built for phones and tablets.
 
-Live: https://zackphasework.github.io/kids-math-game/
+Live: https://power-up-math.netlify.app/
 
 Each kid picks a theme. Every theme has 3 worlds of 5 levels, and level 5 of each world is a boss. Each level has a clear goal, obstacles get harder as you go, and later levels need upgrades. Math does three jobs:
 
@@ -16,7 +16,7 @@ Each kid picks a theme. Every theme has 3 worlds of 5 levels, and level 5 of eac
 
 ## How it's built
 
-- Plain HTML, CSS and JavaScript. There's no build step and no libraries, and it's hosted on GitHub Pages.
+- Plain HTML, CSS and JavaScript. There's no build step and no libraries, and it's hosted on Netlify, which deploys every push to `main`.
 - `js/core.js` holds shared helpers, UI art and sound. `js/math.js` has the question generators and quiz panel, `js/store.js` handles saves and family sync, and `js/levels.js` defines the campaigns and upgrades, and `js/engine.js` is the canvas runner. `js/trucks.js`, `js/soccer.js` and `js/hero.js` are the three games, and `js/app.js` has the screens.
 - Progress is saved in each browser and synced through Supabase, using `kmg_`-prefixed tables and functions in the IAh project.
 - There's no sign-in. A device joins a family by opening the family link (`#join=CODE`) or typing the family code once. The code is never stored in this repo.
