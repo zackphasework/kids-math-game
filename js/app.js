@@ -451,7 +451,7 @@ function isleInfo(p) {
   return SK.ISLANDS.map((I, k) => ({name:I.name, open:SK.isleOpen(p, k), heal:SK.heal(p, k), cleared:SK.cleared(p, k),
     quests:[0, 1, 2, 3, 4].map(j => { const i = k * 5 + j; return {i, boss:!!SK.QUESTS[i].boss, locked:i > pr.unlocked, cur:i === pr.unlocked && !pr.stars[i], stars:pr.stars[i]}; })}));
 }
-const lockedIsleMsg = k => `Purify ${SK.GUARDIANS[SK.ISLANDS[k - 1].guardian].name} on ${SK.ISLANDS[k - 1].name} to open ${SK.ISLANDS[k].name}`;
+const lockedIsleMsg = k => `Defeat ${SK.GUARDIANS[SK.ISLANDS[k - 1].guardian].name} on ${SK.ISLANDS[k - 1].name} to open ${SK.ISLANDS[k].name}`;
 function heroCard(p) {
   const s = p.sky, lv = SK.level(s.xp), c = SK.activeComp(p);
   return `<div class="sq-hero">${KA.portraitImg(KA.lookOf(p), 'sq-port')}<div class="sq-hero-t"><b>${SK.HERO_NAMES[p.hero]} &middot; Lv ${lv}</b><span>${SK.title(lv)}</span><span class="xpbar" aria-label="Experience to next level"><i style="width:${(SK.xpFrac(s.xp) * 100).toFixed(0)}%"></i></span><small>${spiritImg(c.kind, c.stage)} ${esc(c.name)} is with you</small>${['double', 'dash', 'glide'].some(m => s.moves[m]) ? `<span class="sq-movechips">${['double', 'dash', 'glide'].filter(m => s.moves[m]).map(m => `<i>${SK.MOVE_INFO[m].name}</i>`).join('')}</span>` : ''}</div></div>`;
@@ -461,7 +461,7 @@ function buildCard(p, B) {
   let act;
   if (B.k === 'shrine' && built) act = `<span class="upg-max">Open! Use ${SK.SPECIAL2} when your Spirit meter is full</span>`;
   else if (B.k === 'shrine' && SK.guardians(p) >= B.guardians) act = `<button class="btn small go" data-act="sky-build" data-k="shrine">${icon('star', 'fill')} Open the shrine</button>`;
-  else if (B.k === 'shrine') act = `<span class="lock-note">Purify ${B.guardians} guardians to open (${SK.guardians(p)} of ${B.guardians})</span>`;
+  else if (B.k === 'shrine') act = `<span class="lock-note">Defeat ${B.guardians} guardians to open (${SK.guardians(p)} of ${B.guardians})</span>`;
   else if (built) act = ['dojo', 'garden', 'forge'].includes(B.k) ? `<button class="btn small go" data-act="sky-open" data-k="${B.k}">${B.k === 'dojo' ? 'Train' : 'Open'}</button>` : '<span class="upg-max">Built</span>';
   else { const can = p.mp >= B.cost; act = `<button class="btn small ${can ? 'go' : ''}" data-act="sky-build" data-k="${B.k}" ${can ? '' : 'aria-disabled="true"'}>${icon('gem', 'gem')} ${can ? `Rebuild · ${B.cost}` : `Need ${B.cost}`}</button>`; }
   return `<div class="upg sq-build ${built ? 'built' : 'broken'} ${skySel === B.k ? 'sel' : ''}" id="b-${B.k}"><div class="upg-head"><b>${B.name}</b>${built ? icon('check') : ''}</div><p>${B.what}</p>${act}</div>`;
@@ -473,7 +473,7 @@ function renderVillage() {
   <div class="town-bar">${mpChip(p)}<span class="mp-chip snack">${spiritImg('petal', 1)} <b>${s.snacks}</b> snacks</span><button class="btn small" data-act="sky-setup">${icon('pencil')} Hero</button></div>
   <div class="town-wrap sq-wrap"><canvas id="village" aria-label="Sky Village. Tap a building to see it."></canvas></div>
   <section class="sq-next">${heroCard(p)}
-    <div class="sq-quest"><span class="kicker">${all ? 'All three islands saved!' : `Next quest &middot; ${isleName}`}</span><h3>${all ? 'Replay for more stars' : esc(Q.name)}</h3><p>${all ? 'You purified Hanamori, Umikaze and Homura. Replay quests for stars, crystals and snacks, and glide to the secret islands!' : esc(Q.story)}</p>
+    <div class="sq-quest"><span class="kicker">${all ? 'All three islands saved!' : `Next quest &middot; ${isleName}`}</span><h3>${all ? 'Replay for more stars' : esc(Q.name)}</h3><p>${all ? 'You defeated Hanamori, Umikaze and Homura. Replay quests for stars, crystals and snacks, and glide to the secret islands!' : esc(Q.story)}</p>
     <button class="btn go big wide" data-act="sky-quest-card" data-i="${nq}">${icon('play')} Sky map</button></div></section>
   <section class="block"><h2>Sky Village</h2><p class="hint-text" style="margin:-6px 0 12px">Spend crystals to rebuild the village. Every building helps you.</p><div class="upgs sq-builds">${SK.BUILD.map(B => buildCard(p, B)).join('')}</div></section>
   ${renderSettings(p)}`;
@@ -559,7 +559,7 @@ function renderSkyDone() {
   const p = P(), r = skyResult, Q = SK.QUESTS[r.qi];
   const lvUp = r.lv1 > r.lv0, G = Q.boss ? SK.GUARDIANS[SK.ISLANDS[Q.isle].guardian] : null;
   return `<div class="results sq-results">
-    <h2 class="rtitle">${r.ok ? (G ? `${G.name} purified!` : 'Quest complete!') : 'So close!'}</h2>
+    <h2 class="rtitle">${r.ok ? (G ? `${G.name} defeated!` : 'Quest complete!') : 'So close!'}</h2>
     ${r.ok ? `<div class="rstars">${[0, 1, 2].map(i => `<span class="rs ${i < r.stars ? 'on' : ''}" style="--i:${i}">${icon('star', 'fill')}</span>`).join('')}</div>` : ''}
     <div class="site-card sq-wrap"><canvas id="skydone" aria-label="${esc(Q.name)}"></canvas></div>
     ${r.ok ? '' : `<p class="rmsg">You were knocked out. Train at the dojo, upgrade at the forge, or bring a spirit the shadows are weak to.</p>`}
@@ -687,7 +687,7 @@ function skyEvent(a, el) {
     }
     case 'sky-build': {
       const B = SK.BUILD.find(x => x.k === el.dataset.k); if (!B || s.b[B.k]) return true;
-      if (B.guardians && SK.guardians(p) < B.guardians) { PUM.fx.toast(`Purify ${B.guardians} guardians to open the ${B.name.toLowerCase()}`); A.sfx('no'); return true; }
+      if (B.guardians && SK.guardians(p) < B.guardians) { PUM.fx.toast(`Defeat ${B.guardians} guardians to open the ${B.name.toLowerCase()}`); A.sfx('no'); return true; }
       if (p.mp < B.cost) { PUM.fx.toast(`Need ${B.cost - p.mp} more crystals. Go on a quest or train at the dojo!`); A.sfx('no'); return true; }
       p.mp -= B.cost; s.b[B.k] = true; skySel = B.k; store.savePlayer(p); A.sfx('up'); PUM.fx.toast(B.k === 'shrine' ? `${icon('star', 'fill')} The Sky shrine is open! New special: ${SK.SPECIAL2}` : `${icon('up')} ${B.name} rebuilt!`); render();
       PUM.fx.burst(document.getElementById('b-' + B.k)); return true;

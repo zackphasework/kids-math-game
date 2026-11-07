@@ -19,7 +19,7 @@ S.weakTo = el => Object.keys(BEATS).find(k => BEATS[k] === el);
 S.mult = (att, def, mira) => att === 'storm' ? 1.3 : BEATS[att] === def ? (mira ? 2.3 : 2) : BEATS[def] === att ? .5 : 1;
 S.MOVES = {blossom:['Petal Slash', 'Blossom Bloom', 'Petal Arrow'], tide:['Tide Cut', 'Tide Wave', 'Tide Arrow'], ember:['Ember Strike', 'Ember Flare', 'Ember Arrow'], storm:['Storm Edge', 'Storm Call', 'Storm Arrow']};
 S.SPECIAL = ['SKY BLADE', 'STARFALL BLOOM', 'COMET ARROW'];
-/* the Sky shrine's special: every guardian you purified attacks with you, and you get a heart back */
+/* the Sky shrine's special: every guardian you defeated attacks with you, and you get a heart back */
 S.SPECIAL2 = 'GUARDIAN CALL';
 S.STYLE = ['Sword: every hit strikes twice', 'Staff: extra damage on weak spots', 'Bow: lucky critical hits'];
 S.HERO_NAMES = ['Kai', 'Mira', 'Juno'];
@@ -67,7 +67,7 @@ S.BUILD = [
   {k:'forge', name:'Forge', cost:30, what:'Upgrade your weapon, charm and boots.'},
   {k:'spring', name:'Healing spring', cost:40, what:'Start every quest with one extra heart.'},
   {k:'tower', name:'Lantern tower', cost:50, what:'Lights up secret paths on the islands.'},
-  {k:'shrine', name:'Sky shrine', cost:0, guardians:2, what:'Unlocks your second special move. Purify 2 guardians to open it.'},
+  {k:'shrine', name:'Sky shrine', cost:0, guardians:2, what:'Unlocks your second special move. Defeat 2 guardians to open it.'},
 ];
 
 /* ---------- the three islands: five quests each, the fifth is the island's guardian ---------- */
@@ -119,7 +119,7 @@ S.QUESTS = [
     foes:['cinder', 'thorn'], route:[['flat', 300], ['up', 70], ['flat', 180], ['up', 80], ['foe', 'cinder'], ['hop', 3], ['chest', 'snack'], ['up', 60], ['gate'], ['flat', 200], ['foe', 'thorn'], ['gap', 110], ['secret'], ['goal']]},
   {name:'Sakura Falls', rec:4, goal:'falls', story:'Chase the shadows from the river so the waterfall can flow again.', obj:'Restore the falls',
     foes:['puddle', 'cinder', 'surge'], route:[['flat', 300], ['foe', 'puddle'], ['gap', 110], ['flat', 160], ['hop', 2], ['foe', 'cinder'], ['chest', 'snack'], ['down', 60], ['gate'], ['flat', 200], ['up', 80], ['foe', 'surge'], ['secret'], ['goal']]},
-  {name:'Hanamori', rec:5, goal:'grove', boss:true, story:'Hanamori, the Blossom Deer, has been taken over by shadow. Purify the guardian!', obj:'Reach the grove',
+  {name:'Hanamori', rec:5, goal:'grove', boss:true, story:'Hanamori, the Blossom Deer, has been taken over by shadow. Defeat the guardian!', obj:'Reach the grove',
     foes:['hanamori'], route:[['flat', 380], ['chest', 'snack'], ['gap', 110], ['flat', 260], ['foe', 'petal'], ['flat', 120], ['goal']]},
   /* ---- Tide Grotto: sea caves, tide pools and glowing jellyfish. 'secret' ledges need double jump;
      a 'cliff' is a high ledge with a far-away secret island that needs dash or glide. ---- */
@@ -131,7 +131,7 @@ S.QUESTS = [
     foes:['coral', 'steam', 'reef'], route:[['flat', 300], ['foe', 'coral'], ['gap', 130], ['flat', 200], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'dash'], ['foe', 'steam'], ['hop', 3], ['chest', 'snack'], ['gate'], ['flat', 200], ['foe', 'reef'], ['secret'], ['goal']]},
   {name:'The Sleepy Turtle', rec:8, goal:'turtle', story:'A giant sea turtle is stuck in shadow vines. Free it so it can carry you to the dragon!', obj:'Free the turtle',
     foes:['jelly', 'steam', 'abyss', 'reef'], route:[['flat', 300], ['foe', 'jelly'], ['hop', 3], ['flat', 160], ['up', 80], ['foe', 'steam'], ['gap', 140], ['chest', 'snack'], ['down', 80], ['gate'], ['flat', 200], ['foe', 'abyss'], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'glide'], ['hop', 2], ['foe', 'reef'], ['secret'], ['flat', 200], ['goal']]},
-  {name:'Umikaze', rec:9, goal:'lair', boss:true, story:'Umikaze, the Tide Dragon, has been taken over by shadow. Purify the guardian!', obj:'Reach the dragon\'s cave',
+  {name:'Umikaze', rec:9, goal:'lair', boss:true, story:'Umikaze, the Tide Dragon, has been taken over by shadow. Defeat the guardian!', obj:'Reach the dragon\'s cave',
     foes:['umikaze', 'jelly', 'coral'], route:[['flat', 360], ['chest', 'snack'], ['gap', 130], ['flat', 240], ['foe', 'jelly'], ['hop', 2], ['flat', 160], ['foe', 'coral'], ['flat', 140], ['goal']]},
   /* ---- Ember Peak: volcano slopes, lava glow and torii on the cliffs. 'dash' gaps are too long to jump. ---- */
   {name:'Ash Trail', rec:10, goal:'spring', story:'Grey ash covered the hot spring. Clear the trail so the warm water can bubble again!', obj:'Wake the hot spring',
@@ -142,7 +142,7 @@ S.QUESTS = [
     foes:['ash', 'geyser', 'magma'], route:[['flat', 300], ['foe', 'ash'], ['up', 90], ['up', 90], ['foe', 'geyser'], ['up', 90], ['up', 90], ['cliff', 'glide'], ['dash', 340], ['chest', 'snack'], ['foe', 'magma'], ['hop', 3], ['gate'], ['secret'], ['flat', 200], ['goal']]},
   {name:'Lava River', rec:13, goal:'flame', story:'The sacred flame on the peak went dark. Cross the lava river and light it again!', obj:'Light the sacred flame',
     foes:['cinder', 'bramble', 'magma', 'ash'], route:[['flat', 300], ['foe', 'cinder'], ['dash', 350], ['flat', 200], ['hop', 3], ['foe', 'bramble'], ['up', 80], ['flat', 160], ['dash', 350], ['chest', 'snack'], ['gate'], ['down', 80], ['foe', 'magma'], ['gap', 140], ['flat', 160], ['dash', 350], ['foe', 'ash'], ['secret'], ['flat', 200], ['goal']]},
-  {name:'Homura', rec:14, goal:'summit', boss:true, story:'Homura, the Flame Fox, has been taken over by shadow. Purify the last guardian!', obj:'Reach the summit',
+  {name:'Homura', rec:14, goal:'summit', boss:true, story:'Homura, the Flame Fox, has been taken over by shadow. Defeat the last guardian!', obj:'Reach the summit',
     foes:['homura', 'ash', 'magma'], route:[['flat', 360], ['chest', 'snack'], ['dash', 340], ['flat', 240], ['foe', 'ash'], ['up', 80], ['flat', 160], ['hop', 2], ['foe', 'magma'], ['flat', 160], ['goal']]},
 ];
 S.QUESTS.forEach((Q, i) => { Q.isle = S.isleOf(i); });
@@ -191,7 +191,7 @@ A.sfx = k => {
     case 'block': A.tone(1400, 0, .08, 'square', .05); A.tone(1800, .05, .14, 'sine', .06); return;
     case 'special': A.tone(220, 0, .6, 'sawtooth', .06, 1760); A.noise(.6, .1, 1800); return;
     case 'chest': [784, 988, 1175, 1568].forEach((f, i) => A.tone(f, i * .07, .2, 'triangle', .06)); return;
-    case 'purify': [1047, 1319, 1568, 2093].forEach((f, i) => A.tone(f, i * .09, .35, 'sine', .06)); return;
+    case 'chime': [1047, 1319, 1568, 2093].forEach((f, i) => A.tone(f, i * .09, .35, 'sine', .06)); return;
     case 'shatter': A.noise(.5, .2, 4000); A.tone(1800, 0, .3, 'square', .04, 400); return;
     case 'dash': A.noise(.22, .12, 2600); A.tone(440, 0, .18, 'triangle', .05, 1100); return;
     case 'glide': A.tone(660, 0, .35, 'sine', .035, 880); return;
@@ -320,7 +320,7 @@ PUM.games.sky = function (o) {
     if (h.y > 560) hurtFall();
     /* pickups and things */
     for (const c of W.crystals) if (!c.got && Math.hypot(c.x - h.x, c.y - (h.y - 46)) < (c.big ? 42 : 34)) { c.got = true; api.addMp(c.v); g.crystals += c.v; A.sfx('coin'); parts.burst(c.x, c.y, 8, {speed:120, life:.5, size:3, color:['#9BF6FF', '#FFFFFF'], shape:'star'}); }
-    for (const l of W.lanterns) if (!l.lit && Math.abs(l.x - h.x) < 40) { l.lit = true; g.lit++; A.sfx('purify'); parts.burst(l.x, l.y - 90, 18, {speed:160, life:.8, size:3, color:isle === 1 ? ['#FF8FD8', '#BFF6FF'] : isle === 2 ? ['#FF8A3D', '#FFE27A'] : ['#FFD27A', '#FFF1C2'], shape:'star'}); banner(litName[0], `${g.lit} of ${W.lanterns.length}`, 1.1); }
+    for (const l of W.lanterns) if (!l.lit && Math.abs(l.x - h.x) < 40) { l.lit = true; g.lit++; A.sfx('chime'); parts.burst(l.x, l.y - 90, 18, {speed:160, life:.8, size:3, color:isle === 1 ? ['#FF8FD8', '#BFF6FF'] : isle === 2 ? ['#FF8A3D', '#FFE27A'] : ['#FFD27A', '#FFF1C2'], shape:'star'}); banner(litName[0], `${g.lit} of ${W.lanterns.length}`, 1.1); }
     for (const c of W.chests) if (!c.open && !lock && Math.abs(c.x - h.x) < 40 && Math.abs(c.y - h.y) < 40) openLock('chest', c);
     for (const f of W.foes) if (!f.done && Math.abs(f.x - h.x) < 92 && h.y > f.y - 170) { startBattle(f); break; }
     if (W.goal && !W.goal.done && h.x > W.goal.x - 60) reachGoal();
@@ -367,7 +367,7 @@ PUM.games.sky = function (o) {
         g.snacks += sn; api.addMp(cr); g.crystals += cr;
         parts.burst(ref.x, ref.y - 40, 24, {speed:220, life:1, size:4, color:['#FFE27A', '#9BF6FF', '#FFC6DD'], shape:'star', g:300});
         banner(sec ? 'Secret treasure!' : 'Treasure!', `+${sn} spirit snack${sn > 1 ? 's' : ''} and +${cr} crystals`, 1.6);
-      } else { ref.solved = true; A.sfx('purify'); banner('The gate opens!', '', 1); }
+      } else { ref.solved = true; A.sfx('chime'); banner('The gate opens!', '', 1); }
     }, ok ? 900 : 1400);
   }
 
@@ -436,7 +436,7 @@ PUM.games.sky = function (o) {
     g.shake = Math.max(g.shake, big ? 16 : 6); A.sfx(big ? 'blast' : 'slash');
   }
   function afterHeroTurn() {
-    if (b.hp <= 0) { setState('win'); A.sfx('purify'); banner(b.boss ? 'Purified!' : 'Purified!', b.boss ? '' : `+3 crystals`, 1.6); if (!b.boss) { api.addMp(3); g.crystals += 3; } g.beaten++; return; }
+    if (b.hp <= 0) { setState('win'); A.sfx('chime'); banner('Defeated!', b.boss ? '' : `+3 crystals`, 1.6); if (!b.boss) { api.addMp(3); g.crystals += 3; } g.beaten++; return; }
     if (b.boss) {
       const th = b.phase === 0 ? .66 : b.phase === 1 ? .33 : -1;
       if (b.hp / b.max <= th) { b.hp = Math.ceil(th * b.max); b.shield = {got:0}; setState('shieldUp'); A.sfx('boss'); banner('Shadow shield!', '3 right answers in a row break it', 2); say('Shadow shield! Answer 3 in a row to break it!'); return; }
@@ -729,7 +729,7 @@ PUM.games.sky = function (o) {
       for (const n of g.nums) n.t += dt; g.nums = g.nums.filter(n => n.t < 1.1);
       g.shake *= Math.exp(-dt * 8);
       if (g.mode === 'explore') updateExplore(dt);
-      else if (g.mode === 'trans') { g.trans += dt; if (g.trans > .75) { g.mode = 'battle'; b = newBattle(g.pending); api.ctrl(''); if (b.boss) say(`Guardian battle! Purify ${b.name}!`); else say(`${b.name}! It is weak to ${S.EL[S.weakTo(b.el)].name}.`); } }
+      else if (g.mode === 'trans') { g.trans += dt; if (g.trans > .75) { g.mode = 'battle'; b = newBattle(g.pending); api.ctrl(''); if (b.boss) say(`Guardian battle! Defeat ${b.name}!`); else say(`${b.name}! It is weak to ${S.EL[S.weakTo(b.el)].name}.`); } }
       else if (g.mode === 'battle' && b && !g.koWait) updateBattle(dt);
       else if (g.mode === 'trans2') { g.trans += dt; if (g.trans > .6) { g.mode = 'explore'; api.ctrl(exploreCtrl()); } }
       else if (g.mode === 'end') { g.endT += dt; g.heal = lerp(g.heal, g.healTo, 1 - Math.exp(-dt * 1.5)); if (g.endT > .5 && Math.random() < .3) parts.burst(hero.x + (Math.random() - .5) * 400, hero.y - 200 - Math.random() * 200, 4, {speed:80, life:1.2, size:3, color:['#FFC6DD', '#FFE27A', '#9BF6FF'], shape:'star', g:60}); if (g.endT > 3.6) { g.mode = 'done'; result(true); } }

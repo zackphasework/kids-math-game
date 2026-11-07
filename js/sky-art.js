@@ -332,7 +332,7 @@ K.shadow = function (c, el, x, y, k, t = 0, o = {}) {
   c.restore();
 };
 
-/* ---------- Hanamori, the Blossom Deer. Feet at (x, y); about 340 wide at k = 1. pure: 0 shadow, 1 purified. ---------- */
+/* ---------- Hanamori, the Blossom Deer. Feet at (x, y); about 340 wide at k = 1. pure: 0 shadow, 1 back to normal. ---------- */
 K.deer = function (c, x, y, k, t = 0, pure = 0, o = {}) {
   c.save(); c.translate(x, y); c.scale(-k * (o.face || 1), k);
   if (o.hit) c.translate(Math.sin(t * 60) * 5, 0);
