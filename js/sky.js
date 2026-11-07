@@ -22,7 +22,8 @@ S.SPECIAL = ['SKY BLADE', 'STARFALL BLOOM', 'COMET ARROW'];
 /* the Sky shrine's special: every guardian you defeated attacks with you, and you get a heart back */
 S.SPECIAL2 = 'GUARDIAN CALL';
 S.STYLE = ['Sword: every hit strikes twice', 'Staff: extra damage on weak spots', 'Bow: lucky critical hits'];
-S.HERO_NAMES = ['Kai', 'Mira', 'Juno'];
+/* The hero is called whatever the kid types; blank means the kid's own name. */
+S.heroName = p => ((p.sky && p.sky.name) || '').trim() || p.name;
 /* Move strength: a harder question powers a stronger hit. d = how many math steps above the kid's level. */
 S.TIERS = [
   {k:'light', name:'Light', stars:1, d:-1, mult:.65, xp:6, what:'Easier question, small hit'},
@@ -163,7 +164,7 @@ S.normalize = function (raw, p) {
   if (x.comps && typeof x.comps === 'object') for (const k of Object.keys(K.SPIRITS)) { const c = x.comps[k]; if (c && typeof c === 'object') comps[k] = {lv:clamp(num(c.lv) || 1, 1, 15), name:String(c.name || '').slice(0, 14)}; }
   const b = (x.b && typeof x.b === 'object') ? x.b : {};
   const mv = (x.moves && typeof x.moves === 'object') ? x.moves : {};
-  return {v:num(x.v), made:!!x.made, hair:K.HAIR[x.hair] ? x.hair : null, outfit:K.OUTFIT[x.outfit] ? x.outfit : null, xp:clamp(num(x.xp), 0, 1e6),
+  return {v:num(x.v), made:!!x.made, name:String(x.name || '').trim().slice(0, 16), hair:K.HAIR[x.hair] ? x.hair : null, outfit:K.OUTFIT[x.outfit] ? x.outfit : null, xp:clamp(num(x.xp), 0, 1e6),
     comp:K.SPIRITS[x.comp] ? x.comp : null, comps, snacks:clamp(num(x.snacks), 0, 99),
     b:{garden:!!b.garden, forge:!!b.forge, spring:!!b.spring, tower:!!b.tower, shrine:!!b.shrine}, moves:{double:!!mv.double, dash:!!mv.dash, glide:!!mv.glide}};
 };

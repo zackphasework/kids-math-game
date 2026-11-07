@@ -454,7 +454,7 @@ function isleInfo(p) {
 const lockedIsleMsg = k => `Defeat ${SK.GUARDIANS[SK.ISLANDS[k - 1].guardian].name} on ${SK.ISLANDS[k - 1].name} to open ${SK.ISLANDS[k].name}`;
 function heroCard(p) {
   const s = p.sky, lv = SK.level(s.xp), c = SK.activeComp(p);
-  return `<div class="sq-hero">${KA.portraitImg(KA.lookOf(p), 'sq-port')}<div class="sq-hero-t"><b>${SK.HERO_NAMES[p.hero]} &middot; Lv ${lv}</b><span>${SK.title(lv)}</span><span class="xpbar" aria-label="Experience to next level"><i style="width:${(SK.xpFrac(s.xp) * 100).toFixed(0)}%"></i></span><small>${spiritImg(c.kind, c.stage)} ${esc(c.name)} is with you</small>${['double', 'dash', 'glide'].some(m => s.moves[m]) ? `<span class="sq-movechips">${['double', 'dash', 'glide'].filter(m => s.moves[m]).map(m => `<i>${SK.MOVE_INFO[m].name}</i>`).join('')}</span>` : ''}</div></div>`;
+  return `<div class="sq-hero">${KA.portraitImg(KA.lookOf(p), 'sq-port')}<div class="sq-hero-t"><b>${esc(SK.heroName(p))} &middot; Lv ${lv}</b><span>${SK.title(lv)}</span><span class="xpbar" aria-label="Experience to next level"><i style="width:${(SK.xpFrac(s.xp) * 100).toFixed(0)}%"></i></span><small>${spiritImg(c.kind, c.stage)} ${esc(c.name)} is with you</small>${['double', 'dash', 'glide'].some(m => s.moves[m]) ? `<span class="sq-movechips">${['double', 'dash', 'glide'].filter(m => s.moves[m]).map(m => `<i>${SK.MOVE_INFO[m].name}</i>`).join('')}</span>` : ''}</div></div>`;
 }
 function buildCard(p, B) {
   const s = p.sky, built = B.k === 'dojo' || s.b[B.k];
@@ -516,15 +516,17 @@ function renderSkyMap() {
     <div class="sq-qlist">${rows}</div>
     ${sheet}`;
 }
-function initSetup(p) { const s = p.sky, d = KA.heroDefaults(p.hero); return {hero:p.hero, hair:s.hair || d.hair, outfit:s.outfit || d.outfit, comp:s.comp || 'petal', name:''}; }
+function initSetup(p) { const s = p.sky, d = KA.heroDefaults(p.hero); return {hero:p.hero, hair:s.hair || d.hair, outfit:s.outfit || d.outfit, comp:s.comp || 'petal', name:'', heroName:s.name || p.name}; }
 function renderSkySetup() {
   const p = P(), d = setup, made = p.sky.made, L = KA.look(d.hero, d.hair, d.outfit, p.color);
   const sw = (k, map) => Object.keys(map).map(c => `<button class="sw ${d[k] === c ? 'on' : ''}" data-act="sky-pick" data-k="${k}" data-v="${c}" style="--c:${map[c]}" aria-label="${c}" aria-pressed="${d[k] === c}"></button>`).join('');
   return `<header class="top">${made ? backBtn('base', 'Back to Sky Village') : backBtn('games', 'Back to games')}<h2 class="title">${made ? 'Your hero' : 'Make your hero'}</h2><span style="width:52px"></span></header>
   <div class="form sq-setup">
     <div class="sq-preview">${KA.portraitImg(L, 'sq-big')}${made ? '' : spiritImg(d.comp, 1)}</div>
-    <div class="lab">Hero</div>
-    <div class="themes">${[0, 1, 2].map(i => `<button class="theme-b ${d.hero === i ? 'on' : ''}" data-act="sky-pick" data-k="hero" data-v="${i}" aria-pressed="${d.hero === i}">${KA.portraitImg(KA.look(i, d.hair, d.outfit, p.color))}<span>${SK.HERO_NAMES[i]}</span><small>${SK.STYLE[i]}</small></button>`).join('')}</div>
+    <label class="lab" for="hname">Your hero's name</label>
+    <input id="hname" class="field" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="${esc(p.name)}" value="${esc(d.heroName)}">
+    <div class="lab">Pick a look and a weapon</div>
+    <div class="themes">${[0, 1, 2].map(i => { const [wpn, how] = SK.STYLE[i].split(': '); return `<button class="theme-b ${d.hero === i ? 'on' : ''}" data-act="sky-pick" data-k="hero" data-v="${i}" aria-pressed="${d.hero === i}">${KA.portraitImg(KA.look(i, d.hair, d.outfit, p.color))}<span>${wpn}</span><small>${how.charAt(0).toUpperCase() + how.slice(1)}</small></button>`; }).join('')}</div>
     <div class="lab">Hair colour</div><div class="swatches">${sw('hair', KA.HAIR)}</div>
     <div class="lab">Outfit colour</div><div class="swatches">${sw('outfit', KA.OUTFIT)}</div>
     <p class="hint-text">The scarf is ${esc(p.name)}'s player colour. Change it with the pencil on the village screen.</p>
@@ -682,6 +684,7 @@ function skyEvent(a, el) {
     case 'sky-pick': { const k = el.dataset.k; setup[k] = k === 'hero' ? Number(el.dataset.v) : el.dataset.v; if (k === 'hero' && !s.made) { const d = KA.heroDefaults(setup.hero); setup.hair = d.hair; setup.outfit = d.outfit; } A.sfx('tap'); render(); return true; }
     case 'sky-begin': {
       p.hero = setup.hero; s.hair = setup.hair; s.outfit = setup.outfit;
+      { const n = String(setup.heroName || '').trim().slice(0, 16); s.name = n && n !== p.name ? n : ''; }
       if (!s.made) { s.comps[setup.comp] = {lv:1, name:setup.name.trim().slice(0, 14)}; s.comp = setup.comp; s.made = true; }
       setup = null; store.savePlayer(p); A.sfx('fanfare'); go('base'); return true;
     }
@@ -981,6 +984,7 @@ shell.addEventListener('click', e => {
 });
 app.addEventListener('input', e => {
   if (e.target.id === 'spname' && setup) { setup.name = e.target.value.slice(0, 14); return; }
+  if (e.target.id === 'hname' && setup) { setup.heroName = e.target.value.slice(0, 16); return; }
   if (e.target.dataset.rename) { const p = P(), c = p && p.sky.comps[e.target.dataset.rename]; if (c) { c.name = e.target.value.trim().slice(0, 14); store.savePlayer(p); } return; }
   if (e.target.id !== 'pname' || !draft) return;
   draft.name = e.target.value.slice(0, 16);
