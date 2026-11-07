@@ -3,7 +3,10 @@
 (function () {
 'use strict';
 const {clamp, lerp, mulberry32} = PUM.util;
-const E = PUM.engine, P = c => E.col(c);
+const E = PUM.engine, CR = PUM.CREW;
+/* Storybook colours: brown ink, warm metal and glass, and every paint colour warmed. */
+const P = c => c === 'ink' ? CR.LINE : c === 'tire' ? CR.PAL.tire : c === 'metal' ? CR.PAL.metal : c === 'glass' ? CR.PAL.glass : CR.warm(E.col(c));
+const OT = (ctx, text, x, y, size, fill = '#FFF4DC') => CR.text(ctx, text, x, y, size * 1.12, fill);
 const CP = PUM.CAMPAIGN;
 const R = PUM.RIG = {};
 PUM.games = PUM.games || {};
@@ -60,10 +63,19 @@ function boxes(ctx, n, x0, x1, base, bw, bh, col, beams) {
     ctx.fillStyle = col; ctx.fillRect(bx + 1, by + 1, bw - 2, bh - 2); ctx.strokeRect(bx + 1, by + 1, bw - 2, bh - 2);
     ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.moveTo(bx + 2, by + bh / 2); ctx.lineTo(bx + bw - 2, by + bh / 2); ctx.stroke(); ctx.strokeStyle = P('ink');
   }
-  if (n > shown) E.outlineText(ctx, `+${n - shown}`, (x0 + x1) / 2, base - 4.6 * bh, bh * .9, '#FFFFFF');
+  if (n > shown) OT(ctx, `+${n - shown}`, (x0 + x1) / 2, base - 4.6 * bh, bh * .9, '#FFFFFF');
 }
 /* load: a count (loader) or a 0..1 fraction (road); mat: material key */
 R.drawTruck = function (ctx, kind, x, y, s, color, o = {}) {
+  const mat = o.mat, load = o.load || 0, M = R.MATS[mat];
+  const q = Object.assign({}, o, {t:o.t || 0, roll:o.roll || 0, spin:o.spin != null ? o.spin : (o.t || 0) * 2, loadCol:M ? M.col : null});
+  if (kind === 'dump' && load > 0) q.loadFrac = o.frac != null ? o.frac : 1 - Math.exp(-load / 8);
+  if (kind === 'flatbed' && load > 0) { q.boxes = o.frac != null ? Math.ceil(o.frac * 8) : load; q.beams = mat === 'beams'; }
+  if (kind === 'mixer' && load > 0 && o.frac == null) q.drumNum = load;
+  if (kind === 'crane' && !o.tip && o.len == null) { q.len = 150; q.boom = -1.3; q.hook = 34; }
+  CR.truck(ctx, kind, x, y, s, E.col(color), q);
+};
+R.drawTruckOld = function (ctx, kind, x, y, s, color, o = {}) {
   const t = o.t || 0, mat = o.mat, load = o.load || 0, col = P(color);
   ctx.save(); ink(ctx, s);
   ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(x, y, s * .5, s * .035, 0, 0, 7); ctx.fill();
@@ -118,7 +130,8 @@ R.drawTruck = function (ctx, kind, x, y, s, color, o = {}) {
   ctx.restore();
 };
 /* Excavator facing right. (bx, by) = where the bucket is; full = bucket holds dirt. */
-R.drawExcavator = function (ctx, x, y, s, color, bx, by, o = {}) {
+R.drawExcavator = function (ctx, x, y, s, color, bx, by, o = {}) { CR.excavator(ctx, x, y, s, E.col(color), bx, by, o); };
+R.drawExcavatorOld = function (ctx, x, y, s, color, bx, by, o = {}) {
   const col = P(color);
   ctx.save(); ink(ctx, s);
   ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(x, y, s * .5, s * .04, 0, 0, 7); ctx.fill();
@@ -157,7 +170,7 @@ R.drawForklift = function (ctx, x, y, s, color, lift, carry, mat) {
   ctx.fillRect(x + s * .2, y - s * .8, s * .05, s * .72); ctx.strokeRect(x + s * .2, y - s * .8, s * .05, s * .72);
   const fy = y - s * .1 - lift;
   ctx.fillRect(x + s * .25, fy - s * .03, s * .3, s * .03); ctx.strokeRect(x + s * .25, fy - s * .03, s * .3, s * .03);
-  if (carry) { const m = R.MATS[mat]; if (mat === 'beams') { ctx.fillStyle = m.col; for (let k = 0; k < Math.min(3, carry); k++) { E.rr(ctx, x + s * .2, fy - s * .1 - k * s * .07, s * .42, s * .06, s * .01); ctx.fill(); ctx.stroke(); } } else { ctx.fillStyle = m.col; const h = s * (carry > 1 ? .24 : .14); ctx.fillRect(x + s * .27, fy - s * .03 - h, s * .26, h); ctx.strokeRect(x + s * .27, fy - s * .03 - h, s * .26, h); } if (carry > 1) E.outlineText(ctx, `×${carry}`, x + s * .4, fy - s * .3, s * .14, '#FFFFFF'); }
+  if (carry) { const m = R.MATS[mat]; if (mat === 'beams') { ctx.fillStyle = m.col; for (let k = 0; k < Math.min(3, carry); k++) { E.rr(ctx, x + s * .2, fy - s * .1 - k * s * .07, s * .42, s * .06, s * .01); ctx.fill(); ctx.stroke(); } } else { ctx.fillStyle = m.col; const h = s * (carry > 1 ? .24 : .14); ctx.fillRect(x + s * .27, fy - s * .03 - h, s * .26, h); ctx.strokeRect(x + s * .27, fy - s * .03 - h, s * .26, h); } if (carry > 1) OT(ctx, `×${carry}`, x + s * .4, fy - s * .3, s * .14, '#FFFFFF'); }
   wheel(ctx, x - s * .18, y - s * .09, s * .09); wheel(ctx, x + s * .12, y - s * .09, s * .09);
   ctx.restore();
 };
@@ -179,8 +192,8 @@ function win(ctx, x, y, w, h) { ctx.fillStyle = P('glass'); ctx.fillRect(x, y, w
 R.drawPiece = function (ctx, job, x, y, w, t = 0) {
   ctx.save(); ink(ctx, w);
   if (job.piece === 'roof') { ctx.fillStyle = '#7A3B4F'; ctx.beginPath(); ctx.moveTo(x - w * .38, y); ctx.lineTo(x, y - w * .26); ctx.lineTo(x + w * .38, y); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = P('brick'); ctx.fillRect(x + w * .14, y - w * .22, w * .07, w * .12); ctx.strokeRect(x + w * .14, y - w * .22, w * .07, w * .12); }
-  else if (job.piece === 'canopy') { ctx.fillStyle = '#FFFFFF'; E.rr(ctx, x - w * .48, y - w * .09, w * .96, w * .09, w * .02); ctx.fill(); ctx.stroke(); ctx.fillStyle = job.color; ctx.fillRect(x - w * .48, y - w * .045, w * .96, w * .03); E.outlineText(ctx, 'GAS', x, y - w * .045, w * .07, '#FFC233'); }
-  else if (job.piece === 'sign') { ctx.fillStyle = P('metal'); ctx.fillRect(x - w * .2, y - w * .05, w * .03, w * .05); ctx.fillRect(x + w * .17, y - w * .05, w * .03, w * .05); ctx.fillStyle = job.color; E.rr(ctx, x - w * .3, y - w * .16, w * .6, w * .12, w * .03); ctx.fill(); ctx.stroke(); E.outlineText(ctx, 'FIX IT', x, y - w * .1, w * .07, '#FFFFFF'); }
+  else if (job.piece === 'canopy') { ctx.fillStyle = '#FFFFFF'; E.rr(ctx, x - w * .48, y - w * .09, w * .96, w * .09, w * .02); ctx.fill(); ctx.stroke(); ctx.fillStyle = job.color; ctx.fillRect(x - w * .48, y - w * .045, w * .96, w * .03); OT(ctx, 'GAS', x, y - w * .045, w * .07, '#FFC233'); }
+  else if (job.piece === 'sign') { ctx.fillStyle = P('metal'); ctx.fillRect(x - w * .2, y - w * .05, w * .03, w * .05); ctx.fillRect(x + w * .17, y - w * .05, w * .03, w * .05); ctx.fillStyle = job.color; E.rr(ctx, x - w * .3, y - w * .16, w * .6, w * .12, w * .03); ctx.fill(); ctx.stroke(); OT(ctx, 'FIX IT', x, y - w * .1, w * .07, '#FFFFFF'); }
   else if (job.piece === 'bell') { ctx.fillStyle = job.color; ctx.fillRect(x - w * .1, y - w * .16, w * .2, w * .16); ctx.strokeRect(x - w * .1, y - w * .16, w * .2, w * .16); ctx.fillStyle = '#7A3B4F'; ctx.beginPath(); ctx.moveTo(x - w * .14, y - w * .16); ctx.lineTo(x, y - w * .28); ctx.lineTo(x + w * .14, y - w * .16); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = P('star'); ctx.beginPath(); ctx.arc(x, y - w * .08, w * .04, Math.PI, 0); ctx.lineTo(x + w * .05, y - w * .05); ctx.lineTo(x - w * .05, y - w * .05); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y - w * .28); ctx.lineTo(x, y - w * .36); ctx.stroke(); ctx.fillStyle = P('rose'); ctx.beginPath(); ctx.moveTo(x, y - w * .36); ctx.lineTo(x + w * .08, y - w * .33); ctx.lineTo(x, y - w * .3); ctx.fill(); ctx.stroke(); }
   else if (job.piece === 'span') { ctx.fillStyle = job.color; E.rr(ctx, x - w * .58, y - w * .07, w * 1.16, w * .07, w * .02); ctx.fill(); ctx.stroke(); ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = Math.max(1, w * .012); ctx.beginPath(); ctx.moveTo(x - w * .56, y - w * .15); ctx.lineTo(x + w * .56, y - w * .15); for (let k = -5; k <= 5; k++) { ctx.moveTo(x + k * w * .1, y - w * .07); ctx.lineTo(x + k * w * .1, y - w * .15); } ctx.stroke(); }
   ctx.restore();
@@ -237,18 +250,18 @@ R.drawBuilding = function (ctx, job, x, y, w, stage, o = {}) {
 R.townHeight = W => 150 + R.JOBS.length * 170 + 150;
 R.drawTown = function (ctx, W, H, p, t, cur) {
   const rand = mulberry32(42), lots = [], pr = p.prog.trucks, job = p.rig.job;
-  ctx.fillStyle = '#7CC765'; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#6DB857'; for (let i = 0; i < 60; i++) { ctx.beginPath(); ctx.ellipse(rand() * W, rand() * H, 20 + rand() * 30, 8 + rand() * 8, 0, 0, 7); ctx.fill(); }
+  ctx.fillStyle = '#A5B97C'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#99AE72'; for (let i = 0; i < 60; i++) { ctx.beginPath(); ctx.ellipse(rand() * W, rand() * H, 20 + rand() * 30, 8 + rand() * 8, 0, 0, 7); ctx.fill(); }
   const roadX = y => W / 2 + Math.sin(y / 170 * Math.PI) * W * .1;
   const riverY = 150 + 4 * 170 + 20;
-  ctx.fillStyle = '#4AA3DF'; ctx.beginPath(); ctx.moveTo(0, riverY - 34); for (let x = 0; x <= W; x += 10) ctx.lineTo(x, riverY - 34 + Math.sin(x / 40 + t) * 4); ctx.lineTo(W, riverY + 34); for (let x = W; x >= 0; x -= 10) ctx.lineTo(x, riverY + 34 + Math.sin(x / 40 + t + 1) * 4); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#7FB3BF'; ctx.beginPath(); ctx.moveTo(0, riverY - 34); for (let x = 0; x <= W; x += 10) ctx.lineTo(x, riverY - 34 + Math.sin(x / 40 + t) * 4); ctx.lineTo(W, riverY + 34); for (let x = W; x >= 0; x -= 10) ctx.lineTo(x, riverY + 34 + Math.sin(x / 40 + t + 1) * 4); ctx.closePath(); ctx.fill();
   const bridgeDone = R.built(p, 4);
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   const road = (w, col, dash) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); for (let y = -10; y <= H + 10; y += 10) { if (!bridgeDone && y > riverY - 40 && y < riverY + 40) { ctx.stroke(); ctx.beginPath(); continue; } ctx[y === -10 ? 'moveTo' : 'lineTo'](roadX(y), y); } ctx.stroke(); ctx.setLineDash([]); };
-  road(56, '#4A4F5C'); road(48, '#6B6F7A'); road(4, '#FFFFFF', [18, 16]);
-  for (let i = 0; i < 26; i++) { const ty = rand() * H, side = rand() < .5 ? -1 : 1, tx = roadX(ty) + side * (W * .42 + rand() * W * .1); if (Math.abs(ty - riverY) < 50) continue; ctx.fillStyle = '#7A5A3A'; ctx.fillRect(tx - 3, ty - 4, 6, 14); ctx.fillStyle = '#3E9A5A'; ctx.beginPath(); ctx.arc(tx, ty - 10, 14, 0, 7); ctx.fill(); }
-  ctx.fillStyle = '#1D2540'; E.rr(ctx, W / 2 - 92, 12, 184, 40, 12); ctx.fill();
-  E.outlineText(ctx, 'MAIN STREET', W / 2, 32, 20, '#FFC233');
+  road(56, CR.LINE); road(48, '#8E8478'); road(4, '#F6EAD3', [18, 16]);
+  for (let i = 0; i < 26; i++) { const ty = rand() * H, side = rand() < .5 ? -1 : 1, tx = roadX(ty) + side * (W * .42 + rand() * W * .1); if (Math.abs(ty - riverY) < 50) continue; ctx.fillStyle = '#5F4A38'; ctx.fillRect(tx - 3, ty - 4, 6, 14); ctx.fillStyle = rand() < .5 ? '#7E9E62' : '#6E8F55'; ctx.beginPath(); ctx.ellipse(tx, ty - 12, 13, 16, 0, 0, 7); ctx.fill(); }
+  ctx.fillStyle = '#4A3226'; E.rr(ctx, W / 2 - 92, 12, 184, 40, 12); ctx.fill();
+  OT(ctx, 'MAIN STREET', W / 2, 32, 20, '#FFC233');
   const bw = Math.min(150, W * .36);
   R.JOBS.forEach((jb, i) => {
     const J = R.job(i), y = 150 + i * 170, boss = i === 4;
@@ -259,23 +272,25 @@ R.drawTown = function (ctx, W, H, p, t, cur) {
     if (locked) {
       ctx.fillStyle = 'rgba(29,37,64,.18)'; ctx.beginPath(); ctx.ellipse(x, ly, bw * .5, bw * .1, 0, 0, 7); ctx.fill();
       ctx.strokeStyle = '#8E6640'; ctx.lineWidth = 3; ctx.beginPath(); for (let k = -3; k <= 3; k++) { ctx.moveTo(x + k * bw * .13, ly + 4); ctx.lineTo(x + k * bw * .13, ly - 22); } ctx.moveTo(x - bw * .4, ly - 16); ctx.lineTo(x + bw * .4, ly - 16); ctx.stroke();
-      ctx.fillStyle = '#FFC233'; ctx.strokeStyle = '#1D2540'; ctx.lineWidth = 3; E.rr(ctx, x - 13, ly - 50, 26, 22, 5); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x, ly - 50, 8, Math.PI, 0); ctx.stroke();
+      ctx.fillStyle = '#FFC233'; ctx.strokeStyle = '#4A3226'; ctx.lineWidth = 3; E.rr(ctx, x - 13, ly - 50, 26, 22, 5); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x, ly - 50, 8, Math.PI, 0); ctx.stroke();
     } else if (boss) {
       R.drawBuilding(ctx, J, x, riverY + 30, bw * 1.15, stage, {t, river:built ? 0 : .4});
     } else R.drawBuilding(ctx, J, x, ly, bw, stage, {t});
     const plateY = ly + (boss ? 26 : 26);
     ctx.font = '700 15px Lexend, sans-serif'; const label = J.name, tw = ctx.measureText(label).width + 24;
-    ctx.fillStyle = locked ? 'rgba(29,37,64,.55)' : '#FFFFFF'; ctx.strokeStyle = '#1D2540'; ctx.lineWidth = 3; E.rr(ctx, x - tw / 2, plateY, tw, 28, 10); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = locked ? '#FFFFFF' : '#1D2540'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x, plateY + 15);
-    if (built) { const st = pr.stars[i]; for (let s2 = 0; s2 < 3; s2++) { ctx.fillStyle = s2 < st ? '#FFC233' : 'rgba(255,255,255,.7)'; E.starPath(ctx, x - 22 + s2 * 22, plateY + 44, 9, 4, 5); ctx.fill(); ctx.strokeStyle = '#1D2540'; ctx.lineWidth = 2; ctx.stroke(); } }
-    if (i === cur && !locked) { const by = ly - bw * .78 + Math.sin(t * 4) * 6; ctx.fillStyle = '#FFC233'; ctx.strokeStyle = '#1D2540'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 14, by - 20); ctx.lineTo(x + 14, by - 20); ctx.lineTo(x + 14, by - 4); ctx.lineTo(x + 24, by - 4); ctx.lineTo(x, by + 18); ctx.lineTo(x - 24, by - 4); ctx.lineTo(x - 14, by - 4); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    ctx.fillStyle = locked ? 'rgba(29,37,64,.55)' : '#FFFFFF'; ctx.strokeStyle = '#4A3226'; ctx.lineWidth = 3; E.rr(ctx, x - tw / 2, plateY, tw, 28, 10); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = locked ? '#FFFFFF' : '#4A3226'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x, plateY + 15);
+    if (built) { const st = pr.stars[i]; for (let s2 = 0; s2 < 3; s2++) { ctx.fillStyle = s2 < st ? '#FFC233' : 'rgba(255,255,255,.7)'; E.starPath(ctx, x - 22 + s2 * 22, plateY + 44, 9, 4, 5); ctx.fill(); ctx.strokeStyle = '#4A3226'; ctx.lineWidth = 2; ctx.stroke(); } }
+    if (i === cur && !locked) { const by = ly - bw * .78 + Math.sin(t * 4) * 6; ctx.fillStyle = '#FFC233'; ctx.strokeStyle = '#4A3226'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 14, by - 20); ctx.lineTo(x + 14, by - 20); ctx.lineTo(x + 14, by - 4); ctx.lineTo(x + 24, by - 4); ctx.lineTo(x, by + 18); ctx.lineTo(x - 24, by - 4); ctx.lineTo(x - 14, by - 4); ctx.closePath(); ctx.fill(); ctx.stroke(); }
     lots.push({i, x, y:ly - bw * .3, r:bw * .62});
+    if (i === cur && !locked) { const hop = Math.max(0, Math.sin(t * 2.4)) ** 6, side = x < W / 2 ? 1 : -1, tx2 = boss ? x - bw * .8 : x + side * bw * .78; R.drawTruck(ctx, 'dump', tx2, ly + 4, Math.min(96, W * .24), R.paint(p, 'dump'), {t, mood:'grin', hop:hop * .1, sq:-hop * .03, flip:side < 0, look:-1}); }
   });
   const endY = riverY + 120;
-  ctx.strokeStyle = '#1D2540'; ctx.lineWidth = 3;
+  ctx.strokeStyle = '#4A3226'; ctx.lineWidth = 3;
   ctx.fillStyle = '#E8577A'; E.rr(ctx, roadX(endY) - 44, endY - 8, 88, 16, 4); ctx.fill(); ctx.stroke();
   ctx.fillStyle = '#FFFFFF'; for (let k = 0; k < 4; k++) ctx.fillRect(roadX(endY) - 36 + k * 22, endY - 8, 10, 16);
-  E.outlineText(ctx, bridgeDone ? 'The Hills: coming soon' : 'Build the bridge to reach the Hills', W / 2, endY + 34, Math.min(18, W * .05), '#FFFFFF');
+  OT(ctx, bridgeDone ? 'The Hills: coming soon' : 'Build the bridge to reach the Hills', W / 2, endY + 34, Math.min(18, W * .05), '#FFFFFF');
+  CR.paper(ctx, W, H, .35);
   return lots;
 };
 
@@ -294,17 +309,16 @@ PUM.games.site = function (o) {
     },
     draw(ctx, w, h) {
       if (w !== W || h !== H) { W = w; H = h; }
-      const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, job.storm ? '#8FA3B8' : '#69C2F0'); sky.addColorStop(1, '#D6F0FF');
-      ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = 'rgba(255,255,255,.8)'; for (let i = 0; i < 3; i++) { const cx = ((i * 170 + g.t * 12) % (W + 160)) - 80, cy = 26 + i * 18; ctx.beginPath(); ctx.arc(cx, cy, 16, 0, 7); ctx.arc(cx + 18, cy - 6, 20, 0, 7); ctx.arc(cx + 38, cy, 15, 0, 7); ctx.fill(); }
       const gy = H * .82;
-      ctx.fillStyle = '#7CC765'; ctx.fillRect(0, gy, W, H - gy);
+      CR.sky(ctx, W, gy, g.t, {storm:job.storm}); CR.hills(ctx, W, gy, {h1:Math.min(70, H * .3), h2:Math.min(40, H * .18), trees:false}); CR.ground(ctx, W, gy, H, 'grass');
       const bw = Math.min(W * .62, H * 1.05);
       const top = R.drawBuilding(ctx, job, W * .45, gy, bw, g.s, {t:g.t, river:job.b === 'bridge' ? clamp(g.to / job.steps.length, 0, 1) * .6 : 0});
-      if (g.s < 1) { const es = Math.min(W * .22, 100); R.drawExcavator(ctx, W * .86, gy + 4, es, 'star', W * .86 + es * .7, gy - es * .2, {face:-1}); }
-      else if (g.s < job.steps.length) R.drawTruck(ctx, 'dump', W * .87, gy + 6, Math.min(W * .26, 120), o.color || 'marigold', {load:0});
-      if (g.party) { ctx.strokeStyle = '#E8577A'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(W * .1, gy - 20); ctx.quadraticCurveTo(W * .45, gy - 4, W * .8, gy - 20); ctx.stroke(); }
+      const hop = g.party ? Math.abs(Math.sin(g.t * 6)) * .06 : Math.max(0, Math.sin(g.t * 2)) ** 8 * .04;
+      if (g.s < 1) { const es = Math.min(W * .22, 100); R.drawExcavator(ctx, W * .86, gy + 4, es, 'star', W * .86 + es * .7, gy - es * .2, {face:-1, t:g.t, mood:'happy', wig:Math.sin(g.t * 6) * .25, look:-1}); }
+      else R.drawTruck(ctx, 'dump', W * .87, gy + 6, Math.min(W * .26, 120), o.color || 'marigold', {load:0, t:g.t, mood:g.party ? 'cheer' : 'happy', hop, flip:true, look:-1});
+      if (g.party) { ctx.strokeStyle = '#C2533F'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(W * .1, gy - 20); ctx.quadraticCurveTo(W * .45, gy - 4, W * .8, gy - 20); ctx.stroke(); }
       parts.draw(ctx);
+      CR.paper(ctx, W, H, .45);
       return top;
     },
   };
@@ -312,18 +326,14 @@ PUM.games.site = function (o) {
 
 /* ---------- loading and digging ---------- */
 function backdrop(ctx, W, gy, t, kind, signX) {
-  ctx.fillStyle = 'rgba(255,255,255,.85)';
-  for (let i = 0; i < 3; i++) { const cx = ((i * 190 + t * 10) % (W + 160)) - 80, cy = gy * (.42 + i * .08); ctx.beginPath(); ctx.arc(cx, cy, 16, 0, 7); ctx.arc(cx + 18, cy - 6, 20, 0, 7); ctx.arc(cx + 38, cy, 15, 0, 7); ctx.fill(); }
-  ctx.fillStyle = kind === 'excavator' ? '#B8A48A' : '#9BC7B9';
-  ctx.beginPath(); ctx.moveTo(0, gy); for (let x = 0; x <= W; x += 8) ctx.lineTo(x, gy - 70 - Math.sin(x / 70) * 24 - Math.sin(x / 23) * 6); ctx.lineTo(W, gy); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = kind === 'excavator' ? '#A39077' : '#7FB89E';
-  ctx.beginPath(); ctx.moveTo(0, gy); for (let x = 0; x <= W; x += 8) ctx.lineTo(x, gy - 34 - Math.sin(x / 50 + 2) * 14); ctx.lineTo(W, gy); ctx.closePath(); ctx.fill();
+  CR.sky(ctx, W, gy, t);
+  CR.hills(ctx, W, gy, kind === 'excavator' ? {far:'#D2B48C', near:'#BFA27A', trees:false} : {});
   const label = kind === 'excavator' ? 'QUARRY' : kind === 'forklift' ? 'BRICK YARD' : kind === 'chute' ? 'CONCRETE PLANT' : 'BUILDING SITE';
   if (signX === false) return;
   const sx = signX != null ? signX : W * .5, sy = gy - 150;
-  ctx.fillStyle = '#7A5A3A'; ctx.fillRect(sx - 3, sy, 6, 150);
-  ctx.fillStyle = '#1D2540'; E.rr(ctx, sx - 70, sy - 28, 140, 30, 8); ctx.fill();
-  E.outlineText(ctx, label, sx, sy - 13, 15, '#FFC233');
+  ctx.fillStyle = '#5F4A38'; ctx.fillRect(sx - 3, sy, 6, 150);
+  ctx.fillStyle = '#4A3226'; E.rr(ctx, sx - 70, sy - 28, 140, 30, 8); ctx.fill();
+  OT(ctx, label, sx, sy - 13, 15, '#FFC233');
 }
 PUM.games.load = function (o) {
   const {player, assist, api} = o;
@@ -331,7 +341,7 @@ PUM.games.load = function (o) {
   let gq, tries = 0;
   do { gq = PUM.gateQuestion(player, 3); } while ((gq.q.ans < 1 || gq.q.ans > 500) && tries++ < 12);
   const q = gq.q, target = Math.max(1, q.ans);
-  const g = {t:0, count:0, queue:[], anim:null, state:'play', msg:'', msgT:0, fixing:false, doneT:0, roll:0, spin:0, exact:false};
+  const g = {t:0, count:0, queue:[], anim:null, state:'play', msg:'', msgT:0, fixing:false, doneT:0, roll:0, spin:0, exact:false, flinch:0, happyT:0, wigT:0};
   const parts = E.Particles();
   let W = 0, H = 0;
   const L = () => {
@@ -357,13 +367,13 @@ PUM.games.load = function (o) {
     else { say(`The order was ${target} ${M.unit}`, 2.4); g.fixing = true; g.state = 'fix'; g.fixT = .9; }
   }
   function update(dt) {
-    g.t += dt; parts.update(dt); if (g.msgT > 0) g.msgT -= dt;
+    g.t += dt; parts.update(dt); if (g.msgT > 0) g.msgT -= dt; g.flinch = Math.max(0, g.flinch - dt); g.happyT = Math.max(0, g.happyT - dt); g.wigT = Math.max(0, g.wigT - dt);
     const l = L();
     if (!g.anim && g.queue.length) g.anim = {n:g.queue.shift(), p:0, dur:kind === 'chute' ? .5 : .62, given:false};
     if (g.anim) {
       const a = g.anim; a.p += dt / a.dur;
       if (!a.given && a.p >= (kind === 'forklift' ? .5 : .62)) {
-        a.given = true; g.count = Math.min(9999, g.count + a.n); PUM.audio.sfx(kind === 'chute' ? 'refuel' : 'brick');
+        a.given = true; g.count = Math.min(9999, g.count + a.n); PUM.audio.sfx(kind === 'chute' ? 'refuel' : 'brick'); g.flinch = .35; g.happyT = 1; g.wigT = .7;
         const dx = l.tx - l.ts * .16, dy = l.gy - l.ts * .5;
         parts.burst(dx, dy, 8, {speed:90, angle:-Math.PI / 2, spread:2, color:[M.col, '#FFFFFF'], size:5, g:300, life:.5});
       }
@@ -389,10 +399,11 @@ PUM.games.load = function (o) {
   function hud() { hudT -= 1; if (hudT > 0) return; hudT = 6; api.hud({}); }
   function draw(ctx, w, h) {
     W = w; H = h; const l = L();
-    const sky = ctx.createLinearGradient(0, 0, 0, l.gy); sky.addColorStop(0, '#69C2F0'); sky.addColorStop(1, '#D6F0FF'); ctx.fillStyle = sky; ctx.fillRect(0, 0, W, l.gy);
     backdrop(ctx, W, l.gy, g.t, isDig ? 'site' : kind, kind === 'chute' ? W * .62 : Math.max(76, l.pileX));
-    ctx.fillStyle = isDig ? '#7CC765' : '#C9B79A'; ctx.fillRect(0, l.gy, W, H - l.gy);
-    ctx.fillStyle = 'rgba(0,0,0,.06)'; for (let i = 0; i < 20; i++) ctx.fillRect((i * 97) % W, l.gy + 10 + (i * 37) % (H - l.gy - 10), 30, 4);
+    CR.ground(ctx, W, l.gy, H, isDig ? 'grass' : 'yard');
+    /* the truck's mood: flinch as a load lands, grin after, worry while it's being fixed, cheer as it leaves */
+    const tm = g.state === 'leave' ? 'cheer' : g.state === 'fix' ? (assist >= 2 ? 'surprise' : 'worry') : g.flinch > 0 ? 'surprise' : g.happyT > 0 ? 'grin' : 'happy';
+    const tq = {t:g.t, mood:tm, sq:g.flinch > 0 ? .06 * g.flinch / .35 : 0, hop:g.state === 'leave' ? Math.abs(Math.sin(g.t * 9)) * .03 : 0, look:g.anim ? -1 : 0};
     const leave = g.state === 'leave' ? Math.max(0, 1.4 - g.doneT) : 0;
     const tx = l.tx + leave * leave * W * .5;
     const a = g.anim, ap = a ? a.p : 0;
@@ -415,33 +426,34 @@ PUM.games.load = function (o) {
         else if (p < .86) { mv(bed, high, (p - .72) / .14); tip = lerp(1.5, 0, (p - .72) / .14); face = Math.cos(clamp((p - .74) / .12, 0, 1) * Math.PI); }
         else mv(high, rest, (p - .86) / .14);
       }
-      R.drawTruck(ctx, 'dump', tx, l.gy, l.ts, color, {load:g.count, mat:isDig ? 'dirt' : mode, roll:g.roll});
-      R.drawExcavator(ctx, X, l.gy, s2, 'star', bx, by, {full, tip, face, matCol:isDig ? '#A87A50' : M.col});
+      R.drawTruck(ctx, 'dump', tx, l.gy, l.ts, color, Object.assign({load:g.count, mat:isDig ? 'dirt' : mode, roll:g.roll}, tq));
+      R.drawExcavator(ctx, X, l.gy, s2, 'star', bx, by, {full, tip, face, matCol:isDig ? '#A87A50' : M.col, t:g.t, mood:a ? 'focus' : g.state === 'leave' ? 'cheer' : g.wigT > 0 ? 'grin' : 'happy', wig:g.wigT > 0 ? Math.sin(g.t * 22) * .35 : Math.sin(g.t * 3) * .08, look:face > 0 ? 1 : -1});
     } else if (kind === 'forklift') {
       const sx = l.pileX + l.es * .1, deckX = tx - l.ts * .62, deckY = l.ts * .17;
       ctx.fillStyle = M.col; ctx.strokeStyle = P('ink'); ctx.lineWidth = 2.5;
       for (let r = 0; r < 3; r++) for (let c = 0; c < 2; c++) { if (mode === 'beams') { E.rr(ctx, sx - l.es * .4, l.gy - (r + 1) * l.es * .08 - c * l.es * .24, l.es * .7, l.es * .07, 3); ctx.fill(); ctx.stroke(); } else { ctx.fillRect(sx - l.es * .4 + c * l.es * .32, l.gy - (r + 1) * l.es * .15, l.es * .3, l.es * .14); ctx.strokeRect(sx - l.es * .4 + c * l.es * .32, l.gy - (r + 1) * l.es * .15, l.es * .3, l.es * .14); } }
-      R.drawTruck(ctx, 'flatbed', tx, l.gy, l.ts, color, {load:g.count, mat:mode, roll:g.roll});
+      R.drawTruck(ctx, 'flatbed', tx, l.gy, l.ts, color, Object.assign({load:g.count, mat:mode, roll:g.roll}, tq, g.happyT > 0 && g.state === 'play' ? {mood:'proud', tilt:Math.sin(g.happyT * 12) * .02} : {}));
       let fx = sx + l.es * .5, lift = 0, carry = 0;
       if (a) { const p = ap; if (p < .5) { fx = lerp(sx + l.es * .45, deckX - l.es * .45, p / .5); lift = deckY * Math.min(1, p / .35); carry = a.n; } else { fx = lerp(deckX - l.es * .45, sx + l.es * .45, (p - .5) / .5); lift = deckY * (1 - (p - .5) / .5); } }
       R.drawForklift(ctx, fx, l.gy, l.es * .8, 'marigold', lift, carry, mode);
     } else {
       const siloX = l.ex, hx = tx - l.ts * .5, hy = l.gy - l.ts * .42;
       R.drawSilo(ctx, siloX, l.gy, l.es * 1.1, !!a, hx, hy, g.t);
-      R.drawTruck(ctx, 'mixer', tx, l.gy, l.ts, color, {load:g.count, mat:'concrete', spin:g.spin, roll:g.roll});
+      R.drawTruck(ctx, 'mixer', tx, l.gy, l.ts, color, Object.assign({load:g.count, mat:'concrete', spin:g.spin, roll:g.roll}, tq, a && g.state === 'play' ? {mood:'cheer'} : {}));
     }
     /* counter sign */
     const sx = W / 2, sy = l.gy + Math.min(80, (H - l.gy) * .42), bw2 = Math.min(W - 40, 260);
-    ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = P('ink'); ctx.lineWidth = 3; E.rr(ctx, sx - bw2 / 2, sy - 40, bw2, 80, 16); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#56607E'; ctx.font = '700 15px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(isDig ? 'Dug so far' : 'Loaded so far', sx, sy - 22);
+    ctx.fillStyle = '#FFF4DC'; ctx.strokeStyle = P('ink'); ctx.lineWidth = 3; E.rr(ctx, sx - bw2 / 2, sy - 40, bw2, 80, 16); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#7A6250'; ctx.font = '700 15px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(isDig ? 'Dug so far' : 'Loaded so far', sx, sy - 22);
     const numS = String(g.count), unitS = g.count === 1 ? M.unit.replace(/s$/, '') : M.unit;
     ctx.font = '800 38px Lexend, sans-serif'; const nw = ctx.measureText(numS).width; ctx.font = '700 20px Lexend, sans-serif'; const uw = ctx.measureText(' ' + unitS).width;
     const x0 = sx - (nw + uw) / 2;
     E.numText(ctx, numS, x0, sy + 10, 38, P('ink'), null, 'left');
     ctx.fillStyle = P('ink'); ctx.font = '700 20px Lexend, sans-serif'; ctx.textAlign = 'left'; ctx.fillText(' ' + unitS, x0 + nw, sy + 13);
-    if (g.queue.length) { ctx.fillStyle = '#FFFFFF'; ctx.font = '700 17px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`+${g.queue.reduce((s, v) => s + v, 0)} more coming`, sx, sy + 58); }
+    if (g.queue.length) { ctx.fillStyle = '#4A3226'; ctx.font = '700 17px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`+${g.queue.reduce((s, v) => s + v, 0)} more coming`, sx, sy + 58); }
     parts.draw(ctx);
-    if (g.msgT > 0) { let fs = Math.min(40, W * .09); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const mw = ctx.measureText(g.msg).width; if (mw > W * .9) fs *= W * .9 / mw; E.outlineText(ctx, g.msg, W / 2, H * .36, fs, '#FFC233'); }
+    CR.paper(ctx, W, H, .4);
+    if (g.msgT > 0) { let fs = Math.min(40, W * .09); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const mw = ctx.measureText(g.msg).width; if (mw > W * .9) fs *= W * .9 / mw; OT(ctx, g.msg, W / 2, H * .36, fs, '#FFC233'); }
   }
   return {
     update, draw, resize(w, h) { W = w; H = h; },
@@ -489,29 +501,26 @@ PUM.games.crane = function (o) {
     },
     draw(ctx, w, h) {
       W = w; H = h; const l = L();
-      const sky = ctx.createLinearGradient(0, 0, 0, l.gy); sky.addColorStop(0, '#69C2F0'); sky.addColorStop(1, '#D6F0FF'); ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = '#7CC765'; ctx.fillRect(0, l.gy, W, H - l.gy);
+      CR.sky(ctx, W, l.gy, g.t); CR.hills(ctx, W, l.gy, {trees:false}); CR.ground(ctx, W, l.gy, H, 'grass');
       topY = R.drawBuilding(ctx, job, l.cx, l.gy, l.bw, n - 1, {t:g.t, noPiece:true, river:.3});
-      /* tower crane */
-      const mx = l.mx;
-      ctx.save(); ctx.strokeStyle = P('ink'); ctx.lineWidth = 3; ctx.fillStyle = '#FFC233';
-      ctx.fillRect(mx - 9, l.jibY - 30, 18, l.gy - l.jibY + 30); ctx.strokeRect(mx - 9, l.jibY - 30, 18, l.gy - l.jibY + 30);
-      ctx.beginPath(); for (let y = l.jibY - 30; y < l.gy; y += 18) { ctx.moveTo(mx - 9, y); ctx.lineTo(mx + 9, y + 18); } ctx.stroke();
-      ctx.fillRect(8, l.jibY - 10, mx - 8 + 30, 14); ctx.strokeRect(8, l.jibY - 10, mx - 8 + 30, 14);
-      ctx.fillStyle = P('metal'); ctx.fillRect(mx + 4, l.jibY - 6, 34, 26); ctx.strokeRect(mx + 4, l.jibY - 6, 34, 26);
-      ctx.fillStyle = '#4A4F5C'; ctx.fillRect(mx - 16, l.jibY - 44, 32, 22); ctx.strokeRect(mx - 16, l.jibY - 44, 32, 22);
+      /* Stretch the crane: his telescoping boom carries the piece; his face follows it */
       const trolleyX = g.state === 'swing' ? g.px : (g.trolley = g.trolley != null ? g.trolley : g.px);
-      ctx.fillStyle = P('metal'); ctx.fillRect(trolleyX - 14, l.jibY + 4, 28, 10); ctx.strokeRect(trolleyX - 14, l.jibY + 4, 28, 10);
       const ph = (R.PIECE_H[job.piece] || .2) * l.bw, hookY = (g.state === 'swing' ? g.py : l.hookY) - ph - 14;
-      ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(trolleyX - 4, l.jibY + 14); ctx.lineTo(trolleyX - 4, hookY); ctx.moveTo(trolleyX + 4, l.jibY + 14); ctx.lineTo(trolleyX + 4, hookY); ctx.stroke();
+      const cs = Math.min(W * .42, 210), cxr = W - cs * .38, ck = cs / 208, tipY = Math.min(l.jibY, hookY - 70);
+      const cm = g.state === 'swing' ? 'focus' : g.state === 'fall' ? 'surprise' : g.grade === 3 ? 'cheer' : g.grade === 2 ? 'grin' : (g.endT > 1.4 ? 'squeeze' : 'happy');
+      const chop = g.state === 'land' && g.grade === 3 ? Math.abs(Math.sin(g.t * 9)) * .04 : 0;
+      R.drawTruck(ctx, 'crane', cxr, l.gy, cs, o.player ? R.paint(o.player, 'crane') : 'rose', {t:g.t, mood:cm, look:1, flip:true, hop:chop, tip:[-(trolleyX - cxr) / ck, (tipY - l.gy) / ck], noHook:true});
+      ctx.save(); ctx.strokeStyle = P('ink');
+      ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(trolleyX - 3, tipY); ctx.lineTo(trolleyX - 3, hookY); ctx.moveTo(trolleyX + 3, tipY); ctx.lineTo(trolleyX + 3, hookY); ctx.stroke();
       ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(trolleyX, hookY + 4, 6, 0, Math.PI); ctx.stroke();
       if (g.state === 'swing') { ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(trolleyX, hookY + 10); ctx.lineTo(g.px - l.bw * .2, g.py - ph * .6); ctx.moveTo(trolleyX, hookY + 10); ctx.lineTo(g.px + l.bw * .2, g.py - ph * .6); ctx.stroke(); }
       ctx.restore();
       if (g.state === 'swing') { ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.setLineDash([6, 8]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.px, g.py + 4); ctx.lineTo(g.px, topY); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = 'rgba(34,160,107,.35)'; ctx.fillRect(l.cx - l.bw * tol[1], topY - 6, l.bw * tol[1] * 2, 10); ctx.fillStyle = 'rgba(34,160,107,.8)'; ctx.fillRect(l.cx - l.bw * tol[0], topY - 6, l.bw * tol[0] * 2, 10); }
       R.drawPiece(ctx, job, g.px, g.py, l.bw, g.t);
       parts.draw(ctx);
-      if (g.state === 'swing') E.outlineText(ctx, `Tap to drop the ${R.PIECE[job.piece]}!`, W / 2, H * .1 + 30, Math.min(26, W * .06), '#FFFFFF');
-      if (g.msgT > 0) { let fs = Math.min(44, W * .1); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const mw = ctx.measureText(g.msg).width; if (mw > W * .9) fs *= W * .9 / mw; E.outlineText(ctx, g.msg, W / 2, H * .3, fs, '#FFC233'); }
+      CR.paper(ctx, W, H, .4);
+      if (g.state === 'swing') OT(ctx, `Tap to drop the ${R.PIECE[job.piece]}!`, W / 2, H * .1 + 30, Math.min(26, W * .06), '#FFFFFF');
+      if (g.msgT > 0) { let fs = Math.min(44, W * .1); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const mw = ctx.measureText(g.msg).width; if (mw > W * .9) fs *= W * .9 / mw; OT(ctx, g.msg, W / 2, H * .3, fs, '#FFC233'); }
     },
     pointer(type) { if (type === 'down') drop(); },
     setControl(name, on) { if (on && name === 'drop') drop(); },
@@ -527,6 +536,7 @@ PUM.games.unload = function (o) {
   const T1 = 1.9, T2 = T1 + 2.1, T3 = T2 + 2.3, T4 = T3 + 2.0;
   const ease = f => -Math.cos(clamp(f, 0, 1) * Math.PI) / 2 + .5, easeOut = f => 1 - Math.pow(1 - clamp(f, 0, 1), 3);
   const g = {t:0, speed:1, paid:0, coins:[], boxes:[], pile:0, msg:'', msgT:0, msg2:'', beepT:0, brickT:0, s:s0, state:'run', endT:0, roll:0, spin:0, said:{}, shake:0};
+  const truckColor = color;
   const parts = E.Particles();
   const boxN = Math.max(1, Math.ceil(cargo * 8));
   let W = 0, H = 0;
@@ -585,6 +595,7 @@ PUM.games.unload = function (o) {
       const due = Math.floor(clamp(p / .55, 0, 1) * pay);
       while (g.coins.filter(c => c.kind === 'coin').length < due) g.coins.push({kind:'coin', t:0, dur:.7, from:[l.stopX, l.gy - l.ts * .5], to:[W - 40, 28]});
       g.payShow = true;
+      if (truck === 'mixer') g.spin += dt * 9;
     } else if (g.state === 'run') { g.state = 'wait'; g.speed = 1; }
     if (g.state === 'wait') { g.endT += dt; if (g.endT > 3) finish(); }
     for (const c of g.coins) { if (c.landed) continue; c.t += dt / c.dur; if (c.t >= 1) { c.landed = true; if (c.kind === 'coin') { g.paid++; api.addMp(1); PUM.audio.sfx('coin'); } else if (Math.random() < .3) PUM.audio.sfx('brick'); } }
@@ -594,9 +605,8 @@ PUM.games.unload = function (o) {
   function draw(ctx, w, h) {
     W = w; H = h; const l = L(), t = g.t;
     ctx.save(); if (g.shake) ctx.translate((Math.random() - .5) * g.shake, (Math.random() - .5) * g.shake);
-    const sky = ctx.createLinearGradient(0, 0, 0, l.gy); sky.addColorStop(0, job.storm ? '#8FA3B8' : '#69C2F0'); sky.addColorStop(1, '#D6F0FF'); ctx.fillStyle = sky; ctx.fillRect(-10, -10, W + 20, l.gy + 10);
     backdrop(ctx, W, l.gy, t, 'site', false);
-    ctx.fillStyle = '#7CC765'; ctx.fillRect(-10, l.gy, W + 20, H - l.gy + 10);
+    CR.ground(ctx, W, l.gy, H, 'grass');
     R.drawBuilding(ctx, job, l.bx, l.gy, l.bw, g.s, {t, river:job.b === 'bridge' ? .3 : 0});
     if (g.pile > .01) {
       const pw = l.ts * .32 * Math.sqrt(g.pile), ph = l.ts * .2 * g.pile;
@@ -614,7 +624,14 @@ PUM.games.unload = function (o) {
     const inF = easeOut(clamp(t / T1, 0, 1)), tx = lerp(W + l.ts * .7, l.stopX, inF);
     const tip = truck === 'dump' ? (t < T1 ? 0 : t < T2 ? ease(unU * 2.5) : 1 - ease(bU * 3)) : 0;
     const frac = truck === 'dump' ? 1 - clamp((unU - .25) / .65, 0, 1) : truck === 'flatbed' ? 1 - g.boxes.length / boxN : 1;
-    R.drawTruck(ctx, truck, tx, l.gy, l.ts, color, {load:truck === 'mixer' ? 0 : 1, frac:cargo * frac, mat, tip, pour:truck === 'mixer' && t > T1 && t < T2, spin:g.spin, roll:g.roll});
+    /* the truck acts it out: looks back while reversing, cheers as it unloads, watches the building grow, then its signature move */
+    let um;
+    if (t < T1) um = {mood:'focus', look:-1};
+    else if (t < T2) um = truck === 'flatbed' ? {mood:'proud', tilt:Math.sin(t * 10) * .015} : {mood:'cheer'};
+    else if (t < T3) { const b = (t - T2) / (T3 - T2); um = b < .3 ? {mood:'surprise', look:-1} : b < .72 ? {mood:'grin', look:-1} : {mood:'cheer', hop:Math.abs(Math.sin(t * 8)) * .04}; }
+    else if (t < T4) um = truck === 'dump' ? {mood:'cheer', hop:Math.abs(Math.sin(t * 7)) * .05} : truck === 'flatbed' ? {mood:'proud', tilt:Math.sin(t * 6) * .04} : {mood:'cheer'};
+    else um = {mood:'happy'};
+    R.drawTruck(ctx, truck, tx, l.gy, l.ts, truckColor, Object.assign({load:truck === 'mixer' ? 0 : 1, frac:cargo * frac, mat, tip, pour:truck === 'mixer' && t > T1 && t < T2, spin:g.spin, roll:g.roll, t}, um));
     for (const c of g.coins) {
       if (c.landed) continue;
       const [x, y] = arc(c);
@@ -622,15 +639,16 @@ PUM.games.unload = function (o) {
       else { ctx.fillStyle = M.col; ctx.strokeStyle = P('ink'); ctx.lineWidth = 1.5; ctx.fillRect(x - 6, y - 4, 12, 8); ctx.strokeRect(x - 6, y - 4, 12, 8); }
     }
     parts.draw(ctx);
+    CR.paper(ctx, W, H, .4);
     if (g.payShow) { const bx2 = l.stopX, by2 = l.gy - l.ts * .78, pop2 = 1 + .15 * Math.sin(Math.min(1, g.paid / Math.max(1, pay)) * Math.PI); ctx.save(); ctx.translate(bx2, by2); ctx.scale(pop2, pop2); ctx.fillStyle = '#FFC233'; ctx.strokeStyle = P('ink'); ctx.lineWidth = 3; E.rr(ctx, -62, -24, 124, 48, 24); ctx.fill(); ctx.stroke(); E.numText(ctx, `+${g.paid}`, -10, 1, 28, P('ink'), null); ctx.fillStyle = '#FFE07A'; ctx.beginPath(); ctx.arc(36, 0, 13, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore(); }
     if (g.msgT > 0) {
       let fs = Math.min(38, W * .085); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const mw = ctx.measureText(g.msg).width; if (mw > W * .92) fs *= W * .92 / mw;
       const pop = 1 + Math.max(0, g.msgT - 1.9) * 1.2;
-      E.outlineText(ctx, g.msg, W / 2, H * .24, fs * pop, '#FFC233');
-      if (g.msg2) { ctx.font = '700 18px Lexend, sans-serif'; ctx.fillStyle = '#1D2540'; ctx.textAlign = 'center'; ctx.fillText(g.msg2, W / 2, H * .24 + fs * .95); }
+      OT(ctx, g.msg, W / 2, H * .24, fs * pop, '#FFC233');
+      if (g.msg2) { ctx.font = '700 18px Lexend, sans-serif'; ctx.fillStyle = '#4A3226'; ctx.textAlign = 'center'; ctx.fillText(g.msg2, W / 2, H * .24 + fs * .95); }
     }
-    if (g.state === 'wait') { const a = .6 + .4 * Math.sin(t * 5); ctx.globalAlpha = a; E.outlineText(ctx, 'Tap to keep building', W / 2, H * .84, Math.min(24, W * .06), '#FFFFFF'); ctx.globalAlpha = 1; }
-    else if (t > .5) { ctx.fillStyle = 'rgba(29,37,64,.45)'; ctx.font = '600 13px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Tap to speed up', W / 2, H * .88); }
+    if (g.state === 'wait') { const a = .6 + .4 * Math.sin(t * 5); ctx.globalAlpha = a; OT(ctx, 'Tap to keep building', W / 2, H * .84, Math.min(24, W * .06), '#FFFFFF'); ctx.globalAlpha = 1; }
+    else if (t > .5) { ctx.fillStyle = 'rgba(74,50,38,.6)'; ctx.font = '600 13px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Tap to speed up', W / 2, H * .88); }
     ctx.restore();
   }
   function tap() { if (g.state === 'wait') finish(); else g.speed = 3; }

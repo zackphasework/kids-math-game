@@ -222,7 +222,7 @@ function drawTruckCanvases() {
     c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr);
     const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const k = c.dataset.truck, s = Math.min(r.width * .9, r.height * 1.6);
-    R.drawTruck(ctx, k, r.width / 2 + s * .1 * (k === 'crane' ? 1 : 0), r.height - 6, s, R.paint(p, k), {load:c.dataset.mat ? 4 : 0, mat:c.dataset.mat || null, t:1});
+    R.drawTruck(ctx, k, r.width / 2, r.height - 6, s, R.paint(p, k), {load:c.dataset.mat ? 4 : 0, mat:c.dataset.mat || null, t:1});
   });
 }
 function afterRender() {

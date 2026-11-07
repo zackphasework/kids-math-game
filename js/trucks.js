@@ -4,7 +4,8 @@
 (function () {
 'use strict';
 const {clamp, lerp, mulberry32} = PUM.util;
-const E = PUM.engine;
+const E = PUM.engine, CR = PUM.CREW;
+const OT = (ctx, text, x, y, size, fill = '#FFF4DC') => CR.text(ctx, text, x, y, size * 1.12, fill);
 PUM.games = PUM.games || {};
 
 PUM.games.trucks = function (o) {
@@ -13,7 +14,7 @@ PUM.games.trucks = function (o) {
   const RIG = PUM.RIG, kind = trip.truck, mat = RIG.MATS[trip.mat] || RIG.MATS.gravel;
   const up = player.up;
   const LV = PUM.CAMPAIGN.trucks.levels[levelIndex], WD0 = PUM.CAMPAIGN.trucks.worlds[LV.world];
-  const WD = LV.storm ? Object.assign({}, WD0, {sky:['#6F8296', '#C3CFDB'], grass:['#5FA65A', '#559A50']}) : WD0;
+  const WD = LV.storm ? Object.assign({}, WD0, {sky:['#8D99A0', '#C9C3B4'], grass:['#8FA06C', '#869866']}) : Object.assign({}, WD0, {sky:['#A7CBD3', '#F2D9A8'], grass:['#A5B97C', '#99AE72']});
   const truckSpeed = kind === 'flatbed' ? 1.06 : kind === 'mixer' ? .93 : 1;
   const rand = mulberry32(7001 + levelIndex * 7919 + Math.floor(Math.random() * 1000));
   const SEG = 200, ROAD = 2000, CAMH = 1000, DRAW = 140, LANES = [-2 / 3, 0, 2 / 3];
@@ -98,12 +99,25 @@ PUM.games.trucks = function (o) {
   const say = (m, t = 1.4) => { g.msg = m; g.msgT = t; };
 
   /* ---------- update ---------- */
+  /* the truck's face in the corner window: set a mood for a moment, or fall back to what's happening */
+  const face = {m:'focus', t:0};
+  const setFace = (m, d) => { face.m = m; face.t = d; };
+  function faceMood() {
+    let m = face.m;
+    if (face.t <= 0) {
+      const pz = g.pos + playerZ;
+      const near = obs.some(ob => !ob.hit && ob.type !== 'cone' && ob.z - pz > 0 && ob.z - pz < 16 * SEG && Math.abs(ob.x - g.x) < ((ob.w || .4) + .3) / 2);
+      m = g.state === 'over' ? 'worry' : (timeLimit && g.time < 10) || near ? 'worry' : g.boost > 0 ? 'grin' : 'focus';
+    }
+    if (assist >= 2 && (m === 'worry' || m === 'squeeze')) m = 'surprise';
+    return m;
+  }
   function loseCargo(amount, what) {
     if (amount <= 0) return;
     if (g.bumper) { g.bumper = false; api.toast('Your bumper saved the load!'); return; }
     const lost = amount * lossMul;
     if (lost <= 0) { api.toast(`${what}! You held on to the load.`); return; }
-    g.cargo = Math.max(0, g.cargo - lost);
+    g.cargo = Math.max(0, g.cargo - lost); setFace('worry', 1.3);
     parts.burst(W / 2, H * .62, 14, {speed:240, angle:-Math.PI / 2, spread:2.4, color:[mat.col, '#FFFFFF'], size:7, g:700, life:.9, shape:'rect'});
     if (g.cargo < .12 && g.state === 'run') { g.state = 'over'; say('The whole load fell off!', 3); PUM.audio.sfx('no'); setTimeout(() => api.finish({ok:false, reason:'lost', mp:g.mp}), 1900); }
     else api.toast(`${what}! Some ${mat.name} fell off`);
@@ -111,20 +125,20 @@ PUM.games.trucks = function (o) {
   function hit(ob, k) {
     if (g.inv > 0 && k !== 'mud') return;
     if (k === 'cone') { g.speed *= .6; PUM.audio.sfx('brick'); if (ob) ob.flyT = 1; return; }
-    if (k === 'hole') { g.speed *= .45; g.bump = .4; g.shake = 6; g.inv = .5; PUM.audio.sfx('thud'); loseCargo(.12, 'Pothole'); return; }
+    if (k === 'hole') { g.speed *= .45; g.bump = .4; g.shake = 6; g.inv = .5; PUM.audio.sfx('thud'); loseCargo(.12, 'Pothole'); setFace('surprise', .9); return; }
     if (k === 'mud') { g.speed *= .35; g.shake = 4; return; }
     g.inv = 1.1; g.speed *= .2; g.shake = 14; g.flash = .3; PUM.audio.sfx('crash');
     parts.burst(W / 2, H * .72, 18, {speed:260, color:['#B9BFC7', '#4A4F5C', '#FFC233'], size:6, g:500, life:.8, shape:'rect'});
     if (ob) ob.flyT = 1;
-    loseCargo(k === 'water' ? .15 : .25, k === 'water' ? 'Splash' : 'Crash');
+    loseCargo(k === 'water' ? .15 : .25, k === 'water' ? 'Splash' : 'Crash'); setFace('squeeze', 1.2);
   }
   function update(dt) {
-    g.t += dt; if (g.msgT > 0) g.msgT -= dt; if (g.shake > 0) g.shake = Math.max(0, g.shake - dt * 30); if (g.flash > 0) g.flash -= dt; if (g.inv > 0) g.inv -= dt; if (g.bump > 0) g.bump -= dt;
+    g.t += dt; if (g.msgT > 0) g.msgT -= dt; if (face.t > 0) face.t -= dt; if (g.shake > 0) g.shake = Math.max(0, g.shake - dt * 30); if (g.flash > 0) g.flash -= dt; if (g.inv > 0) g.inv -= dt; if (g.bump > 0) g.bump -= dt;
     parts.update(dt);
     for (const ob of obs) if (ob.flyT > 0) ob.flyT -= dt;
     if (g.state === 'intro') { g.introT -= dt; if (g.introT <= 0) { g.state = 'run'; say('GO!', 1); PUM.audio.sfx('whistle'); } hudOut(dt); return; }
     if (rain) for (const d of rain) { d.y += dt * 1.6 * d.s; if (d.y > 1) { d.y -= 1; d.x = Math.random(); } }
-    g.spin += dt * (kind === 'mixer' ? 2 : 0);
+    g.spin += dt * (kind === 'mixer' ? (timeLimit && g.time < 10 ? 7 : 2) : 0);
     if (g.state !== 'run' && g.state !== 'finish') { hudOut(dt); return; }
     const pct = g.speed / maxSpeed, seg = segAt(g.pos + playerZ);
     let target = maxSpeed * (g.boost > 0 ? 1.35 : 1);
@@ -179,6 +193,7 @@ PUM.games.trucks = function (o) {
         const ok = Math.abs(g.x - LANES[lane]) < .45 && gt.opts[lane] === gt.q.ans;
         g.gatesDone++;
         const r = api.answer(ok, gt.q);
+        setFace(ok ? 'grin' : 'worry', 1.4);
         if (ok) { g.gatesOk++; g.boost = 2.8; if (timeLimit) g.time += 3; say('TURBO!', 1.2); PUM.audio.sfx('up'); g.mp += r.mp; }
         else { hit(null, 'mud'); say(`Mud! It was ${gt.q.ans}`, 1.6); PUM.audio.sfx('no'); parts.burst(W / 2, H * .8, 20, {speed:200, angle:-Math.PI / 2, spread:2, color:['#7A5A3A', '#9C7650'], size:6, g:600, life:.8}); }
         api.hideQuestion(ok);
@@ -220,7 +235,7 @@ PUM.games.trucks = function (o) {
   }
 
   /* ---------- drawing ---------- */
-  const P = c => E.col(c);
+  const P = c => c === 'ink' ? CR.LINE : c === 'tire' ? CR.PAL.tire : c === 'metal' ? CR.PAL.metal : c === 'glass' ? CR.PAL.glass : CR.warm(E.col(c));
   function drawBg(ctx) {
     const sky = ctx.createLinearGradient(0, 0, 0, hz + 10); sky.addColorStop(0, WD.sky[0]); sky.addColorStop(1, WD.sky[1]);
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz + 4);
@@ -230,20 +245,20 @@ PUM.games.trucks = function (o) {
       for (let sx = 0; sx <= W + 8; sx += 8) { const u = (sx / W + g.skyX * k) * 6.28; ctx.lineTo(sx, hz - h * (.5 + .3 * Math.sin(u * f) + .2 * Math.sin(u * f * 2.7 + 1))); }
       ctx.lineTo(W, hz + 2); ctx.closePath(); ctx.fill();
     };
-    layer(.3, H * .12, LV.world === 2 ? '#C9D6EA' : LV.world === 1 ? '#D98D5C' : '#9BC7B9', 1.3);
-    layer(.6, H * .07, LV.world === 2 ? '#E6EEF8' : LV.world === 1 ? '#C46F45' : '#7FB89E', 2.1);
+    layer(.3, H * .12, LV.world === 2 ? '#C9C6BE' : LV.world === 1 ? '#D2A57A' : '#B8C08A', 1.3);
+    layer(.6, H * .07, LV.world === 2 ? '#DAD5CA' : LV.world === 1 ? '#BF8C62' : '#93AD72', 2.1);
   }
   function quad(ctx, x1, y1, w1, x2, y2, w2, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x1 - w1, y1); ctx.lineTo(x2 - w2, y2); ctx.lineTo(x2 + w2, y2); ctx.lineTo(x1 + w1, y1); ctx.closePath(); ctx.fill(); }
   function drawSeg(ctx, s) {
     const a = s.p1, b = s.p2, alt = Math.floor(s.i / 3) % 2;
-    ctx.fillStyle = s.bridge ? (alt ? '#4AA3DF' : '#3E95D2') : WD.grass[alt];
+    ctx.fillStyle = s.bridge ? (alt ? '#7FB3BF' : '#74A8B4') : WD.grass[alt];
     ctx.fillRect(0, b.sy, W, a.sy - b.sy + 1);
     const wf = s.bridge ? .62 : 1;
     if (s.bridge) quad(ctx, a.sx, a.sy, a.sw * .72, b.sx, b.sy, b.sw * .72, '#8B5E3C');
-    else quad(ctx, a.sx, a.sy, a.sw * 1.16, b.sx, b.sy, b.sw * 1.16, alt ? '#FFFFFF' : '#E8577A');
+    else quad(ctx, a.sx, a.sy, a.sw * 1.16, b.sx, b.sy, b.sw * 1.16, alt ? '#F6EAD3' : '#C2533F');
     const fin = s.i >= finishI && s.i < finishI + 2;
-    quad(ctx, a.sx, a.sy, a.sw * wf, b.sx, b.sy, b.sw * wf, fin ? (s.i % 2 ? '#FFFFFF' : '#1D2540') : s.ice ? (alt ? '#DDEEFA' : '#CFE4F5') : (alt ? '#6B6F7A' : '#666A75'));
-    if (!alt && !s.bridge) for (const lx of [-1 / 3, 1 / 3]) quad(ctx, a.sx + lx * a.sw, a.sy, a.sw / 45, b.sx + lx * b.sw, b.sy, b.sw / 45, '#FFFFFF');
+    quad(ctx, a.sx, a.sy, a.sw * wf, b.sx, b.sy, b.sw * wf, fin ? (s.i % 2 ? '#FFFFFF' : '#4A3226') : s.ice ? (alt ? '#DDEEFA' : '#CFE4F5') : (alt ? '#8E8478' : '#877D71'));
+    if (!alt && !s.bridge) for (const lx of [-1 / 3, 1 / 3]) quad(ctx, a.sx + lx * a.sw, a.sy, a.sw / 45, b.sx + lx * b.sw, b.sy, b.sw / 45, '#F6EAD3');
   }
   function sprite(ctx, type, x, y, u, ob, extra) {
     ctx.save(); ctx.lineJoin = 'round'; ctx.strokeStyle = P('ink'); ctx.lineWidth = Math.max(1, u * .012);
@@ -285,9 +300,9 @@ PUM.games.trucks = function (o) {
     const a = s.p1, u = a.sw, y = a.sy, ph = u * .9;
     ctx.save(); ctx.lineWidth = Math.max(1.5, u * .012); ctx.strokeStyle = P('ink');
     ctx.fillStyle = '#FFFFFF'; ctx.fillRect(a.sx - u * 1.1, y - ph, u * .06, ph); ctx.fillRect(a.sx + u * 1.04, y - ph, u * .06, ph);
-    for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? '#FFFFFF' : '#1D2540'; ctx.fillRect(a.sx - u * 1.1 + i * u * 2.2 / 16, y - ph - u * .14, u * 2.2 / 16, u * .14); }
+    for (let i = 0; i < 16; i++) { ctx.fillStyle = i % 2 ? '#FFFFFF' : '#4A3226'; ctx.fillRect(a.sx - u * 1.1 + i * u * 2.2 / 16, y - ph - u * .14, u * 2.2 / 16, u * .14); }
     ctx.strokeRect(a.sx - u * 1.1, y - ph - u * .14, u * 2.2, u * .14);
-    if (u > 40) E.outlineText(ctx, 'FINISH', a.sx, y - ph - u * .25, u * .16, '#FFC233', P('ink'));
+    if (u > 40) OT(ctx, 'FINISH', a.sx, y - ph - u * .25, u * .16, '#FFC233', P('ink'));
     ctx.restore();
   }
   function drawTruckRear(ctx, x, y, w, col, isRival, tilt) {
@@ -368,15 +383,17 @@ PUM.games.trucks = function (o) {
       ctx.restore();
     }
     const tw = Math.min(W * .42, H * .34), bob = Math.sin(g.t * 18) * (g.speed > 100 ? 1.2 : 0);
-    if (!(g.inv > 0 && Math.floor(g.inv * 14) % 2)) drawTruckRear(ctx, W / 2, H * .8 + bob, tw, E.col(trip.color), false, g.wob * .06);
+    if (!(g.inv > 0 && Math.floor(g.inv * 14) % 2)) drawTruckRear(ctx, W / 2, H * .8 + bob, tw, P(trip.color), false, g.wob * .06);
     if (g.speed > 200 && Math.random() < .35) parts.add({x:W / 2 - tw * .35, y:H * .8 - tw * .9, vx:-20 - Math.random() * 30, vy:-40, life:.6, size:5, grow:2, color:'rgba(90,95,110,.45)'});
     if (g.cargo < .4 && Math.random() < .2) parts.add({x:W / 2 + (Math.random() - .5) * tw * .4, y:H * .8 - tw * .8, vx:(Math.random() - .5) * 30, vy:-60, life:.9, size:6, grow:2.5, color:'rgba(60,60,70,.5)'});
     parts.draw(ctx);
+    CR.paper(ctx, W, H, .35);
+    { const fr = Math.min(48, W * .12), fx = W - fr - 12, fy = H * .52, fm = faceMood(); CR.portrait(ctx, kind, fx, fy, fr, E.col(trip.color), fm, g.t, {look:g.left ? -1 : g.right ? 1 : 0, spin:g.spin, tongue:false}); CR.text(ctx, CR.NAMES[kind], fx, fy + fr + 14, 17); }
     if (rain) { ctx.strokeStyle = 'rgba(220,235,255,.55)'; ctx.lineWidth = 2; ctx.beginPath(); for (const d of rain) { const rx = d.x * W, ry = d.y * H; ctx.moveTo(rx, ry); ctx.lineTo(rx - 4, ry + 16 * d.s); } ctx.stroke(); ctx.fillStyle = 'rgba(40,55,80,.12)'; ctx.fillRect(0, 0, W, H); }
     if (g.flash > 0) { ctx.fillStyle = `rgba(232,87,122,${g.flash})`; ctx.fillRect(0, 0, W, H); }
     if (g.speed > maxSpeed * .85 || g.boost > 0) { ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2; for (let i = 0; i < 8; i++) { const a2 = Math.random() * Math.PI * 2, r1 = Math.min(W, H) * .45, r2 = r1 + 40; ctx.beginPath(); ctx.moveTo(W / 2 + Math.cos(a2) * r1, hz + Math.sin(a2) * r1 * .6); ctx.lineTo(W / 2 + Math.cos(a2) * r2, hz + Math.sin(a2) * r2 * .6); ctx.stroke(); } }
-    if (g.state === 'intro') { const it = `Take the ${mat.name} to the ${LV.name.toLowerCase()}!`; let fs = Math.min(34, W * .08); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const iw = ctx.measureText(it).width; if (iw > W * .92) fs *= W * .92 / iw; E.outlineText(ctx, it, W / 2, H * .24, fs, '#FFFFFF'); E.outlineText(ctx, g.introT > 1.4 ? '3' : g.introT > .7 ? '2' : '1', W / 2, H * .34, 64, '#FFC233'); }
-    if (g.msgT > 0) { let fs = Math.min(50, W * .12); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const mw = ctx.measureText(g.msg).width; if (mw > W * .9) fs *= W * .9 / mw; E.outlineText(ctx, g.msg, W / 2, H * .3, fs, '#FFC233'); }
+    if (g.state === 'intro') { const it = `Take the ${mat.name} to the ${LV.name.toLowerCase()}!`; let fs = Math.min(34, W * .08); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const iw = ctx.measureText(it).width; if (iw > W * .92) fs *= W * .92 / iw; OT(ctx, it, W / 2, H * .24, fs, '#FFFFFF'); OT(ctx, g.introT > 1.4 ? '3' : g.introT > .7 ? '2' : '1', W / 2, H * .34, 64, '#FFC233'); }
+    if (g.msgT > 0) { let fs = Math.min(50, W * .12); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const mw = ctx.measureText(g.msg).width; if (mw > W * .9) fs *= W * .9 / mw; OT(ctx, g.msg, W / 2, H * .3, fs, '#FFC233'); }
     ctx.restore();
   }
   const ptrs = new Map();
