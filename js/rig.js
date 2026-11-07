@@ -338,7 +338,7 @@ PUM.games.site = function (o) {
     draw(ctx, w, h) {
       if (w !== W || h !== H) { W = w; H = h; }
       const gy = H * .82;
-      CR.sky(ctx, W, gy, g.t, {storm:job.storm}); CR.hills(ctx, W, gy, {h1:Math.min(70, H * .3), h2:Math.min(40, H * .18), trees:false}); CR.ground(ctx, W, gy, H, 'grass');
+      const cam = CR.scenery(ctx, W, gy, g.t, {kind:'site', storm:job.storm}); ctx.save(); CR.withCam(ctx, W, gy, cam, 1); CR.ground(ctx, W, gy, H, 'grass');
       const bw = Math.min(W * .62, H * 1.05);
       const top = R.drawBuilding(ctx, job, W * .45, gy, bw, g.s, {t:g.t, river:job.b === 'bridge' ? clamp(g.to / job.steps.length, 0, 1) * .6 : 0});
       const hop = g.party ? Math.abs(Math.sin(g.t * 6)) * .06 : Math.max(0, Math.sin(g.t * 2)) ** 8 * .04;
@@ -346,6 +346,7 @@ PUM.games.site = function (o) {
       else R.drawTruck(ctx, 'dump', W * .87, gy + 6, Math.min(W * .26, 120), o.color || 'marigold', {load:0, t:g.t, mood:g.party ? 'cheer' : 'happy', hop, flip:true, look:-1});
       if (g.party) { ctx.strokeStyle = '#C2533F'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(W * .1, gy - 20); ctx.quadraticCurveTo(W * .45, gy - 4, W * .8, gy - 20); ctx.stroke(); }
       parts.draw(ctx);
+      ctx.restore(); CR.light(ctx, W, H);
       CR.paper(ctx, W, H, .45);
       return top;
     },
@@ -354,14 +355,15 @@ PUM.games.site = function (o) {
 
 /* ---------- loading and digging ---------- */
 function backdrop(ctx, W, gy, t, kind, signX) {
-  CR.sky(ctx, W, gy, t);
-  CR.hills(ctx, W, gy, kind === 'excavator' ? {far:'#D2B48C', near:'#BFA27A', trees:false} : {});
+  const cam = CR.scenery(ctx, W, gy, t, {kind:kind === 'excavator' ? 'quarry' : kind === 'forklift' || kind === 'chute' ? 'yard' : 'site'});
   const label = kind === 'excavator' ? 'QUARRY' : kind === 'forklift' ? 'BRICK YARD' : kind === 'chute' ? 'CONCRETE PLANT' : 'BUILDING SITE';
   if (signX === false) return;
+  ctx.save(); CR.withCam(ctx, W, gy, cam, .85);
   const sx = signX != null ? signX : W * .5, sy = gy - 150;
   ctx.fillStyle = '#5F4A38'; ctx.fillRect(sx - 3, sy, 6, 150);
   ctx.fillStyle = '#4A3226'; E.rr(ctx, sx - 70, sy - 28, 140, 30, 8); ctx.fill();
   OT(ctx, label, sx, sy - 13, 15, '#FFC233');
+  ctx.restore();
 }
 PUM.games.load = function (o) {
   const {player, assist, api} = o;
@@ -431,6 +433,7 @@ PUM.games.load = function (o) {
   function draw(ctx, w, h) {
     W = w; H = h; const l = L();
     backdrop(ctx, W, l.gy, g.t, isDig ? 'site' : kind, kind === 'chute' ? W * .62 : Math.max(76, l.pileX));
+    const cam = CR.cam(g.t, W); ctx.save(); CR.withCam(ctx, W, l.gy, cam, 1);
     CR.ground(ctx, W, l.gy, H, isDig ? 'grass' : 'yard');
     /* the truck's mood: flinch as a load lands, grin after, worry while it's being fixed, cheer as it leaves */
     const tm = g.state === 'leave' ? 'cheer' : g.state === 'fix' ? (assist >= 2 ? 'surprise' : 'worry') : g.flinch > 0 ? 'surprise' : g.happyT > 0 ? 'grin' : 'happy';
@@ -472,6 +475,7 @@ PUM.games.load = function (o) {
       R.drawSilo(ctx, siloX, l.gy, l.es * 1.1, !!a, hx, hy, g.t);
       R.drawTruck(ctx, 'mixer', tx, l.gy, l.ts, color, Object.assign({load:g.count, mat:'concrete', spin:g.spin, roll:g.roll}, tq, a && g.state === 'play' ? {mood:'cheer'} : {}));
     }
+    parts.draw(ctx); ctx.restore(); CR.front(ctx, W, H, cam); CR.light(ctx, W, H);
     /* counter sign */
     const sx = W / 2, sy = l.gy + Math.min(80, (H - l.gy) * .42), bw2 = Math.min(W - 40, 260);
     ctx.fillStyle = '#FFF4DC'; ctx.strokeStyle = P('ink'); ctx.lineWidth = 3; E.rr(ctx, sx - bw2 / 2, sy - 40, bw2, 80, 16); ctx.fill(); ctx.stroke();
@@ -482,7 +486,6 @@ PUM.games.load = function (o) {
     E.numText(ctx, numS, x0, sy + 10, 38, P('ink'), null, 'left');
     ctx.fillStyle = P('ink'); ctx.font = '700 20px Lexend, sans-serif'; ctx.textAlign = 'left'; ctx.fillText(' ' + unitS, x0 + nw, sy + 13);
     if (g.queue.length) { ctx.fillStyle = '#4A3226'; ctx.font = '700 17px Lexend, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`+${g.queue.reduce((s, v) => s + v, 0)} more coming`, sx, sy + 58); }
-    parts.draw(ctx);
     CR.paper(ctx, W, H, .4);
     if (g.msgT > 0) { let fs = Math.min(40, W * .09); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const mw = ctx.measureText(g.msg).width; if (mw > W * .9) fs *= W * .9 / mw; OT(ctx, g.msg, W / 2, H * .36, fs, '#FFC233'); }
   }
@@ -532,7 +535,7 @@ PUM.games.crane = function (o) {
     },
     draw(ctx, w, h) {
       W = w; H = h; const l = L();
-      CR.sky(ctx, W, l.gy, g.t); CR.hills(ctx, W, l.gy, {trees:false}); CR.ground(ctx, W, l.gy, H, 'grass');
+      const cam = CR.scenery(ctx, W, l.gy, g.t, {kind:'site'}); ctx.save(); CR.withCam(ctx, W, l.gy, cam, 1); CR.ground(ctx, W, l.gy, H, 'grass');
       topY = R.drawBuilding(ctx, job, l.cx, l.gy, l.bw, n - 1, {t:g.t, noPiece:true, river:.3});
       /* Stretch the crane: his telescoping boom carries the piece; his face follows it */
       const trolleyX = g.state === 'swing' ? g.px : (g.trolley = g.trolley != null ? g.trolley : g.px);
@@ -549,6 +552,7 @@ PUM.games.crane = function (o) {
       if (g.state === 'swing') { ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.setLineDash([6, 8]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.px, g.py + 4); ctx.lineTo(g.px, topY); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = 'rgba(34,160,107,.35)'; ctx.fillRect(l.cx - l.bw * tol[1], topY - 6, l.bw * tol[1] * 2, 10); ctx.fillStyle = 'rgba(34,160,107,.8)'; ctx.fillRect(l.cx - l.bw * tol[0], topY - 6, l.bw * tol[0] * 2, 10); }
       R.drawPiece(ctx, job, g.px, g.py, l.bw, g.t);
       parts.draw(ctx);
+      ctx.restore(); CR.front(ctx, W, H, cam); CR.light(ctx, W, H);
       CR.paper(ctx, W, H, .4);
       if (g.state === 'swing') OT(ctx, `Tap to drop the ${R.PIECE[job.piece]}!`, W / 2, H * .1 + 30, Math.min(26, W * .06), '#FFFFFF');
       if (g.msgT > 0) { let fs = Math.min(44, W * .1); ctx.font = `800 ${fs}px Sniglet, sans-serif`; const mw = ctx.measureText(g.msg).width; if (mw > W * .9) fs *= W * .9 / mw; OT(ctx, g.msg, W / 2, H * .3, fs, '#FFC233'); }
@@ -637,6 +641,7 @@ PUM.games.unload = function (o) {
     W = w; H = h; const l = L(), t = g.t;
     ctx.save(); if (g.shake) ctx.translate((Math.random() - .5) * g.shake, (Math.random() - .5) * g.shake);
     backdrop(ctx, W, l.gy, t, 'site', false);
+    const cam = CR.cam(t, W); ctx.save(); CR.withCam(ctx, W, l.gy, cam, 1);
     CR.ground(ctx, W, l.gy, H, 'grass');
     R.drawBuilding(ctx, job, l.bx, l.gy, l.bw, g.s, {t, river:job.b === 'bridge' ? .3 : 0});
     if (g.pile > .01) {
@@ -690,6 +695,7 @@ PUM.games.unload = function (o) {
       else { ctx.fillStyle = M.col; ctx.strokeStyle = P('ink'); ctx.lineWidth = 1.5; ctx.fillRect(x - 6, y - 4, 12, 8); ctx.strokeRect(x - 6, y - 4, 12, 8); }
     }
     parts.draw(ctx);
+    ctx.restore(); CR.front(ctx, W, H, cam); CR.light(ctx, W, H);
     CR.paper(ctx, W, H, .4);
     if (g.payShow) { const bx2 = l.stopX, by2 = l.gy - l.ts * .78, pop2 = 1 + .15 * Math.sin(Math.min(1, g.paid / Math.max(1, pay)) * Math.PI); ctx.save(); ctx.translate(bx2, by2); ctx.scale(pop2, pop2); ctx.fillStyle = '#FFC233'; ctx.strokeStyle = P('ink'); ctx.lineWidth = 3; E.rr(ctx, -62, -24, 124, 48, 24); ctx.fill(); ctx.stroke(); E.numText(ctx, `+${g.paid}`, -10, 1, 28, P('ink'), null); ctx.fillStyle = '#FFE07A'; ctx.beginPath(); ctx.arc(36, 0, 13, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore(); }
     if (g.msgT > 0) {

@@ -200,7 +200,7 @@ C.truck = function (ctx, kind, x, y, s, color, o = {}) {
   const k = s / 208, t = o.t || 0;
   LW = 3.2;
   ctx.save();
-  ctx.fillStyle = 'rgba(74,50,38,.22)'; ctx.beginPath(); ctx.ellipse(x, y, s * .5, s * .035, 0, 0, TAU); ctx.fill();
+  C.longShadow(ctx, x, y, s * .98, s * .5);
   ctx.translate(x, y - (o.hop || 0) * s); ctx.scale(k * (o.flip ? -1 : 1) * (1 + (o.sq || 0)), k * (1 - (o.sq || 0)));
   if (o.tilt) ctx.rotate(o.tilt);
   const F = T[kind](ctx, t, Object.assign({col:C.warm(color)}, o));
@@ -212,7 +212,7 @@ C.excavator = function (ctx, x, y, s, color, bx, by, o = {}) {
   const k = s / 176, t = o.t || 0, col = C.warm(color);
   LW = 3.2;
   ctx.save();
-  ctx.fillStyle = 'rgba(74,50,38,.22)'; ctx.beginPath(); ctx.ellipse(x, y, s * .5, s * .04, 0, 0, TAU); ctx.fill();
+  C.longShadow(ctx, x, y, s * .9, s * .7);
   ctx.translate(x, y - (o.hop || 0) * s); ctx.scale(k * (1 + (o.sq || 0)), k * (1 - (o.sq || 0)));
   paint(ctx, () => rr(ctx, -84, -30, 150, 30, 15), PAL.tire, [-84, -30, 150, 30]);
   for (const tx of [-64, -30, 4, 40]) paint(ctx, () => ctx.arc(tx, -15, 9, 0, TAU), PAL.hub, null, {flat:true, lw:LW * .7});
@@ -292,5 +292,64 @@ C.paper = function (ctx, W, H, strength = .5) {
 C.text = function (ctx, text, x, y, size, fill = '#FFF4DC', align = 'center') {
   ctx.font = `400 ${size}px "Patrick Hand", "Comic Sans MS", cursive`; ctx.textAlign = align; ctx.textBaseline = 'middle';
   ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size * .18); ctx.strokeStyle = LINE; ctx.strokeText(text, x, y); ctx.fillStyle = fill; ctx.fillText(text, x, y);
+};
+/* ---------- 2.5D: background layers drawn once (softly blurred), then drifting at different speeds ---------- */
+const layerCache = {};
+let layerCount = 0;
+function makeLayer(key, w, h, blurPx, draw) {
+  if (layerCache[key]) return layerCache[key];
+  if (++layerCount > 40) { for (const k in layerCache) delete layerCache[k]; layerCount = 1; }
+  const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.ceil(w)); cv.height = Math.max(1, Math.ceil(h));
+  draw(cv.getContext('2d'));
+  let out = cv;
+  if (blurPx) { try { const c2 = document.createElement('canvas'); c2.width = cv.width; c2.height = cv.height; const g2 = c2.getContext('2d'); if (typeof g2.filter === 'string') { g2.filter = `blur(${blurPx}px)`; g2.drawImage(cv, 0, 0); out = c2; } } catch (e) {} }
+  return (layerCache[key] = out);
+}
+/* the slow camera drift every scene shares */
+C.cam = (t, W) => ({pan:Math.sin(t * .22) * W * .028, zoom:1 + .032 * (.5 + .5 * Math.sin(t * .15))});
+/* parallax: f = 1 for the ground and trucks, less for far things, more for the foreground */
+C.withCam = (ctx, W, gy, cam, f) => { const s = 1 + (cam.zoom - 1) * f; ctx.translate(W / 2, gy); ctx.scale(s, s); ctx.translate(-W / 2 - cam.pan * f, -gy); };
+const tree = (g, x, y, s, col) => { g.fillStyle = '#5F4A38'; g.fillRect(x - 3 * s, y - 34 * s, 6 * s, 34 * s); g.fillStyle = col; g.beginPath(); g.ellipse(x, y - 50 * s, 24 * s, 30 * s, 0, 0, TAU); g.fill(); g.fillStyle = 'rgba(255,240,200,.25)'; g.beginPath(); g.ellipse(x + 8 * s, y - 58 * s, 10 * s, 14 * s, 0, 0, TAU); g.fill(); };
+C.scenery = function (ctx, W, gy, t, o = {}) {
+  const cam = o.cam || C.cam(t, W), kind = o.kind || 'site', k = clamp(gy / 330, .45, 1.4), R = seed(11);
+  C.sky(ctx, W, gy, t, o);
+  const far = makeLayer(`far|${kind}|${W}|${gy}|${o.storm ? 1 : 0}`, W * 1.5, gy + 4, 1.6, g => {
+    const col = kind === 'quarry' ? '#D2B48C' : o.storm ? '#A9AE94' : '#C9C49A';
+    g.fillStyle = col; g.beginPath(); g.moveTo(0, gy + 4); for (let x = 0; x <= W * 1.5; x += 10) g.lineTo(x, gy - 118 * k - Math.sin(x / (120 * k)) * 28 * k - Math.sin(x / (47 * k)) * 8 * k); g.lineTo(W * 1.5, gy + 4); g.closePath(); g.fill();
+  });
+  const mid = makeLayer(`mid|${kind}|${W}|${gy}|${o.storm ? 1 : 0}`, W * 1.7, gy + 4, .8, g => {
+    const col = kind === 'quarry' ? '#BFA27A' : '#AEBB84';
+    g.fillStyle = col; g.beginPath(); g.moveTo(0, gy + 4); for (let x = 0; x <= W * 1.7; x += 10) g.lineTo(x, gy - 62 * k - Math.sin(x / (80 * k) + 2) * 18 * k); g.lineTo(W * 1.7, gy + 4); g.closePath(); g.fill();
+    g.save(); g.clip(); g.strokeStyle = shade(col, -.18); g.globalAlpha = .35; g.lineWidth = 1.5; g.beginPath(); for (let x = -40; x < W * 1.7; x += 5) { g.moveTo(x, gy + 4); g.lineTo(x + 18, gy - 80 * k); } g.stroke(); g.restore();
+    if (kind !== 'quarry') for (let i = 0; i < 9; i++) tree(g, 30 + i * W * .2 + R() * 30, gy - 40 * k - (i % 3) * 6 * k, .55 * k, i % 2 ? '#8FA36B' : '#7E9662');
+  });
+  const near = kind === 'quarry' ? null : makeLayer(`near|${kind}|${W}|${gy}`, W * 1.9, gy + 4, .4, g => {
+    for (let i = 0; i < 6; i++) tree(g, 60 + i * W * .34 + R() * 40, gy - 4, .85 * k, i % 2 ? '#7E9E62' : '#6E8F55');
+  });
+  const draw = (img, f, mx) => { ctx.save(); C.withCam(ctx, W, gy, cam, f); ctx.drawImage(img, -W * mx, 0, img.width, img.height); ctx.restore(); };
+  draw(far, .15, .25); draw(mid, .35, .35); if (near) draw(near, .6, .45);
+  return cam;
+};
+/* soft grass in the foreground, out of focus and moving faster than the trucks */
+C.front = function (ctx, W, H, cam) {
+  const strip = makeLayer(`front|${W}`, W * 2, 70, 2.4, g => {
+    for (let i = 0; i < Math.ceil(W * 2 / 90); i++) { const x = i * 90 + (i % 3) * 14; g.fillStyle = i % 2 ? '#93AD72' : '#7E9E62'; g.beginPath(); for (let k = 0; k < 6; k++) { g.moveTo(x + k * 8, 70); g.quadraticCurveTo(x + k * 8 + 6, 70 - 34 - (k % 3) * 10, x + k * 8 + 14, 70 - 40 - (k % 2) * 8); g.lineTo(x + k * 8 + 6, 70); } g.fill(); }
+  });
+  ctx.drawImage(strip, -W * .5 - cam.pan * 1.7, H - 52);
+};
+/* warm light from the sun side */
+C.light = function (ctx, W, H) {
+  ctx.save(); ctx.globalCompositeOperation = 'soft-light';
+  const lg = ctx.createLinearGradient(W, 0, 0, H); lg.addColorStop(0, 'rgba(255,214,140,.6)'); lg.addColorStop(1, 'rgba(90,60,120,.3)'); ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+};
+/* a long soft shadow cast away from the sun, plus a dark contact shadow */
+C.longShadow = function (ctx, x, y, w, h) {
+  const L = w * .55, up = h * .28;
+  ctx.save();
+  const g = ctx.createLinearGradient(x, y, x - L, y - up); g.addColorStop(0, 'rgba(74,50,38,.24)'); g.addColorStop(1, 'rgba(74,50,38,0)'); ctx.fillStyle = g;
+  ctx.beginPath(); ctx.moveTo(x + w * .5, y + 3); ctx.quadraticCurveTo(x + w * .5 - L * .5, y - up * .3, x + w * .5 - L, y - up); ctx.lineTo(x - w * .5 - L, y - up); ctx.quadraticCurveTo(x - w * .5 - L * .4, y - up * .1, x - w * .5, y + 3); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(74,50,38,.22)'; ctx.beginPath(); ctx.ellipse(x, y, w * .5, Math.max(2, w * .035), 0, 0, TAU); ctx.fill();
+  ctx.restore();
 };
 })();
