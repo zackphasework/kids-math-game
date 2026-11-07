@@ -568,7 +568,7 @@ function renderSkySetup() {
     <label class="lab" for="hname">Your hero's name</label>
     <input id="hname" class="field" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="${esc(p.name)}" value="${esc(d.heroName)}">
     <div class="lab">Pick a look and a weapon</div>
-    <div class="themes">${[0, 1, 2].map(i => { const [wpn, how] = SK.STYLE[i].split(': '); return `<button class="theme-b ${d.hero === i ? 'on' : ''}" data-act="sky-pick" data-k="hero" data-v="${i}" aria-pressed="${d.hero === i}">${KA.portraitImg(KA.look(i, d.hair, d.outfit, p.color))}<span>${wpn}</span><small>${how.charAt(0).toUpperCase() + how.slice(1)}</small></button>`; }).join('')}</div>
+    <div class="themes">${SK.STYLE.map((style, i) => { const [wpn, how] = style.split(': '); return `<button class="theme-b ${d.hero === i ? 'on' : ''}" data-act="sky-pick" data-k="hero" data-v="${i}" aria-pressed="${d.hero === i}" aria-label="${SK.LOOKS[i]}, ${wpn}">${KA.portraitImg(KA.look(i, null, null, p.color))}<span>${wpn}</span><small>${i >= 3 ? 'Villain look! ' : ''}${how.charAt(0).toUpperCase() + how.slice(1)}</small></button>`; }).join('')}</div>
     <div class="lab">Hair colour</div><div class="swatches">${sw('hair', KA.HAIR)}</div>
     <div class="lab">Outfit colour</div><div class="swatches">${sw('outfit', KA.OUTFIT)}</div>
     <p class="hint-text">The scarf is ${esc(p.name)}'s player colour. Change it with the pencil on the village screen.</p>
@@ -723,7 +723,7 @@ function skyEvent(a, el) {
   const s = p.sky;
   switch (a) {
     case 'sky-setup': setup = initSetup(p); A.sfx('tap'); go('skySetup'); return true;
-    case 'sky-pick': { const k = el.dataset.k; setup[k] = k === 'hero' ? Number(el.dataset.v) : el.dataset.v; if (k === 'hero' && !s.made) { const d = KA.heroDefaults(setup.hero); setup.hair = d.hair; setup.outfit = d.outfit; } A.sfx('tap'); render(); return true; }
+    case 'sky-pick': { const k = el.dataset.k; setup[k] = k === 'hero' ? Number(el.dataset.v) : el.dataset.v; if (k === 'hero') { const d = KA.heroDefaults(setup.hero); setup.hair = d.hair; setup.outfit = d.outfit; } A.sfx('tap'); render(); return true; }
     case 'sky-begin': {
       p.hero = setup.hero; s.hair = setup.hair; s.outfit = setup.outfit;
       { const n = String(setup.heroName || '').trim().slice(0, 16); s.name = n && n !== p.name ? n : ''; }

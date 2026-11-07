@@ -17,11 +17,14 @@ S.EL = {
 const BEATS = {blossom:'tide', tide:'ember', ember:'blossom'};
 S.weakTo = el => Object.keys(BEATS).find(k => BEATS[k] === el);
 S.mult = (att, def, mira) => att === 'storm' ? 1.3 : BEATS[att] === def ? (mira ? 2.3 : 2) : BEATS[def] === att ? .5 : 1;
-S.MOVES = {blossom:['Petal Slash', 'Blossom Bloom', 'Petal Arrow'], tide:['Tide Cut', 'Tide Wave', 'Tide Arrow'], ember:['Ember Strike', 'Ember Flare', 'Ember Arrow'], storm:['Storm Edge', 'Storm Call', 'Storm Arrow']};
-S.SPECIAL = ['SKY BLADE', 'STARFALL BLOOM', 'COMET ARROW'];
+/* Five hero looks, each with its own weapon and battle perk. Looks 3 and 4 are villain-styled heroes. */
+S.MOVES = {blossom:['Petal Slash', 'Blossom Bloom', 'Petal Arrow', 'Petal Reap', 'Petal Twin Cut'], tide:['Tide Cut', 'Tide Wave', 'Tide Arrow', 'Tide Reap', 'Riptide Daggers'], ember:['Ember Strike', 'Ember Flare', 'Ember Arrow', 'Ember Reap', 'Flame Daggers'], storm:['Storm Edge', 'Storm Call', 'Storm Arrow', 'Storm Reap', 'Thunder Daggers']};
+S.SPECIAL = ['SKY BLADE', 'STARFALL BLOOM', 'COMET ARROW', 'MOON SCYTHE', 'SHADOW STAR STORM'];
 /* the Sky shrine's special: every guardian you defeated attacks with you, and you get a heart back */
 S.SPECIAL2 = 'GUARDIAN CALL';
-S.STYLE = ['Sword: every hit strikes twice', 'Staff: extra damage on weak spots', 'Bow: lucky critical hits'];
+S.STYLE = ['Sword: every hit strikes twice', 'Staff: extra damage on weak spots', 'Bow: lucky critical hits', 'Scythe: big hits, huge on Mega moves', 'Daggers: two quick cuts, sometimes three'];
+S.LOOKS = ['Kai the Sky Swordfighter', 'Mira the Blossom Mage', 'Jax the Comet Archer', 'Rook the Shadow Knight', 'Kage the Night Ninja'];
+S.HEROES = S.STYLE.length;
 /* The hero is called whatever the kid types; blank means the kid's own name. */
 S.heroName = p => ((p.sky && p.sky.name) || '').trim() || p.name;
 /* Move strength: a harder question powers a stronger hit. d = how many math steps above the kid's level. */
@@ -461,6 +464,8 @@ PUM.games.sky = function (o) {
     b.ok = ok; b.isCrit = crit;
     setState(ok ? 'resolve' : 'miss');
   }
+  /* each weapon's hit strength: sword and daggers hit several times for less, the scythe hits big (bigger on Mega) */
+  const heroPower = () => p.hero === 0 ? .55 : p.hero === 4 ? .5 : p.hero === 3 ? (b.tierUsed && b.tierUsed.k === 'mega' ? 1.35 : 1.05) : 1;
   function damage(el, factor) {
     let m = S.mult(el, b.el, mira) * factor;
     if (p.hero === 2 && Math.random() < .2) { m *= 1.5; b.lucky = true; }
@@ -560,7 +565,7 @@ PUM.games.sky = function (o) {
         else setState('crack');
         return;
       }
-      setState('atk'); b.hitsLeft = p.hero === 0 ? 2 : 1;
+      setState('atk'); b.hitsLeft = p.hero === 0 ? 2 : p.hero === 4 ? (Math.random() < .3 ? 3 : 2) : 1; b.hitsN = b.hitsLeft;
       g.meter = Math.min(1, g.meter + st.meter);
     }
     else if (b.state === 'crack' && b.tm > .7) toAsk('shield');
@@ -576,7 +581,7 @@ PUM.games.sky = function (o) {
       const col = S.EL[b.move].col;
       const bounce = b.TY.armor && b.tierUsed && b.tierUsed.k === 'light';
       if (b.hitsLeft > 0 && bounce && b.tm > .35) { b.hitsLeft = 0; g.bounces = (g.bounces || 0) + 1; A.sfx('block'); b.x = 6; num(Wd * .66, Hd * .3 - 40, 'BOUNCE!', '#FFE27A', true); parts.burst(Wd * .66, Hd * .3, 14, {speed:220, life:.5, size:3, color:['#FFE27A', '#FFFFFF']}); banner('Too tough!', 'Use a Strong or Mega move', 1.6, '#FFB347'); say('Too tough! Use a Strong or Mega move.'); }
-      if (b.hitsLeft > 0 && b.tm > (p.hero === 0 ? (b.hitsLeft === 2 ? .3 : .55) : .35)) { b.hitsLeft--; hitFoe(damage(b.move, (p.hero === 0 ? .55 : 1) * (b.isCrit ? 1.35 : 1) * (b.tierUsed ? b.tierUsed.mult : 1)), col, b.isCrit || (b.tierUsed && b.tierUsed.k === 'mega')); }
+      if (b.hitsLeft > 0 && b.tm > (b.hitsN > 1 ? .3 + (b.hitsN - b.hitsLeft) * (p.hero === 4 ? .18 : .25) : .35)) { b.hitsLeft--; if (p.hero === 4 && b.hitsN === 3 && b.hitsLeft === 0) num(Wd * .66, Hd * .3 - 80, 'TRIPLE!', '#5BFFB0', true); hitFoe(damage(b.move, heroPower() * (b.isCrit ? 1.35 : 1) * (b.tierUsed ? b.tierUsed.mult : 1)), col, b.isCrit || (b.tierUsed && b.tierUsed.k === 'mega')); }
       if (!b.compDone && b.tm > .95) { b.compDone = true; b.compFx = 1; hitFoe(Math.max(1, Math.round(st.atk * (.25 + .04 * comp.lv) * S.mult(comp.el, b.el))), S.EL[comp.el].col, false); }
       if (b.tm > 1.5) { b.compDone = false; afterHeroTurn(); }
     }
