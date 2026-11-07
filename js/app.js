@@ -96,18 +96,19 @@ function privacyNote() {
   </div>` : ''}</div>`;
 }
 
+/* the lobby is only "who's playing?": each kid as a big letter badge in their colour, nothing about the games */
+const kidBadge = p => `<span class="kid-badge" style="--c:var(--${p.color})" aria-hidden="true">${esc((p.name || '?').trim().charAt(0).toUpperCase() || '?')}</span>`;
 function renderHome() {
   const ps = [...S.players].sort((a, b) => a.created - b.created);
   return `
-  <header class="top"><div><h1>Power-Up Math</h1><p class="sub">Solve math to build a whole town with the truck crew, or save the three sky islands.</p></div>${muteBtn()}</header>
-  <div class="hero-strip" aria-hidden="true">${PUM.truckSVG('excavator', 'marigold')}${PUM.SKYART.portraitImg(PUM.SKYART.look(0, null, null, 'berry'))}</div>
-  ${installCard()}
-  <section class="block"><h2>Who's playing?</h2>
-    <div class="players">${ps.map(p => `<button class="player" data-act="open" data-id="${p.id}">${avatar(p, 'av')}<span class="pname">${esc(p.name)}</span><span class="pmeta">Last: ${PUM.THEMES[p.theme].game}</span></button>`).join('')}
+  <header class="top lobby-top"><div><span class="kicker">Power-Up Math</span><h1>Who's playing?</h1></div>${muteBtn()}</header>
+  <section class="block lobby">
+    <div class="players">${ps.map(p => `<button class="player" data-act="open" data-id="${p.id}">${kidBadge(p)}<span class="pname">${esc(p.name)}</span></button>`).join('')}
       <button class="player add" data-act="add-player">${icon('plus')}<span>Add player</span></button></div>
-    ${ps.length ? '' : `<p class="empty-note">Add each kid once with their name, age and colour. They'll start at the right math level and can play every game.</p>`}
+    ${ps.length ? '' : `<p class="empty-note">Add each kid once with their name, age and colour.</p>`}
     ${syncChip()}
   </section>
+  ${installCard()}
   ${privacyNote()}`;
 }
 function renderForm() {
