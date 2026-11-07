@@ -199,8 +199,12 @@ R.drawPiece = function (ctx, job, x, y, w, t = 0) {
   ctx.restore();
 };
 /* stage: steps done (can be fractional while it grows). Returns the y of the top of the walls. */
+/* Each step shows as what it really is: dig makes a pit, gravel fills it with a stone bed, concrete pours a smooth
+   slab, bricks raise the walls course by course, steel beams make the bridge's girders, and the crane adds the top piece. */
 R.drawBuilding = function (ctx, job, x, y, w, stage, o = {}) {
-  const n = job.steps.length, dug = clamp(stage, 0, 1), k = clamp((stage - 1) / (n - 2), 0, 1), pf = clamp(stage - (n - 1), 0, 1);
+  const steps = job.steps, f = i => clamp(stage - i, 0, 1);
+  const part = type => { let sum = 0, c = 0; steps.forEach((st, i) => { if (st === type) { sum += f(i); c++; } }); return c ? sum / c : 0; };
+  const dug = f(0), gravel = part('gravel'), conc = part('concrete'), k = part('bricks'), pf = part('crane'), hasConc = steps.includes('concrete');
   ctx.save(); ink(ctx, w);
   const bridge = job.b === 'bridge';
   if (!bridge) {
@@ -211,9 +215,24 @@ R.drawBuilding = function (ctx, job, x, y, w, stage, o = {}) {
       ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = Math.max(1, w * .008); ctx.beginPath(); ctx.moveTo(x - w * .36, y - w * .06); ctx.lineTo(x + w * .36, y - w * .06); ctx.stroke();
       ink(ctx, w);
     }
-    if (dug > 0) { ctx.fillStyle = '#B9BFC7'; ctx.fillRect(x - w * .42, y - w * .05 * dug, w * .84, w * .05 * dug); ctx.strokeRect(x - w * .42, y - w * .05 * dug, w * .84, w * .05 * dug); }
+    if (dug > 0) {
+      const pw = w * .84, d = w * .08 * dug, px = x - pw / 2;
+      ctx.fillStyle = '#7A5235'; ctx.fillRect(px, y, pw, d); ctx.fillStyle = 'rgba(40,20,10,.22)'; ctx.fillRect(px, y, pw, Math.min(d, w * .022)); ctx.strokeRect(px, y, pw, d);
+      if (gravel + conc === 0 && k === 0) { ctx.fillStyle = '#9C6A42'; ctx.beginPath(); ctx.moveTo(px - w * .13 * dug, y); ctx.quadraticCurveTo(px - w * .06, y - w * .09 * dug, px + w * .01, y); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      if (gravel > 0) {
+        const gh = d * gravel, R2 = mulberry32(7);
+        ctx.fillStyle = '#ABA59B'; ctx.fillRect(px, y + d - gh, pw, gh);
+        ctx.fillStyle = '#7F7A72'; for (let i = 0; i < 90 * gravel; i++) { ctx.beginPath(); ctx.arc(px + R2() * pw, y + d - R2() * gh, w * .005 + R2() * w * .005, 0, 7); ctx.fill(); }
+        ctx.strokeRect(px, y + d - gh, pw, gh);
+      }
+      if (conc > 0) {
+        const ch = (d + w * .025) * conc;
+        ctx.fillStyle = '#CFC9BE'; ctx.fillRect(px, y + d - ch, pw, ch); ctx.strokeRect(px, y + d - ch, pw, ch);
+        ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillRect(px + 3, y + d - ch + 2, pw - 6, Math.min(ch * .4, w * .01));
+      }
+    }
   }
-  const fy = y - w * .05;
+  const fy = y - (hasConc ? w * .025 * conc : 0);
   let top = fy;
   const walls = (bw, bh, col, deco) => {
     const h = bh * w * k; top = fy - bh * w;
@@ -237,9 +256,14 @@ R.drawBuilding = function (ctx, job, x, y, w, stage, o = {}) {
     ctx.fillStyle = '#8E6640'; ctx.fillRect(x - w * .62, y - w * .18, w * .16, w * .18); ctx.fillRect(x + w * .46, y - w * .18, w * .16, w * .18);
     ctx.fillStyle = '#4AA3DF'; ctx.fillRect(x - w * .46, y - w * (.06 + rl * .08), w * .92, w * (.06 + rl * .08) + 2);
     ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); for (let i = 0; i < 4; i++) { const wx = x - w * .4 + ((i * .25 + (o.t || 0) * .1) % 1) * w * .8; ctx.moveTo(wx, y - w * .04); ctx.lineTo(wx + w * .06, y - w * .04); } ctx.stroke(); ink(ctx, w);
-    if (dug > 0) { ctx.fillStyle = '#B9BFC7'; for (const px of [-.22, .22]) { ctx.fillRect(x + px * w - w * .06, y - w * .03 * dug, w * .12, w * .03 * dug); ctx.strokeRect(x + px * w - w * .06, y - w * .03 * dug, w * .12, w * .03 * dug); } }
-    const h = w * .2 * k; ctx.fillStyle = '#B9BFC7'; if (h > 0) for (const px of [-.22, .22]) { ctx.fillRect(x + px * w - w * .045, y - w * .03 - h, w * .09, h); ctx.strokeRect(x + px * w - w * .045, y - w * .03 - h, w * .09, h); }
-    top = y - w * .23;
+    /* bridge order: dig footings, pour the piers, lay steel girders, pour the ramps, add the steel railings, lift the deck */
+    const piers = f(1), girders = f(2), ramps = f(3), rails = f(4), deckY = y - w * .23;
+    if (dug > 0) { ctx.fillStyle = '#7A5235'; for (const px of [-.22, .22]) { ctx.fillRect(x + px * w - w * .07, y - w * .03 * dug, w * .14, w * .03 * dug); ctx.strokeRect(x + px * w - w * .07, y - w * .03 * dug, w * .14, w * .03 * dug); } }
+    const h = w * .2 * piers; ctx.fillStyle = '#CFC9BE'; if (h > 0) for (const px of [-.22, .22]) { ctx.fillRect(x + px * w - w * .045, y - w * .03 - h, w * .09, h); ctx.strokeRect(x + px * w - w * .045, y - w * .03 - h, w * .09, h); }
+    if (girders > 0) { const L = w * 1.24 * girders; ctx.fillStyle = P('sea'); ctx.fillRect(x - w * .62, deckY - w * .035, L, w * .035); ctx.strokeRect(x - w * .62, deckY - w * .035, L, w * .035); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); for (let i = 1; i < 12 * girders; i++) { ctx.moveTo(x - w * .62 + i * w * .1, deckY - w * .03); ctx.lineTo(x - w * .62 + i * w * .1, deckY - w * .005); } ctx.stroke(); ink(ctx, w); }
+    if (ramps > 0) { ctx.fillStyle = '#CFC9BE'; for (const sgn of [-1, 1]) { const ex = x + sgn * w * .62, ix = x + sgn * w * (.62 - .2 * ramps); ctx.beginPath(); ctx.moveTo(ex, y - w * .18); ctx.lineTo(ex, deckY - w * .035 * ramps); ctx.lineTo(ix, deckY - w * .035 * ramps); ctx.lineTo(ix, y - w * .18); ctx.closePath(); ctx.fill(); ctx.stroke(); } }
+    if (rails > 0) { const rh = w * .06 * rails; ctx.strokeStyle = P('sea'); ctx.lineWidth = Math.max(2, w * .012); ctx.beginPath(); ctx.moveTo(x - w * .6, deckY - w * .035 - rh); ctx.lineTo(x + w * .6, deckY - w * .035 - rh); for (let i = 0; i <= 12; i++) { const rx = x - w * .6 + i * w * .1; ctx.moveTo(rx, deckY - w * .035); ctx.lineTo(rx + (i % 2 ? -1 : 1) * w * .05, deckY - w * .035 - rh); } ctx.stroke(); ink(ctx, w); }
+    top = deckY - w * .035;
   }
   if (pf > 0 && !o.noPiece) { ctx.globalAlpha = Math.min(1, pf * 2); R.drawPiece(ctx, job, x, top - (1 - pf) * w * .4, w, o.t); ctx.globalAlpha = 1; }
   ctx.restore();
@@ -267,7 +291,9 @@ R.drawTown = function (ctx, W, H, p, t, cur) {
     const J = R.job(i), y = 150 + i * 170, boss = i === 4;
     const x = boss ? roadX(riverY) : roadX(y) + (i % 2 ? 1 : -1) * W * .26;
     const ly = boss ? riverY + 18 : y + 40;
-    const locked = i > pr.unlocked, built = R.built(p, i);
+    const locked = i > pr.unlocked, built = R.built(p, i), next = i === cur && !locked;
+    if (next) { const pu = .5 + .5 * Math.sin(t * 4); ctx.fillStyle = `rgba(255,226,122,${.35 + .3 * pu})`; ctx.beginPath(); ctx.ellipse(x, ly, bw * .66 + pu * 6, bw * .17 + pu * 2, 0, 0, 7); ctx.fill(); }
+    if (!built) { ctx.save(); ctx.globalAlpha = locked ? .16 : .3; R.drawBuilding(ctx, J, x, boss ? riverY + 30 : ly, boss ? bw * 1.15 : bw, J.steps.length, {t, river:.4}); ctx.restore(); }
     let stage = built ? jb.steps.length : (job && job.i === i ? job.stage : 0);
     if (locked) {
       ctx.fillStyle = 'rgba(29,37,64,.18)'; ctx.beginPath(); ctx.ellipse(x, ly, bw * .5, bw * .1, 0, 0, 7); ctx.fill();
@@ -277,10 +303,12 @@ R.drawTown = function (ctx, W, H, p, t, cur) {
       R.drawBuilding(ctx, J, x, riverY + 30, bw * 1.15, stage, {t, river:built ? 0 : .4});
     } else R.drawBuilding(ctx, J, x, ly, bw, stage, {t});
     const plateY = ly + (boss ? 26 : 26);
-    ctx.font = '700 15px Lexend, sans-serif'; const label = J.name, tw = ctx.measureText(label).width + 24;
+    ctx.font = '700 15px Lexend, sans-serif'; const label = `${i + 1}. ${J.name}${locked ? ' (locked)' : ''}`, tw = ctx.measureText(label).width + (built ? 44 : 24);
     ctx.fillStyle = locked ? 'rgba(29,37,64,.55)' : '#FFFFFF'; ctx.strokeStyle = '#4A3226'; ctx.lineWidth = 3; E.rr(ctx, x - tw / 2, plateY, tw, 28, 10); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = locked ? '#FFFFFF' : '#4A3226'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x, plateY + 15);
+    ctx.fillStyle = locked ? '#FFFFFF' : '#4A3226'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x - (built ? 10 : 0), plateY + 15);
+    if (built) { ctx.fillStyle = '#6E9A4A'; ctx.beginPath(); ctx.arc(x + tw / 2 - 16, plateY + 14, 9, 0, 7); ctx.fill(); ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x + tw / 2 - 20, plateY + 14); ctx.lineTo(x + tw / 2 - 17, plateY + 18); ctx.lineTo(x + tw / 2 - 11, plateY + 10); ctx.stroke(); }
     if (built) { const st = pr.stars[i]; for (let s2 = 0; s2 < 3; s2++) { ctx.fillStyle = s2 < st ? '#FFC233' : 'rgba(255,255,255,.7)'; E.starPath(ctx, x - 22 + s2 * 22, plateY + 44, 9, 4, 5); ctx.fill(); ctx.strokeStyle = '#4A3226'; ctx.lineWidth = 2; ctx.stroke(); } }
+    if (next) OT(ctx, job && job.i === i ? 'Keep building! Tap here' : 'Next job! Tap here', x, ly - bw * .78 - 44 + Math.sin(t * 4) * 6, 19, '#FFE27A');
     if (i === cur && !locked) { const by = ly - bw * .78 + Math.sin(t * 4) * 6; ctx.fillStyle = '#FFC233'; ctx.strokeStyle = '#4A3226'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 14, by - 20); ctx.lineTo(x + 14, by - 20); ctx.lineTo(x + 14, by - 4); ctx.lineTo(x + 24, by - 4); ctx.lineTo(x, by + 18); ctx.lineTo(x - 24, by - 4); ctx.lineTo(x - 14, by - 4); ctx.closePath(); ctx.fill(); ctx.stroke(); }
     lots.push({i, x, y:ly - bw * .3, r:bw * .62});
     if (i === cur && !locked) { const hop = Math.max(0, Math.sin(t * 2.4)) ** 6, side = x < W / 2 ? 1 : -1, tx2 = boss ? x - bw * .8 : x + side * bw * .78; R.drawTruck(ctx, 'dump', tx2, ly + 4, Math.min(96, W * .24), R.paint(p, 'dump'), {t, mood:'grin', hop:hop * .1, sq:-hop * .03, flip:side < 0, look:-1}); }
@@ -339,7 +367,8 @@ PUM.games.load = function (o) {
   const {player, assist, api} = o;
   const mode = o.mat, M = R.MATS[mode], kind = M.loader, truck = M.truck, color = o.color;
   let gq, tries = 0;
-  do { gq = PUM.gateQuestion(player, 3); } while ((gq.q.ans < 1 || gq.q.ans > 500) && tries++ < 12);
+  /* never a load of 1 or 2: every step needs at least 3 */
+  do { gq = PUM.gateQuestion(player, 3, tries > 25 ? 1 : 0); } while ((gq.q.ans < 3 || gq.q.ans > 500) && tries++ < 50);
   const q = gq.q, target = Math.max(1, q.ans);
   const g = {t:0, count:0, queue:[], anim:null, state:'play', msg:'', msgT:0, fixing:false, doneT:0, roll:0, spin:0, exact:false, flinch:0, happyT:0, wigT:0};
   const parts = E.Particles();
@@ -351,7 +380,9 @@ PUM.games.load = function (o) {
   };
   const say = (m, t = 1.6) => { g.msg = m; g.msgT = t; };
   const isDig = o.dig;
-  api.showQuestion(q, isDig ? `Dig this many ${M.unit}:` : `Load this many ${M.unit}:`);
+  const sp = String(q.spoken || '').trim(), verb = isDig ? 'Dig' : 'Load';
+  const spoken = /[?.!]$/.test(sp) ? `${sp} ${verb} that many ${M.unit}.` : `${verb} this many ${M.unit}. ${sp}.`;
+  api.showQuestion(Object.assign({}, q, {spoken}), isDig ? `Dig this many ${M.unit}:` : `Load this many ${M.unit}:`);
   function press(n) {
     if (g.state !== 'play') return;
     if (n < 0) { if (g.queue.length) g.queue.pop(); else if (g.count > 0) { g.count--; PUM.audio.sfx('tap'); } return; }
@@ -581,10 +612,10 @@ PUM.games.unload = function (o) {
       g.s = lerp(s0, s1, ease(b / .72));
       if (truck !== 'flatbed') g.pile = Math.max(0, cargo * (1 - ease(b / .72)));
       g.brickT -= dt;
-      if (g.brickT <= 0 && b < .66) {
-        g.brickT = .09;
-        const tx = l.bx + (Math.random() - .5) * l.bw * .6, ty = l.gy - l.bw * (.06 + .3 * Math.random() * ease(b / .72));
-        g.coins.push({kind:'brick', t:0, dur:.45, from:[l.pileX, l.gy - 10], to:[tx, ty]});
+      if (g.brickT <= 0 && b < .66 && mat !== 'concrete') {
+        if (mat === 'gravel' || mat === 'dirt') { g.brickT = .035; g.coins.push({kind:'stone', t:0, dur:.4, h:28, from:[l.pileX + (Math.random() - .5) * 16, l.gy - 6], to:[l.bx + (Math.random() - .5) * l.bw * .8, l.gy + l.bw * .03]}); }
+        else if (mat === 'beams') { g.brickT = .3; g.coins.push({kind:'beam', t:0, dur:.7, h:130, from:[l.pileX, l.gy - 10], to:[l.bx + (Math.random() - .5) * l.bw * .9, l.gy - l.bw * .25]}); }
+        else { g.brickT = .09; const tx = l.bx + (Math.random() - .5) * l.bw * .55, ty = l.gy - l.bw * (.03 + .32 * ease(b / .72)) + Math.random() * 6; g.coins.push({kind:'brick', t:0, dur:.45, from:[l.pileX, l.gy - 10], to:[tx, ty]}); }
       }
       once('build', () => PUM.audio.sfx('brick'));
       if (b > .72) once('built', () => { PUM.audio.sfx('up'); g.shake = 6; parts.burst(l.bx, l.gy - l.bw * .3, 26, {speed:240, color:['#FFC233', '#FFFFFF', '#22A06B', '#E8577A'], shape:'star', size:7, life:1}); for (let k = 0; k < 10; k++) parts.add({x:l.bx + (Math.random() - .5) * l.bw, y:l.gy - 4, vx:(Math.random() - .5) * 120, vy:-40 - Math.random() * 40, life:.9, size:8, grow:2, color:'rgba(185,150,110,.55)'}); say(R.DONE_LABEL[mat] || 'Built!', 2.4, s1 === n - 1 ? `Next: lift the ${R.PIECE[job.piece]} with the crane!` : ''); });
@@ -601,7 +632,7 @@ PUM.games.unload = function (o) {
     for (const c of g.coins) { if (c.landed) continue; c.t += dt / c.dur; if (c.t >= 1) { c.landed = true; if (c.kind === 'coin') { g.paid++; api.addMp(1); PUM.audio.sfx('coin'); } else if (Math.random() < .3) PUM.audio.sfx('brick'); } }
     for (const b of g.boxes) if (b.t < 1) { b.t = Math.min(1, b.t + dt / .4); if (b.t >= 1) PUM.audio.sfx('brick'); }
   }
-  function arc(c) { const f = easeOut(c.t); return [lerp(c.from[0], c.to[0], c.t), lerp(c.from[1], c.to[1], f) - Math.sin(c.t * Math.PI) * 70]; }
+  function arc(c) { const f = easeOut(c.t); return [lerp(c.from[0], c.to[0], c.t), lerp(c.from[1], c.to[1], f) - Math.sin(c.t * Math.PI) * (c.h != null ? c.h : 70)]; }
   function draw(ctx, w, h) {
     W = w; H = h; const l = L(), t = g.t;
     ctx.save(); if (g.shake) ctx.translate((Math.random() - .5) * g.shake, (Math.random() - .5) * g.shake);
@@ -614,6 +645,24 @@ PUM.games.unload = function (o) {
       ctx.beginPath(); ctx.moveTo(l.pileX - pw, l.gy); ctx.quadraticCurveTo(l.pileX, l.gy - ph * 2, l.pileX + pw, l.gy); ctx.closePath(); ctx.fill(); ctx.stroke();
     }
     const unU = clamp((t - T1) / (T2 - T1), 0, 1), bU = clamp((t - T2) / (T3 - T2), 0, 1);
+    if (mat === 'concrete' && t > T2 && bU < .72) {
+      const x0 = l.pileX, y0 = l.gy - 4, x1 = l.bx + l.bw * .3, y1 = l.gy + l.bw * .03, cx = (x0 + x1) / 2, cy = l.gy - 10;
+      ctx.save(); ctx.lineCap = 'round';
+      const path = () => { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(cx, cy, x1, y1); };
+      path(); ctx.strokeStyle = P('ink'); ctx.lineWidth = 15 * (1 - bU * .5); ctx.stroke();
+      path(); ctx.strokeStyle = '#CFC9BE'; ctx.lineWidth = 11 * (1 - bU * .5); ctx.stroke();
+      path(); ctx.setLineDash([7, 11]); ctx.lineDashOffset = -t * 70; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 3; ctx.stroke();
+      ctx.restore();
+    }
+    if ((mat === 'gravel' || mat === 'concrete') && bU > .74 && bU < .99) {
+      const sx = l.bx - l.bw * .4 + (bU - .74) / .25 * l.bw * .8, sy = l.gy + (mat === 'concrete' ? -l.bw * .02 : l.bw * .01);
+      ctx.save(); ctx.strokeStyle = P('ink'); ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(sx + 26, sy - 46); ctx.lineTo(sx, sy - 4); ctx.stroke();
+      if (mat === 'gravel') { ctx.beginPath(); ctx.moveTo(sx - 12, sy - 4); ctx.lineTo(sx + 12, sy - 4); for (let i = -2; i <= 2; i++) { ctx.moveTo(sx + i * 6, sy - 4); ctx.lineTo(sx + i * 6, sy + 3); } ctx.stroke(); }
+      else { ctx.fillStyle = '#B9BFC7'; ctx.fillRect(sx - 14, sy - 6, 28, 5); ctx.strokeRect(sx - 14, sy - 6, 28, 5); }
+      ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillRect(l.bx - l.bw * .42, sy - 2, sx - (l.bx - l.bw * .42), 3);
+      ctx.restore();
+    }
     for (const [k, b] of g.boxes.entries()) {
       if (truck === 'flatbed' && t > T2 && k >= Math.ceil(boxN * (1 - bU))) continue;
       const f = easeOut(b.t), x = lerp(b.from[0], b.to[0], b.t), y = lerp(b.from[1], b.to[1], f) - Math.sin(b.t * Math.PI) * 50;
@@ -636,6 +685,8 @@ PUM.games.unload = function (o) {
       if (c.landed) continue;
       const [x, y] = arc(c);
       if (c.kind === 'coin') { ctx.fillStyle = '#FFC233'; ctx.strokeStyle = P('ink'); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(x, y, 11 * Math.abs(Math.cos(c.t * 9)) + 2, 11, 0, 0, 7); ctx.fill(); ctx.stroke(); }
+      else if (c.kind === 'stone') { ctx.fillStyle = mat === 'dirt' ? '#9C6A42' : '#9A958C'; ctx.strokeStyle = P('ink'); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, 7); ctx.fill(); ctx.stroke(); }
+      else if (c.kind === 'beam') { ctx.save(); ctx.translate(x, y); ctx.rotate((1 - c.t) * -.7); ctx.fillStyle = P('sea'); ctx.strokeStyle = P('ink'); ctx.lineWidth = 2; ctx.fillRect(-l.ts * .14, -4, l.ts * .28, 8); ctx.strokeRect(-l.ts * .14, -4, l.ts * .28, 8); ctx.restore(); }
       else { ctx.fillStyle = M.col; ctx.strokeStyle = P('ink'); ctx.lineWidth = 1.5; ctx.fillRect(x - 6, y - 4, 12, 8); ctx.strokeRect(x - 6, y - 4, 12, 8); }
     }
     parts.draw(ctx);
