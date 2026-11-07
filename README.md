@@ -14,6 +14,10 @@ Each kid is added once. In the lobby they tap their name, then pick a game: Big 
 - **Soccer: Striker Rush (parked, not shown in the game for now).** A top-down attacking game. Drag to dribble past blockers, chasers and slide tackles, break defensive walls with math passes, and shoot past a keeper who gets better every level. Bosses have giant keepers and defenders.
 - **Hero: Sky Quest.** An anime adventure. Make a hero (any name the kid types, defaulting to their own; a look and a weapon: sword, staff or bow) and pick a spirit companion, then restore three islands one quest at a time (Blossom Isle, Tide Grotto and Ember Peak, 5 quests each): explore side-scrolling stages, open chests and spirit gates with math, and fight turn-based battles where right answers power element moves, a streak fills the Spirit meter for a special-move cut-in, and you block enemy attacks by answering a quick question before the timer runs out (a fast answer is a perfect block). Each island ends with a guardian (Hanamori, Umikaze, Homura) with three phases, who joins your team once defeated and teaches a move (double jump, dash, glide). Two guardians open the Sky shrine and its second special, Guardian Call. Crystals rebuild Sky Village (dojo, spirit garden, forge, healing spring, lantern tower), snacks level up and evolve your spirits, and XP raises your hero level.
 
+## Install as an app
+
+The game is a web app (PWA): on Android or Chrome the lobby shows a "Get the app" card with an Install button, and on iPhone or iPad it explains Share, then Add to Home Screen. Installed, it opens full screen and keeps working offline. `manifest.webmanifest` and `icons/` describe the app, and `sw.js` caches the game (network-first, so updates show up right away online). When adding a new script, add it to the `CORE` list in `sw.js` too.
+
 ## How it's built
 
 - Plain HTML, CSS and JavaScript. There's no build step and no libraries, and it's hosted on Netlify, which deploys every push to `main`.

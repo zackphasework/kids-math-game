@@ -58,11 +58,30 @@ store.sync.onChange = () => { const el = document.getElementById('sync'); if (el
 store.sync.onPulled = () => { if (pid && !P()) { pid = null; if (view !== 'form') view = 'home'; } if (view === 'home' || view === 'games' || view === 'base' || view === 'map' || view === 'garage' || view === 'skyGarden' || view === 'skyForge') render(); };
 
 /* ---------- screens ---------- */
+/* ---------- install as an app ----------
+   Chrome and Android offer a real install prompt; iPhone and iPad Safari need Share, then Add to Home Screen. */
+let installEvt = null;
+const isStandalone = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const installLater = () => { try { return Date.now() - Number(localStorage.getItem('pum-install-later') || 0) < 3 * 864e5; } catch (e) { return false; } };
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (view === 'home') render(); });
+window.addEventListener('appinstalled', () => { installEvt = null; if (view === 'home') render(); });
+function installCard() {
+  if (isStandalone() || installLater()) return '';
+  const art = `<img class="inst-icon" src="icons/icon-192.png" alt="">`;
+  if (installEvt) return `<section class="block install"><div class="inst-row">${art}<div><h2>Get the app</h2><p>Put Power-Up Math on this device's home screen. It opens full screen and works without internet.</p></div></div>
+    <div class="inst-btns"><button class="btn go" data-act="install">${icon('plus')} Install</button><button class="btn ghost small" data-act="install-later">Not now</button></div></section>`;
+  if (isIOS) return `<section class="block install"><div class="inst-row">${art}<div><h2>Get the app</h2><p>Tap <b>Share</b> <span class="inst-share" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 12v8h14v-8"/></svg></span> at the top or bottom of Safari, then <b>Add to Home Screen</b>.</p></div></div>
+    <div class="inst-btns"><button class="btn ghost small" data-act="install-later">Got it</button></div></section>`;
+  return '';
+}
+
 function renderHome() {
   const ps = [...S.players].sort((a, b) => a.created - b.created);
   return `
   <header class="top"><div><h1>Power-Up Math</h1><p class="sub">Solve math to build a whole town with the truck crew, or save the three sky islands.</p></div>${muteBtn()}</header>
   <div class="hero-strip" aria-hidden="true">${PUM.truckSVG('excavator', 'marigold')}${PUM.SKYART.portraitImg(PUM.SKYART.look(0, null, null, 'berry'))}</div>
+  ${installCard()}
   <section class="block"><h2>Who's playing?</h2>
     <div class="players">${ps.map(p => `<button class="player" data-act="open" data-id="${p.id}">${avatar(p, 'av')}<span class="pname">${esc(p.name)}</span><span class="pmeta">Last: ${PUM.THEMES[p.theme].game}</span></button>`).join('')}
       <button class="player add" data-act="add-player">${icon('plus')}<span>Add player</span></button></div>
@@ -592,8 +611,8 @@ function skyAfterRender(p) {
       tap(x, y) { const h = hits.find(o => Math.hypot(o.x - x, o.y - y) < o.r); if (!h) return; A.ac(); A.sfx('tap'); skySel = h.k; render(); const el = document.getElementById('b-' + h.k); if (el) el.scrollIntoView({block:'center', behavior:'smooth'}); }}, w => Math.min(460, w * .92));
   }
   if (view === 'map') {
-    let nodes = []; const isles = isleInfo(p);
-    skyCanvas('skymap', {draw(ctx, W, H, t) { nodes = KA.skyMap(ctx, W, H, t, {isle:skyIsle || 0, sel:questSel, isles}); },
+    let nodes = []; const isles = isleInfo(p), look = KA.lookOf(p);
+    skyCanvas('skymap', {draw(ctx, W, H, t) { nodes = KA.skyMap(ctx, W, H, t, {isle:skyIsle || 0, sel:questSel, isles, look}); },
       tap(x, y) { const n = nodes.find(o => Math.hypot(o.x - x, o.y - y) < o.r); if (!n) return; A.ac(); if (n.isle != null) pickIsle(n.isle); else selQuest(n.i); }}, w => Math.min(540, w * 1.14));
   }
   if (view === 'skyGarden') {
@@ -953,6 +972,8 @@ app.addEventListener('click', e => {
       render(); PUM.fx.burst(app.querySelector(`[data-k="${k}"]`) || app.querySelector('.upgs'));
       break;
     }
+    case 'install': { if (!installEvt) break; const ev = installEvt; installEvt = null; ev.prompt(); ev.userChoice.finally(() => render()); break; }
+    case 'install-later': { try { localStorage.setItem('pum-install-later', String(Date.now())); } catch (e) {} A.sfx('tap'); render(); break; }
     case 'mute': { S.muted = !S.muted; store.saveLocal(); if (S.muted) A.hush(); else A.sfx('tap'); const m = document.getElementById('mute'); if (m) m.outerHTML = muteBtn(); break; }
     case 'set': {
       const p = P(); if (!p) break;
@@ -1037,4 +1058,5 @@ function saveForm() {
 PUM.app = {go, P, get play() { return play; }, startGame, startQuest, rigLoad, rigDrive, rigCrane, rigUnload, get view() { return view; }};
 render();
 store.pull();
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') && !/[?&]nosw/.test(location.search)) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();

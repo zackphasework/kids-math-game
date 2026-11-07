@@ -1129,38 +1129,203 @@ K.village = function (c, W, H, t, st, sel) {
   return hits;
 };
 
-/* ---------- the sky map: the island in focus with its five quest nodes, the other two small at the top.
-   info: {isle, sel, isles:[{name, open, heal, cleared, quests:[{i, boss, locked, cur, stars}]}]}. Returns tap areas. ---------- */
+/* ---------- the sky map ----------
+   The island in focus is a proper floating island: a grassy slab with a cliff edge, rocky underside with
+   glowing crystals, a waterfall (or tide spill, or lava fall) off its edge, scenery, and a winding path
+   with the five quest stops. The other two islands float smaller at the top, joined by sky routes.
+   The still parts are drawn once into a cache; only glows, water, clouds and markers animate.
+   info: {isle, sel, look, isles:[{name, open, heal, cleared, quests:[{i, boss, locked, cur, stars}]}]}. Returns tap areas. */
+const MAP_STYLE = [
+  {top:['#9BEFC8', '#5CCB9F', '#3AA582'], rim:'#C8FFE2', face:['#6A5AA8', '#3A2F78'], under:['#3A2F78', '#1C1648'], crystal:'#FFC6DD', path:['#F6E7CF', '#C9A98A'], fall:'#9BE8FF', mist:'rgba(190,240,255,.5)'},
+  {top:['#8FF0DF', '#3FC6B4', '#249A92'], rim:'#D2FFF6', face:['#2F6E92', '#18405E'], under:['#18405E', '#0B2238'], crystal:'#7FF0FF', path:['#FFF1D2', '#D8BF94'], fall:'#7FF0FF', mist:'rgba(160,240,255,.55)'},
+  {top:['#9A8A8E', '#6E5C64', '#4E3E48'], rim:'#D8C6C0', face:['#5A2E3A', '#3A1824'], under:['#3A1824', '#1E0A12'], crystal:'#FF9A3D', path:['#C9B2A6', '#8A6E66'], fall:'#FF8A3D', mist:'rgba(255,140,80,.35)'},
+];
+const MAP_NODES = [[-.64, .17], [-.31, -.15], [.0, .15], [.31, -.15], [.63, .05]];
+const mapCache = {};
+function isleOutline(k, r) {
+  const R = seed(101 + k * 7), ph = [R() * 6, R() * 6, R() * 6], pts = [];
+  for (let i = 0; i < 64; i++) { const a = i / 64 * TAU, w = 1 + .05 * Math.sin(a * 3 + ph[0]) + .035 * Math.sin(a * 5 + ph[1]) + .02 * Math.sin(a * 11 + ph[2]); pts.push([Math.cos(a) * r * w, Math.sin(a) * r * .44 * w]); }
+  return pts;
+}
+function tracePath(c, pts, ox, oy) { c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(ox + x, oy + y) : c.moveTo(ox + x, oy + y)); c.closePath(); }
+/* the underside: a jagged rock cone hanging below the slab */
+function underPts(k, r) {
+  const R = seed(203 + k * 13), pts = [], n = 22, depth = r * .95;
+  for (let i = 0; i <= n; i++) { const f = i / n, x = -r + 2 * r * f, e = 1 - Math.pow(Math.abs(2 * f - 1), 1.7), jag = (i % 2 ? .1 : -.04) + (R() - .5) * .1; pts.push([x * .98, r * .1 + depth * e * (.75 + jag)]); }
+  return pts;
+}
+function drawIsleStatic(c, k, r, o) {
+  const S = MAP_STYLE[k], top = isleOutline(k, r), th = r * .13, R = seed(311 + k * 17);
+  /* underside rock with strata */
+  const und = underPts(k, r);
+  c.save(); c.beginPath(); c.moveTo(-r, th * .6); und.forEach(([x, y]) => c.lineTo(x, y + th * .6)); c.lineTo(r, th * .6); c.closePath();
+  const ug = c.createLinearGradient(0, 0, 0, r * 1.05); ug.addColorStop(0, S.under[0]); ug.addColorStop(1, S.under[1]); c.fillStyle = ug; c.fill();
+  c.strokeStyle = LINE; c.lineWidth = Math.max(1.5, r * .012); c.stroke(); c.clip();
+  c.strokeStyle = 'rgba(255,255,255,.08)'; c.lineWidth = Math.max(1, r * .01);
+  for (let i = 1; i < 6; i++) { const y = th + i * r * .14; c.beginPath(); c.moveTo(-r, y); for (let x = -r; x <= r; x += r / 8) c.lineTo(x, y + Math.sin(x / r * 7 + i) * r * .025); c.stroke(); }
+  /* roots and vines */
+  c.strokeStyle = k === 2 ? 'rgba(40,10,20,.6)' : 'rgba(30,60,50,.55)'; c.lineWidth = Math.max(1, r * .012);
+  for (let i = 0; i < 7; i++) { const x = (R() - .5) * r * 1.5, l = r * (.12 + R() * .2); c.beginPath(); c.moveTo(x, th); c.quadraticCurveTo(x + r * .03, th + l * .5, x - r * .02, th + l); c.stroke(); }
+  c.restore();
+  /* cliff face: the slab's thickness */
+  c.save(); tracePath(c, top, 0, th); const fg = c.createLinearGradient(0, -r * .1, 0, r * .55); fg.addColorStop(0, S.face[0]); fg.addColorStop(1, S.face[1]); c.fillStyle = fg; c.fill(); c.strokeStyle = LINE; c.lineWidth = Math.max(1.5, r * .012); c.stroke(); c.restore();
+  c.save(); c.fillStyle = 'rgba(255,255,255,.07)'; for (let i = 0; i < 9; i++) { const a = .15 + i * .32, x = Math.cos(a) * r * .97, y = Math.sin(a) * r * .44 + th * .5; c.fillRect(x - r * .004, y - th * .4, r * .008, th * .8); } c.restore();
+  /* grassy top */
+  c.save(); tracePath(c, top, 0, 0);
+  const tg = c.createRadialGradient(-r * .2, -r * .2, r * .05, 0, 0, r * 1.05); tg.addColorStop(0, S.top[0]); tg.addColorStop(.6, S.top[1]); tg.addColorStop(1, S.top[2]); c.fillStyle = tg; c.fill();
+  c.clip();
+  for (let i = 0; i < 90; i++) { const x = (R() - .5) * 2 * r, y = (R() - .5) * r * .9; c.fillStyle = i % 4 ? 'rgba(255,255,255,.1)' : k === 0 ? 'rgba(255,198,221,.7)' : k === 1 ? 'rgba(255,241,194,.55)' : 'rgba(255,140,60,.35)'; c.beginPath(); c.ellipse(x, y, r * .012, r * .006, 0, 0, TAU); c.fill(); }
+  c.restore();
+  c.save(); tracePath(c, top, 0, 0); c.strokeStyle = LINE; c.lineWidth = Math.max(1.5, r * .013); c.stroke();
+  c.beginPath(); top.forEach(([x, y], i) => { if (y > 0) return; i ? c.lineTo(x, y + r * .012) : c.moveTo(x, y + r * .012); }); c.strokeStyle = S.rim; c.globalAlpha = .55; c.lineWidth = Math.max(1.5, r * .016); c.stroke(); c.restore();
+  if (k === 2) { c.save(); c.strokeStyle = '#FF6A2A'; c.shadowColor = '#FF6A2A'; c.shadowBlur = r * .05; c.lineWidth = Math.max(1, r * .008); for (const [x0, y0] of [[-.5, .05], [.15, -.05], [.45, .22], [-.15, .3]]) { c.beginPath(); c.moveTo(x0 * r, y0 * r); c.lineTo(x0 * r + r * .06, y0 * r + r * .03); c.lineTo(x0 * r + r * .1, y0 * r + r * .01); c.lineTo(x0 * r + r * .16, y0 * r + r * .04); c.stroke(); } c.restore(); }
+  /* the winding path through the five stops (big island only) */
+  const P = MAP_NODES.map(([x, y]) => [x * r, y * r]);
+  const pathLine = () => { const Q = [[P[0][0] - r * .26, P[0][1] + r * .14], ...P]; c.beginPath(); c.moveTo(Q[0][0], Q[0][1]); for (let i = 0; i < Q.length - 1; i++) { const p0 = Q[Math.max(0, i - 1)], p1 = Q[i], p2 = Q[i + 1], p3 = Q[Math.min(Q.length - 1, i + 2)]; c.bezierCurveTo(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]); } };
+  if (!o.small) { c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+  pathLine(); c.strokeStyle = 'rgba(0,0,0,.22)'; c.lineWidth = r * .11; c.stroke();
+  pathLine(); c.strokeStyle = S.path[1]; c.lineWidth = r * .09; c.stroke();
+  pathLine(); c.strokeStyle = S.path[0]; c.lineWidth = r * .065; c.stroke();
+  pathLine(); c.setLineDash([r * .02, r * .045]); c.strokeStyle = 'rgba(120,90,70,.35)'; c.lineWidth = r * .02; c.stroke(); c.setLineDash([]);
+  c.restore(); }
+  /* scenery, back to front */
+  const u = r / 190, items = [];
+  if (k === 0) {
+    for (const [x, y, s] of [[-.84, -.08, .36], [-.02, -.3, .3], [.54, -.32, .3], [.84, .0, .33], [-.48, .34, .3], [.3, .33, .28], [-.62, -.3, .26]]) items.push([y, () => { c.save(); c.globalAlpha = .95; sakura(c, x * r, y * r, s * u, seed(Math.round(x * 100 + 500)), true); c.restore(); }]);
+    items.push([-.36, () => pagoda(c, .66 * r, -.24 * r, .3 * u, '#C8384A')]);
+    items.push([.12, () => torii(c, -.84 * r, .26 * r, .34 * u)]);
+  } else if (k === 1) {
+    items.push([-.3, () => { c.save(); c.translate(.66 * r, -.24 * r); c.scale(.62 * u, .62 * u); seaArch(c, 0); c.restore(); }]);
+    for (const [x, y, col] of [[-.82, -.02, '#FF7FA8'], [-.08, -.3, '#FF9A5A'], [.5, .3, '#C27BFF'], [-.46, .34, '#FF9A5A'], [.86, .08, '#FF7FA8'], [.2, .34, '#FF7FA8']]) items.push([y, () => coralFan(c, x * r, y * r, .55 * u, col, seed(Math.round(x * 100 + 900)), true)]);
+    items.push([-.02, () => { c.save(); c.shadowColor = '#7FF0FF'; c.shadowBlur = r * .06; c.fillStyle = '#46C8E8'; c.beginPath(); c.ellipse(-.5 * r, -.02 * r, r * .14, r * .05, 0, 0, TAU); c.fill(); c.restore(); c.strokeStyle = LINE; c.lineWidth = 1.5; c.stroke(); c.strokeStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.ellipse(-.5 * r, -.02 * r, r * .08, r * .025, 0, 0, TAU); c.stroke(); }]);
+    items.push([.12, () => torii(c, -.84 * r, .26 * r, .32 * u, '#E24A6A')]);
+  } else {
+    items.push([-.4, () => {
+      const vx = .3 * r, vy = -.16 * r, vw = r * .38, vh = r * .58;
+      c.fillStyle = '#3A1A26'; c.beginPath(); c.moveTo(vx - vw, vy); c.quadraticCurveTo(vx - vw * .3, vy - vh * .6, vx - vw * .16, vy - vh); c.lineTo(vx + vw * .16, vy - vh); c.quadraticCurveTo(vx + vw * .3, vy - vh * .6, vx + vw, vy); c.closePath(); c.fill(); c.strokeStyle = LINE; c.lineWidth = 2; c.stroke();
+      c.fillStyle = '#5A2A36'; c.beginPath(); c.moveTo(vx - vw * .16, vy - vh); c.quadraticCurveTo(vx - vw * .22, vy - vh * .5, vx - vw * .6, vy); c.lineTo(vx - vw * .3, vy); c.quadraticCurveTo(vx - vw * .1, vy - vh * .5, vx, vy - vh); c.closePath(); c.fill();
+      c.save(); c.strokeStyle = '#FF7A3A'; c.shadowColor = '#FF6A2A'; c.shadowBlur = r * .05; c.lineWidth = r * .02; c.beginPath(); c.moveTo(vx + vw * .05, vy - vh); c.quadraticCurveTo(vx + vw * .25, vy - vh * .5, vx + vw * .5, vy - vh * .05); c.stroke(); c.restore();
+    }]);
+    for (const [x, y] of [[-.84, -.06], [-.06, -.3], [-.5, .32], [.82, .06], [.2, .34], [-.62, -.28]]) items.push([y, () => pine(c, x * r, y * r, .6 * u, '#24101A')]);
+    items.push([.12, () => torii(c, -.84 * r, .26 * r, .34 * u, '#D8452E')]);
+  }
+  items.sort((a, b) => a[0] - b[0]).forEach(([, f]) => f());
+}
+function isleCached(k, r, o) {
+  const dpr = o.dpr, key = `${k}|${Math.round(r)}|${dpr}|${o.small ? 1 : 0}|${Math.round((o.heal || 0) * 10)}|${o.locked ? 1 : 0}`;
+  if (mapCache[key]) return mapCache[key];
+  for (const kk of Object.keys(mapCache)) if (kk.startsWith(`${k}|`) && kk.split('|')[3] === (o.small ? '1' : '0')) delete mapCache[kk];
+  const w = r * 2.5, h = r * 2.4, cv = document.createElement('canvas'); cv.width = Math.ceil(w * dpr); cv.height = Math.ceil(h * dpr);
+  const c = cv.getContext('2d'); c.scale(dpr, dpr); c.translate(w / 2, h * .38);
+  drawIsleStatic(c, k, r, o);
+  if (o.heal != null && o.heal < 1) {
+    /* grey out an unhealed island: blend toward grey, then cut back to the island's own shape */
+    const mask = document.createElement('canvas'); mask.width = cv.width; mask.height = cv.height; mask.getContext('2d').drawImage(cv, 0, 0);
+    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'saturation'; c.fillStyle = `rgba(128,128,128,${(1 - o.heal) * .8})`; c.fillRect(0, 0, cv.width, cv.height);
+    c.globalCompositeOperation = 'destination-in'; c.drawImage(mask, 0, 0); c.restore();
+  }
+  if (o.locked) { c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-atop'; c.fillStyle = 'rgba(40,44,90,.55)'; c.fillRect(0, 0, cv.width, cv.height); c.restore(); }
+  return (mapCache[key] = {cv, w, h, ox:w / 2, oy:h * .38});
+}
+/* live, animated bits on top of the cached island */
+function isleLive(c, k, x, y, r, t, small) {
+  const S = MAP_STYLE[k], th = r * .13;
+  /* hanging crystals */
+  c.save(); c.shadowColor = S.crystal; c.shadowBlur = r * (.06 + .02 * Math.sin(t * 2 + k));
+  for (const [f, l] of [[-.35, .22], [-.08, .34], [.18, .26], [.4, .16]]) { const cx = x + f * r, cy = y + th + r * .55 * (1 - Math.pow(Math.abs(f) * 1.6, 2)) * .9; c.fillStyle = S.crystal; c.globalAlpha = .9; c.beginPath(); c.moveTo(cx - r * .03, cy - r * .02); c.lineTo(cx, cy + r * l * .55); c.lineTo(cx + r * .03, cy - r * .02); c.closePath(); c.fill(); }
+  c.restore();
+  if (small) return;
+  /* waterfall / tide spill / lava fall off the front-right edge */
+  const fx = x + r * .74, fy = y + r * .16, fh = r * .95, fw = r * .07;
+  c.save(); c.shadowColor = S.fall; c.shadowBlur = r * .05;
+  const fg = c.createLinearGradient(0, fy, 0, fy + fh); fg.addColorStop(0, S.fall); fg.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = fg; c.globalAlpha = k === 2 ? .95 : .8;
+  c.beginPath(); c.moveTo(fx - fw, fy); c.quadraticCurveTo(fx - fw * .6, fy + fh * .5, fx - fw * .3, fy + fh); c.lineTo(fx + fw * .3, fy + fh); c.quadraticCurveTo(fx + fw * .6, fy + fh * .5, fx + fw, fy); c.closePath(); c.fill();
+  c.shadowBlur = 0; c.strokeStyle = k === 2 ? 'rgba(255,240,180,.7)' : 'rgba(255,255,255,.7)'; c.lineWidth = Math.max(1, r * .008);
+  for (let i = 0; i < 4; i++) { const q = (t * .9 + i / 4) % 1, yy = fy + q * fh * .8; c.globalAlpha = (1 - q) * .8; c.beginPath(); c.moveTo(fx - fw * .5, yy); c.lineTo(fx - fw * .5, yy + r * .05); c.moveTo(fx + fw * .4, yy + r * .03); c.lineTo(fx + fw * .4, yy + r * .07); c.stroke(); }
+  c.restore();
+  c.save(); c.fillStyle = S.mist; for (let i = 0; i < 4; i++) { const q = (t * .3 + i / 4) % 1; c.globalAlpha = .5 * (1 - q); c.beginPath(); c.arc(fx + Math.sin(i * 2) * r * .05, fy - r * .01 + Math.sin(t + i) * 2, r * (.025 + q * .04), 0, TAU); c.fill(); } c.restore();
+  if (k === 1) for (let i = 0; i < 4; i++) jellyDot(c, x + [-.7, -.2, .3, .85][i] * r, y - r * (.5 + .08 * i) + Math.sin(t * 1.3 + i) * r * .03, r * .035, i % 2 ? '#FF8FD8' : '#7FF0FF', t + i);
+  if (k === 2) { const vx = x + .3 * r, vy = y - .16 * r - r * .58; c.save(); c.shadowColor = '#FF6A2A'; c.shadowBlur = r * .08; c.fillStyle = '#FF7A3A'; c.beginPath(); c.ellipse(vx, vy, r * .06, r * .018, 0, 0, TAU); c.fill(); c.restore(); for (let i = 0; i < 3; i++) { const q = (t * .15 + i / 3) % 1; c.fillStyle = `rgba(70,40,60,${.5 * (1 - q)})`; c.beginPath(); c.arc(vx + q * r * .15, vy - q * r * .4, r * (.03 + q * .07), 0, TAU); c.fill(); } }
+  if (k === 0) { c.save(); for (let i = 0; i < 3; i++) K.lantern(c, x + [-.47, .15, .47][i] * r, y + [.06, -.02, .1][i] * r, .22 * r / 190, true, t + i); c.restore(); }
+}
+const portraitImgs = {};
+function heroPin(c, look, x, y, s, t) {
+  if (!look) return;
+  const src = K.portrait(look); let im = portraitImgs[src];
+  if (!im) { im = portraitImgs[src] = new Image(); im.src = src; }
+  const bob = Math.sin(t * 3) * 3 * s, py = y - 44 * s + bob, pr = 20 * s;
+  c.save(); c.fillStyle = '#FFE27A'; c.strokeStyle = LINE; c.lineWidth = 2;
+  c.beginPath(); c.moveTo(x - 8 * s, py + pr * .8); c.lineTo(x, py + pr + 10 * s); c.lineTo(x + 8 * s, py + pr * .8); c.closePath(); c.fill(); c.stroke();
+  c.beginPath(); c.arc(x, py, pr + 3 * s, 0, TAU); c.fill(); c.stroke();
+  c.beginPath(); c.arc(x, py, pr, 0, TAU); c.fillStyle = '#2C2470'; c.fill();
+  if (im.complete && im.naturalWidth) { c.save(); c.beginPath(); c.arc(x, py, pr, 0, TAU); c.clip(); c.drawImage(im, x - pr * 1.1, py - pr * 1.05, pr * 2.2, pr * 2.2); c.restore(); }
+  c.restore();
+}
+function pill(c, x, y, w, h, fill, stroke) { c.fillStyle = fill; E.rr(c, x - w / 2, y - h / 2, w, h, h / 2); c.fill(); if (stroke) { c.strokeStyle = stroke; c.lineWidth = 1.5; c.stroke(); } }
+function cloudBank(c, W, y, t, n, alpha, speed, sd, size) {
+  const R = seed(sd); c.save(); c.fillStyle = `rgba(235,225,255,${alpha})`;
+  for (let i = 0; i < n; i++) { const base = R() * (W + 200), x = ((base + t * speed) % (W + 200)) - 100, yy = y + (R() - .5) * size * .8, s = size * (.6 + R() * .6); for (const [dx, dy, rr] of [[0, 0, .5], [-.45, .12, .35], [.45, .1, .38], [.15, -.18, .32]]) { c.beginPath(); c.ellipse(x + dx * s, yy + dy * s, rr * s, rr * s * .6, 0, 0, TAU); c.fill(); } }
+  c.restore();
+}
 K.skyMap = function (c, W, H, t, info) {
-  K.skyGradient(c, W, H, '#0B1240', '#2E2478', '#9E5AA8', '#F2A6A0');
-  K.stars(c, W, H, t, 80, 13);
-  const u = Math.min(W / 360, H / 520), nodes = [], foc = info.isle || 0;
-  const text = (s, x, y, size, col, font) => { c.font = font || `700 ${size}px Lexend, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.lineJoin = 'round'; c.lineWidth = 4; c.strokeStyle = 'rgba(11,18,64,.8)'; c.strokeText(s, x, y); c.fillStyle = col; c.fillText(s, x, y); };
-  /* the other two islands, small. Tap to fly there. */
-  [0, 1, 2].filter(k => k !== foc).forEach((k, j) => {
-    const I = info.isles[k], x = W * (j ? .8 : .2), y = H * .14, r = 36 * u;
-    isleArt(c, k, x, y, r, t, {heal:I.heal, locked:!I.open});
-    text(I.name, x, y + r * 1.45 + 8 * u, 12 * u, '#FFFFFF');
-    text(I.open ? `${I.cleared} of 5 quests` : 'Locked', x, y + r * 1.45 + 23 * u, 11 * u, I.open ? '#BFF6FF' : '#C9C4E0', `600 ${11 * u}px Lexend, sans-serif`);
-    nodes.push({isle:k, x, y:y + r * .3, r:r * 1.5});
+  K.skyGradient(c, W, H, '#0B1240', '#2A2272', '#7E4A9E', '#E89AA8');
+  K.stars(c, W, H, t, 90, 13);
+  const u = Math.min(W / 360, H / 470), nodes = [], foc = info.isle || 0, dpr = (c.getTransform ? c.getTransform().a : 1) || 1;
+  const text = (s, x, y, size, col, font, align = 'center') => { c.font = font || `700 ${size}px Lexend, sans-serif`; c.textAlign = align; c.textBaseline = 'middle'; c.fillStyle = col; c.fillText(s, x, y); };
+  /* moon and far clouds */
+  c.save(); const mx = W * .5, my = H * .09, mr = 16 * u; const mg = c.createRadialGradient(mx, my, mr * .5, mx, my, mr * 4); mg.addColorStop(0, 'rgba(255,240,220,.35)'); mg.addColorStop(1, 'rgba(255,240,220,0)'); c.fillStyle = mg; c.beginPath(); c.arc(mx, my, mr * 4, 0, TAU); c.fill(); c.fillStyle = '#FFF4E0'; c.beginPath(); c.arc(mx, my, mr, 0, TAU); c.fill(); c.fillStyle = 'rgba(200,180,200,.35)'; c.beginPath(); c.arc(mx - mr * .3, my - mr * .2, mr * .25, 0, TAU); c.arc(mx + mr * .35, my + mr * .25, mr * .18, 0, TAU); c.fill(); c.restore();
+  cloudBank(c, W, H * .36, t, 4, .04, 4, 71, 80 * u);
+  /* the other two islands, small, with sky routes to the one in focus */
+  const I = info.isles[foc], cx = W / 2, cy = H * .56, r = Math.min(W * .43, 178 * u);
+  const others = [0, 1, 2].filter(k => k !== foc);
+  others.forEach((k, j) => {
+    const O = info.isles[k], x = W * (j ? .84 : .16), y = H * .17 + Math.sin(t * .8 + k * 2) * 3 * u, sr = 40 * u;
+    /* route */
+    c.save(); c.setLineDash([3 * u, 7 * u]); c.lineCap = 'round'; c.lineWidth = 3 * u; c.strokeStyle = O.open ? `rgba(255,226,122,${.55 + .25 * Math.sin(t * 2 + j)})` : 'rgba(200,200,240,.18)';
+    c.beginPath(); c.moveTo(cx + (j ? .45 : -.45) * r, cy - r * .4); c.quadraticCurveTo(x + (j ? -.2 : .2) * W * .3, (y + cy) / 2 - r * .5, x, y + sr * .5); c.stroke(); c.restore();
+    const sm = isleCached(k, sr, {dpr, small:true, heal:O.heal, locked:!O.open});
+    c.drawImage(sm.cv, x - sm.ox, y - sm.oy, sm.w, sm.h);
+    isleLive(c, k, x, y, sr, t, true);
+    if (!O.open) { c.save(); c.fillStyle = 'rgba(225,230,255,.5)'; for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + t * .15; c.beginPath(); c.arc(x + Math.cos(a) * sr * .8, y - sr * .05 + Math.sin(a) * sr * .3, sr * (.3 + (i % 2) * .08), 0, TAU); c.fill(); } c.restore();
+      const lr = 9 * u, ly = y - sr * .15; c.save(); c.fillStyle = '#FFFFFF'; c.strokeStyle = LINE; c.lineWidth = 2; c.beginPath(); c.arc(x, ly, lr + 6 * u, 0, TAU); c.fill(); c.stroke(); c.strokeStyle = '#4A4466'; c.lineWidth = 3 * u; c.beginPath(); c.arc(x, ly - 2 * u, lr * .5, Math.PI, 0); c.stroke(); c.fillStyle = '#4A4466'; E.rr(c, x - lr * .7, ly - 2 * u, lr * 1.4, lr * 1.05, 2 * u); c.fill(); c.restore(); }
+    const lw = 96 * u, ly = y + sr * 1.05;
+    pill(c, x, ly, lw, 34 * u, 'rgba(14,18,60,.82)', O.open ? K.ISLES[k].glow : 'rgba(200,200,240,.3)');
+    text(O.name, x, ly - 7 * u, 11 * u, '#FFFFFF', `800 ${11 * u}px Lexend, sans-serif`);
+    text(O.open ? `${O.cleared} of 5 quests` : 'Locked', x, ly + 8 * u, 10 * u, O.open ? '#BFF6FF' : '#B8B2D8', `600 ${10 * u}px Lexend, sans-serif`);
+    nodes.push({isle:k, x, y, r:sr * 1.4});
   });
   /* the island in focus */
-  const I = info.isles[foc], cx = W / 2, cy = H * .63, r = Math.min(W * .44, 186 * u);
-  isleArt(c, foc, cx, cy, r, t, {heal:I.heal});
-  const pos = [[-.62, .1], [-.28, -.22], [.06, .12], [.4, -.18], [.62, .14]];
-  c.strokeStyle = 'rgba(255,240,220,.75)'; c.lineWidth = 4 * u; c.setLineDash([8 * u, 8 * u]); c.beginPath(); pos.forEach(([px, py], i) => { const x = cx + px * r, y = cy + py * r; i ? c.lineTo(x, y) : c.moveTo(x, y); }); c.stroke(); c.setLineDash([]);
-  pos.forEach(([px, py], j) => {
-    const x = cx + px * r, y = cy + py * r, q = I.quests[j], nr = (q.boss ? 26 : 20) * u;
-    if (q.cur) { c.save(); c.shadowColor = '#FFE27A'; c.shadowBlur = 24; c.fillStyle = 'rgba(255,226,122,.4)'; c.beginPath(); c.arc(x, y, nr + 10 * u + Math.sin(t * 4) * 3, 0, TAU); c.fill(); c.restore(); }
-    c.fillStyle = q.locked ? '#4A4466' : q.boss ? ['#C8384A', '#2F6FB8', '#D8572E'][foc] : q.stars ? '#E9B949' : '#FFFFFF'; c.beginPath(); c.arc(x, y, nr, 0, TAU); c.fill(); c.strokeStyle = LINE; c.lineWidth = 3; c.stroke();
-    if (info.sel === q.i) { c.strokeStyle = '#7FF0FF'; c.lineWidth = 4; c.beginPath(); c.arc(x, y, nr + 5 * u, 0, TAU); c.stroke(); }
-    if (q.boss) BOSS_ICON(c, foc, x, y, nr, q.locked);
-    else { c.fillStyle = q.locked ? '#9A94B8' : LINE; c.font = `800 ${18 * u}px Lexend, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(j + 1), x, y + 1); }
-    if (q.stars) for (let s = 0; s < 3; s++) { c.fillStyle = s < q.stars ? '#FFE27A' : 'rgba(255,255,255,.35)'; E.starPath(c, x - 14 * u + s * 14 * u, y + nr + 9 * u, 6 * u, 2.8 * u, 5); c.fill(); }
+  const fy = cy + Math.sin(t * .8 + foc * 2) * 3 * u;
+  const big = isleCached(foc, r, {dpr, heal:I.heal});
+  c.drawImage(big.cv, cx - big.ox, fy - big.oy, big.w, big.h);
+  isleLive(c, foc, cx, fy, r, t, false);
+  /* quest stops */
+  let curXY = null;
+  MAP_NODES.forEach(([px, py], j) => {
+    const x = cx + px * r, y = fy + py * r, q = I.quests[j], nr = (q.boss ? 21 : 16) * u;
+    c.save(); c.fillStyle = 'rgba(0,0,0,.28)'; c.beginPath(); c.ellipse(x, y + nr * .75, nr * 1.05, nr * .38, 0, 0, TAU); c.fill(); c.restore();
+    if (q.cur) { c.save(); c.shadowColor = '#FFE27A'; c.shadowBlur = 22; c.strokeStyle = `rgba(255,226,122,${.6 + .3 * Math.sin(t * 4)})`; c.lineWidth = 4 * u; c.beginPath(); c.arc(x, y, nr + 6 * u + Math.sin(t * 4) * 2 * u, 0, TAU); c.stroke(); c.restore(); curXY = [x, y - nr]; }
+    const face = q.locked ? '#5A5478' : q.boss ? ['#E0507A', '#2F8FD8', '#E86A2E'][foc] : q.stars ? '#F2C24E' : '#FFFFFF';
+    const g2 = c.createLinearGradient(0, y - nr, 0, y + nr); g2.addColorStop(0, q.locked ? '#6E6890' : '#FFFFFF'); g2.addColorStop(.35, face); g2.addColorStop(1, q.locked ? '#3E3A58' : face);
+    c.fillStyle = q.locked ? '#2E2A48' : '#3A2A1A'; c.beginPath(); c.arc(x, y + 3 * u, nr, 0, TAU); c.fill();
+    c.fillStyle = g2; c.beginPath(); c.arc(x, y, nr, 0, TAU); c.fill(); c.strokeStyle = LINE; c.lineWidth = 2.5; c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1.5; c.beginPath(); c.arc(x, y, nr - 3.5 * u, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+    if (info.sel === q.i) { c.strokeStyle = '#7FF0FF'; c.lineWidth = 3.5; c.beginPath(); c.arc(x, y, nr + 4 * u, 0, TAU); c.stroke(); }
+    if (q.boss) BOSS_ICON(c, foc, x, y, nr * .9, q.locked);
+    else if (q.locked) { const lr = nr * .42; c.strokeStyle = '#B8B2D8'; c.lineWidth = 2.4 * u; c.beginPath(); c.arc(x, y - lr * .35, lr * .55, Math.PI, 0); c.stroke(); c.fillStyle = '#B8B2D8'; E.rr(c, x - lr * .75, y - lr * .35, lr * 1.5, lr * 1.15, 2 * u); c.fill(); }
+    else text(String(j + 1), x, y + 1, 15 * u, LINE, `800 ${15 * u}px Lexend, sans-serif`);
+    if (q.stars) { pill(c, x, y + nr + 9 * u, 44 * u, 14 * u, 'rgba(14,18,60,.8)'); for (let s = 0; s < 3; s++) { c.fillStyle = s < q.stars ? '#FFE27A' : 'rgba(255,255,255,.3)'; E.starPath(c, x - 13 * u + s * 13 * u, y + nr + 9 * u, 5.4 * u, 2.4 * u, 5); c.fill(); } }
+    if (q.boss && !q.locked && !q.stars) { pill(c, x, y - nr - 10 * u, 62 * u, 16 * u, 'rgba(14,18,60,.85)', K.ISLES[foc].glow); text('GUARDIAN', x, y - nr - 10 * u, 9 * u, '#FFE27A', `800 ${9 * u}px Lexend, sans-serif`); }
     nodes.push({i:q.i, x, y, r:nr + 14 * u});
   });
-  text(I.name, cx, cy + r * .42 + 36 * u, 18 * u, '#FFFFFF', `${18 * u}px "Dela Gothic One", Lexend, sans-serif`);
-  K.drift(c, W, H, t, 12, foc);
+  if (curXY) heroPin(c, info.look, curXY[0], curXY[1] - 2 * u, u, t);
+  /* near clouds drifting under the island, and the name banner */
+  cloudBank(c, W, H * .93, t, 6, .12, 7, 88, 70 * u);
+  K.drift(c, W, H, t, 10, foc);
+  const bw = Math.min(W * .62, 230 * u), by = H - 24 * u;
+  c.save(); c.shadowColor = K.ISLES[foc].glow; c.shadowBlur = 14; pill(c, cx, by, bw, 38 * u, 'rgba(14,18,60,.88)', K.ISLES[foc].glow); c.restore();
+  text(I.name, cx, by - 6 * u, 16 * u, '#FFFFFF', `${16 * u}px "Dela Gothic One", Lexend, sans-serif`);
+  text(I.cleared >= 5 ? 'Island saved!' : `${I.cleared} of 5 quests done`, cx, by + 10 * u, 10 * u, '#BFF6FF', `600 ${10 * u}px Lexend, sans-serif`);
   return nodes;
 };
 })();
