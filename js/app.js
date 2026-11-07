@@ -61,7 +61,7 @@ store.sync.onPulled = () => { if (pid && !P()) { pid = null; if (view !== 'form'
 function renderHome() {
   const ps = [...S.players].sort((a, b) => a.created - b.created);
   return `
-  <header class="top"><div><h1>Power-Up Math</h1><p class="sub">Solve math to build with the truck crew or save Blossom Isle.</p></div>${muteBtn()}</header>
+  <header class="top"><div><h1>Power-Up Math</h1><p class="sub">Solve math to build a whole town with the truck crew, or save the three sky islands.</p></div>${muteBtn()}</header>
   <div class="hero-strip" aria-hidden="true">${PUM.truckSVG('excavator', 'marigold')}${PUM.SKYART.portraitImg(PUM.SKYART.look(0, null, null, 'berry'))}</div>
   <section class="block"><h2>Who's playing?</h2>
     <div class="players">${ps.map(p => `<button class="player" data-act="open" data-id="${p.id}">${avatar(p, 'av')}<span class="pname">${esc(p.name)}</span><span class="pmeta">Last: ${PUM.THEMES[p.theme].game}</span></button>`).join('')}
@@ -402,7 +402,7 @@ function rigLoad(mat, truck) {
 function rigDrive(mat, truck) {
   const p = P(), j = p.rig.job;
   openShell({cls:'trucks', ctrl:truckCtrl(), gauge:true, keymap:KEYMAP.trucks, onExit:() => { j.msg = 'You stopped the trip. Load up and go again!'; store.savePlayer(p); go('job'); },
-    make:api => PUM.games.trucks({player:p, assist:assistOf(p), levelIndex:j.i, api, trip:{mat, truck, color:R.paint(p, truck)}}),
+    make:api => PUM.games.trucks({player:p, assist:assistOf(p), levelIndex:j.i, api, trip:{mat, truck, color:R.paint(p, truck), race:R.job(j.i).steps.findLastIndex(s => R.MATS[s]) === j.stage}}),
     onFinish:r => {
       const mp = play ? play.mp : 0; stopGame();
       j.coins += mp;

@@ -91,7 +91,8 @@ PUM.games.trucks = function (o) {
   const parts = E.Particles();
   let rival = null;
   /* the rival is a bit slower than an engine at level 4, so turbo from right answers and a few upgrades win the race */
-  if (LV.rival) rival = {z:22 * SEG, x:0, tx:0, speed:(6000 + Math.min(recEngine, 4) * 520) * (assist >= 2 ? .82 : 1) * truckSpeed * (LV.world > 1 ? .83 : .86), laneT:2, throwT:3, name:WD.racer || WD.boss, lead:true};
+  /* boss jobs race the rival only on the last delivery, so one lost race never undoes a whole job */
+  if (LV.rival && !(o.trip && o.trip.race === false)) rival = {z:22 * SEG, x:0, tx:0, speed:(6000 + Math.min(recEngine, 4) * 520) * (assist >= 2 ? .82 : 1) * truckSpeed * (LV.world > 1 ? .8 : .86), laneT:2, throwT:3, name:WD.racer || WD.boss, lead:true};
   const rain = LV.storm ? Array.from({length:70}, () => ({x:Math.random(), y:Math.random(), s:.6 + Math.random() * .6})) : null;
 
   let W = 0, H = 0, hz = 0, HS = 0, VS = 0;

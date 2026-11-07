@@ -48,12 +48,12 @@ L.trucks = {
     {name:'Soccer field', len:640, curve:.55, hills:.6, obs:{rock:.3, tractor:.4, car:.45}, gates:3, nw:'New: cars coming toward you. Stay out of their lane!'},
     {name:'Hospital', len:680, curve:.6, hills:.7, obs:{rock:.3, tractor:.3, car:.4, boulder:.5}, gates:4, nw:'New: boulders roll down the hills. Watch for the shadow on the road!'},
     {name:'Fire station', len:700, curve:.8, hills:.7, obs:{rock:.35, hole:.35, tractor:.3, car:.4, boulder:.4}, gates:4, nw:'Twisty mountain roads. Brake before the sharp curves!'},
-    {name:'Mountain Tunnel', len:680, curve:.65, hills:.6, obs:{rock:.3, car:.3, hole:.35}, gates:4, boss:true, rival:true, nw:'BOSS: race Rusty to the tunnel! Right answers give turbo to pass him. Dodge his barrels.'},
+    {name:'Mountain Tunnel', len:680, curve:.65, hills:.6, obs:{rock:.3, car:.3, hole:.35}, gates:4, boss:true, rival:true, nw:'BOSS: on the last delivery, race Rusty to the tunnel! Right answers give turbo to pass him. Dodge his barrels.'},
     {name:'Train station', len:700, curve:.6, hills:.5, obs:{rock:.3, car:.35, ice:.6}, gates:4, nw:'Welcome to Big City! New: icy roads. Steer gently on the ice.'},
     {name:'Apartment tower', len:720, curve:.65, hills:.6, obs:{hole:.35, car:.4, ice:.4, bridge:.6}, gates:4, nw:'New: narrow canal bridges. Stay in the middle lane or splash!'},
     {name:'Shopping mall', len:760, curve:.75, hills:.7, obs:{rock:.3, car:.45, ice:.4, bridge:.4, boulder:.3}, gates:5, nw:'Busy city traffic with ice and bridges. Take it slow!'},
     {name:'Stadium', len:800, curve:.85, hills:.8, obs:{cone:.3, rock:.35, hole:.35, tractor:.3, car:.45, ice:.4, bridge:.4, boulder:.35}, gates:5, nw:'Game day! Everything at once. Upgrade your trucks first.'},
-    {name:'Skyscraper', len:760, curve:.75, hills:.7, obs:{rock:.25, car:.3, ice:.4, bridge:.3}, gates:5, boss:true, rival:true, nw:'FINAL BOSS: race Turbo Tess across Big City! Every right answer is a turbo.'},
+    {name:'Skyscraper', len:760, curve:.75, hills:.7, obs:{rock:.25, car:.3, ice:.4, bridge:.3}, gates:5, boss:true, rival:true, nw:'FINAL BOSS: on the last delivery, race Turbo Tess across Big City! Every right answer is a turbo.'},
   ],
 };
 L.soccer = {
