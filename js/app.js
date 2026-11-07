@@ -442,7 +442,7 @@ function rigCrane() {
 /* ---------- Sky Quest: village, sky map, hero setup, spirit garden, forge, results ---------- */
 const SK = PUM.SKY, KA = PUM.SKYART;
 let skySel = null, questSel = null, skyIsle = null, setup = null, skyResult = null, evo = null;
-const SKYKEYS = {ArrowLeft:'left', ArrowRight:'right', ArrowUp:'jump', ' ':'jump', g:'guard', '1':'k1', '2':'k2', '3':'k3', '4':'k4', s:'k0', d:'dash', Shift:'dash', f:'glide', ArrowDown:'glide'};
+const SKYKEYS = {ArrowLeft:'left', ArrowRight:'right', ArrowUp:'jump', ' ':'jump', '1':'k1', '2':'k2', '3':'k3', '4':'k4', s:'k0', d:'dash', Shift:'dash', f:'glide', ArrowDown:'glide'};
 const spiritImg = (k, stage) => `<img class="sq-spirit" src="${KA.spiritImg(k, stage)}" alt="" draggable="false">`;
 function compList(p) { return Object.keys(p.sky.comps).map(k => ({k, kind:k, c:p.sky.comps[k], stage:SK.isGuardian(k) ? 3 : SK.stage(p.sky.comps[k].lv), name:SK.compName(k, p.sky.comps[k])})); }
 /* what the sky map and village need to know about each island */

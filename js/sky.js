@@ -271,7 +271,6 @@ PUM.games.sky = function (o) {
   const num = (x, y, text, col, big) => g.nums.push({x, y, text, col, big, t:0});
   const moveCtrl = () => dash || glide ? `<span class="ctl-col sq-acts">${glide ? `<button class="ctl sq mini glide" data-ctl="glide" aria-label="Glide: hold in the air">${PUM.icon('down')}<span>Glide</span></button>` : ''}${dash ? `<button class="ctl sq mini dash" data-ctl="dash" aria-label="Dash">${PUM.icon('next')}<span>Dash</span></button>` : ''}</span>` : '';
   const exploreCtrl = () => `<span class="ctl-pair"><button class="ctl sq move" data-ctl="left" aria-label="Move left">${PUM.icon('back')}</button><button class="ctl sq move" data-ctl="right" aria-label="Move right">${PUM.icon('next')}</button></span><span class="ctl-pair">${moveCtrl()}<button class="ctl sq jump" data-ctl="jump" aria-label="Jump">${PUM.icon('up')}<span>Jump</span></button></span>`;
-  const guardCtrl = () => `<span></span><button class="ctl sq guard" data-ctl="guard" aria-label="Guard"><span>Guard</span></button><span></span>`;
   const LIT = {lanterns:1, jellies:1, bowls:1};
   const objText = () => LIT[Q.goal] ? `${Q.obj} ${g.lit} / ${W.lanterns.length}` : Q.obj;
   const litName = isle === 1 ? ['Jellyfish awake!', 'Wake every jellyfish first'] : isle === 2 ? ['Fire bowl lit!', 'Light every fire bowl first'] : ['Lantern lit!', 'Light every lantern first'];
@@ -445,34 +444,41 @@ PUM.games.sky = function (o) {
     }
     enemyTurn();
   }
+  /* Enemy attacks are blocked with math: answer before the timer runs out to raise your shield.
+     The block question is one step easier than the kid's level, because there's a clock. */
+  const blockTime = () => (age <= 5 ? 10 : age <= 7 ? 8 : age <= 9 ? 7 : 6) * (assist >= 2 ? 1.6 : assist ? 1.25 : 1);
   function enemyTurn() {
     const base = b.boss ? b.phases[b.phase].hits.slice() : [1.4];
-    const slow = assist >= 2 ? 1.6 : assist ? 1.2 : 1;
-    b.hits = base.map(t0 => ({t:t0 * slow + .3, done:false, blocked:false, tried:false}));
-    b.windDur = b.hits[b.hits.length - 1].t + .7;
-    api.panel(null); api.ctrl(guardCtrl());
-    setState('wind');
-    if (b.boss) banner(b.phases[b.phase].name, '', .9, '#FF6FD8');
+    b.hits = base.map(t0 => ({t:t0 * .7 + .25, done:false, blocked:false}));
+    b.windDur = b.hits[b.hits.length - 1].t + .8;
+    b.atkName = b.boss ? b.phases[b.phase].name : 'attack';
+    const {q, options} = S.question(p, -1, nOpts());
+    b.q = q; b.opts = options; b.answered = false; b.blockLim = blockTime();
+    const bar = `<div class="sq-crit block"><i style="animation-duration:${b.blockLim}s"></i><span>Answer before it hits!</span></div>`;
+    api.ctrl(''); api.panel(qPanel(`${b.name} is attacking! Answer to block`, q, options, null, bar), 'sky-q'); say(q.spoken);
+    setState('block');
+    if (b.boss) banner(b.atkName, 'Answer to block it!', 1.1, '#FF6FD8');
   }
-  function guardTap() {
-    if (!b || b.state !== 'wind') return;
-    const h = b.hits.find(x => !x.done && !x.tried); if (!h) return;
-    const dtI = h.t - b.tm, win = assist >= 2 ? 9 : assist ? .3 : .2;
-    if (assist >= 2) { if (b.tm > .25) { h.tried = true; h.blocked = true; } return; }
-    if (dtI > .75) return;
-    h.tried = true;
-    if (Math.abs(dtI) <= win) { h.blocked = true; h.perfect = Math.abs(dtI) <= .09; }
+  function answerBlock(v) {
+    if (b.state !== 'block' || b.answered) return;
+    const timeUp = v == null, ok = !timeUp && v === b.q.ans; b.answered = true;
+    if (!timeUp) { g.asked++; api.answer(ok, b.q); }
+    const perfect = ok && b.tm <= b.blockLim * .4;
+    if (ok) { g.right++; g.xp += 6; }
+    api.panel(qPanel(ok ? (perfect ? 'PERFECT BLOCK!' : 'Shield up!') : timeUp ? `Too slow! It was ${b.q.ans}.` : `Not quite. It's ${b.q.ans}.`, b.q, b.opts, timeUp ? null : {picked:v}), 'sky-q');
+    for (const h of b.hits) { h.blocked = ok; h.perfect = perfect; }
+    setState('wind');
   }
   function enemyHit(h) {
     h.done = true; b.lunge = 1;
     const hx = Wd * .26, hy = Hd * .45;
     if (h.blocked) {
       A.sfx('block'); g.blockFx = 1; num(hx + 40, hy - 70, h.perfect ? 'PERFECT!' : 'BLOCK!', '#7FF0FF', true);
-      if (h.perfect) g.meter = Math.min(1, g.meter + .1);
+      if (h.perfect && !b.perfectGiven) { b.perfectGiven = true; g.meter = Math.min(1, g.meter + .1); }
       parts.burst(hx, hy, 16, {speed:200, life:.5, size:3, color:['#7FF0FF', '#FFFFFF']});
     } else {
-      g.hearts--; g.lost++; g.hurtFx = 1; g.shake = 14; A.sfx('hurt'); num(hx + 40, hy - 70, '-1', '#FF6FB0', true);
-      if (g.hearts <= 0) { b.ko = true; }
+      g.hurtFx = 1; g.shake = 14; A.sfx('hurt');
+      if (!b.hurt) { b.hurt = true; g.hearts--; g.lost++; num(hx + 40, hy - 70, '-1', '#FF6FB0', true); if (g.hearts <= 0) { b.ko = true; } }
     }
   }
   function knockedOut() {
@@ -523,10 +529,12 @@ PUM.games.sky = function (o) {
       }
       if (b.tm > 1.4) { b.specHit = false; afterHeroTurn(); }
     }
+    else if (b.state === 'block') { if (b.tm > b.blockLim) answerBlock(null); }
     else if (b.state === 'wind') {
+      if (b.tm < .05) { b.hurt = false; b.perfectGiven = false; }
       for (const h of b.hits) if (!h.done && b.tm >= h.t) enemyHit(h);
-      if (b.ko && !g.koWait) { b.ko = false; setState('ko'); knockedOut(); return; }
-      if (b.tm > b.windDur) { api.ctrl(''); toPick(); }
+      if (b.ko && !g.koWait) { b.ko = false; setState('ko'); api.panel(null); knockedOut(); return; }
+      if (b.tm > b.windDur) { api.panel(null); api.ctrl(''); toPick(); }
     }
     else if (b.state === 'win') {
       if (b.boss) { b.pure = Math.min(1, b.tm / 2.4); if (b.tm > 1 && !b.joined) { const GD = S.GUARDIANS[b.guard]; b.joined = true; banner(`${b.name} is free!`, `${GD.title.replace(/^the/, 'The')} joins your team!`, 2.4, '#FFC6DD'); } if (b.tm > 3.6) { finishQuest(); } }
@@ -665,7 +673,7 @@ PUM.games.sky = function (o) {
     K.battleBg(c, Wd, Hd, t, {boss:b.boss, isle});
     const fx = Wd * .66 + b.x - (b.lunge || 0) * Wd * .2, fy = Hd * .3 + (b.lunge || 0) * Hd * .08, fk = Math.min(Wd / 420, Hd / 760);
     const winA = b.state === 'win' && !b.boss ? Math.max(0, 1 - b.tm / 1.2) : 1;
-    if (b.boss) K.guardian(c, b.guard, fx + 20 * fk, Hd * .47, fk * .62, t, b.pure, {flash:b.flash, hit:b.flash > .5, charge:b.state === 'wind' && b.phase === 2});
+    if (b.boss) K.guardian(c, b.guard, fx + 20 * fk, Hd * .47, fk * .62, t, b.pure, {flash:b.flash, hit:b.flash > .5, charge:(b.state === 'wind' || b.state === 'block') && b.phase === 2});
     else K.shadow(c, b.el, fx, fy, fk * (b.big ? .95 : .8), t, {face:-1, big:b.big, flash:b.flash, alpha:winA, seed:b.seed, look:b.look});
     if (b.boss && b.shield) { c.save(); c.translate(Wd * .66, Hd * .3); const r = 150 * fk; c.shadowColor = '#B04CFF'; c.shadowBlur = 24; c.strokeStyle = 'rgba(200,120,255,.9)'; c.fillStyle = 'rgba(120,40,200,.18)'; c.lineWidth = 3; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + t * .3; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.fill(); c.stroke();
       c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 2; for (let i = 0; i < b.shield.got; i++) { c.beginPath(); c.moveTo(0, 0); for (let j = 1; j < 5; j++) c.lineTo(Math.cos(i * 2.1 + j * .4) * r * j / 4, Math.sin(i * 2.1 + j * .3) * r * j / 4); c.stroke(); } c.restore(); }
@@ -676,7 +684,7 @@ PUM.games.sky = function (o) {
     const bs = Math.min(Wd * .62 / 360, Hd * .32 / 300), lunge = b.state === 'atk' && b.tm < .5 ? Math.sin(b.tm / .5 * Math.PI) * 30 : 0, dodge = b.state === 'dodge' ? -Math.sin(b.tm / .8 * Math.PI) * 40 : 0;
     c.save(); c.beginPath(); c.rect(0, Hd * .3, Wd * .62, Hd * .3); c.clip();
     c.translate(Wd * .26 - 180 * bs + lunge, Hd * .47 - 220 * bs + dodge * .3); c.scale(bs, bs);
-    K.bust(c, L, {fierce:b.state === 'atk' || b.state === 'wind', mouth:b.state === 'atk' ? 'shout' : b.state === 'win' ? 'grin' : 'smile', blink:Math.sin(t * 1.7) > .985 ? .1 : 1});
+    K.bust(c, L, {fierce:b.state === 'atk' || b.state === 'wind' || b.state === 'block', mouth:b.state === 'atk' ? 'shout' : b.state === 'win' ? 'grin' : 'smile', blink:Math.sin(t * 1.7) > .985 ? .1 : 1});
     c.restore();
     if (g.hurtFx > 0) { c.save(); c.globalAlpha = g.hurtFx * .5; c.fillStyle = '#FF2A5A'; c.fillRect(0, 0, Wd, Hd); c.restore(); }
     if (g.blockFx > 0) { c.save(); c.globalAlpha = g.blockFx; c.translate(Wd * .26, Hd * .45); c.shadowColor = '#7FF0FF'; c.shadowBlur = 20; c.strokeStyle = '#BFF6FF'; c.lineWidth = 4; const r = 90 * (1.2 - g.blockFx * .2); c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.stroke(); c.restore(); }
@@ -686,11 +694,8 @@ PUM.games.sky = function (o) {
       const h = b.hits.find(x => !x.done);
       const hx = Wd * .26, hy = Hd * .45, rT = 56;
       if (h) {
-        const rem = h.t - b.tm, near = assist >= 2 ? b.tm > .25 : Math.abs(rem) <= (assist ? .3 : .2);
-        c.save(); c.lineWidth = 4; c.strokeStyle = near ? '#FFE27A' : 'rgba(255,255,255,.55)'; c.shadowColor = near ? '#FFE27A' : '#7FF0FF'; c.shadowBlur = near ? 20 : 6; c.beginPath(); c.arc(hx, hy, rT, 0, TAU); c.stroke();
-        if (rem < 1.1 && rem > -.1) { c.strokeStyle = '#FF6FD8'; c.lineWidth = 5; c.shadowColor = '#FF6FD8'; c.beginPath(); c.arc(hx, hy, rT + Math.max(0, rem) * 150, 0, TAU); c.stroke(); }
-        c.restore();
-        label(c, assist >= 2 ? 'Tap GUARD!' : 'Tap GUARD when the rings meet!', Wd / 2, Hd * .64, 16, '#FFFFFF', 'center');
+        const rem = h.t - b.tm;
+        if (h.blocked) { c.save(); c.globalAlpha = .55 + .25 * Math.sin(t * 10); c.lineWidth = 5; c.strokeStyle = '#7FF0FF'; c.shadowColor = '#7FF0FF'; c.shadowBlur = 22; c.fillStyle = 'rgba(127,240,255,.12)'; c.beginPath(); c.arc(hx, hy, rT, 0, TAU); c.fill(); c.stroke(); c.restore(); }
         if (rem < .5 && rem > 0) K.speedLines(c, Wd, Hd, fx, fy, t, 'rgba(255,111,216,.18)', 30);
       }
     }
@@ -754,13 +759,12 @@ PUM.games.sky = function (o) {
     setControl(k, down) {
       if (k === 'left' || k === 'right' || k === 'glide') { ctl[k] = down && g.mode === 'explore'; return; }
       if (k === 'dash') { if (down && g.mode === 'explore') hero.dashQ = .15; return; }
-      if (k === 'jump') { if (down) { if (g.mode === 'explore') hero.buf = .14; else if (b && b.state === 'wind') guardTap(); } return; }
-      if (k === 'guard') { if (down) guardTap(); return; }
+      if (k === 'jump') { if (down && g.mode === 'explore') hero.buf = .14; return; }
       if (/^k[1-4]$/.test(k) && down) { const els = document.querySelectorAll('#choose [data-gp]:not(.sq-leave):not(.sq-tier)'); const el = els[Number(k[1]) - 1] || (els.length === 1 ? els[0] : null); if (el && !el.disabled) el.click(); }
       if (k === 'k0' && down) { const el = document.querySelector('#choose .special'); if (el) el.click(); }
     },
     ui(act, v) {
-      if (act === 'ans') { const n = Number(v); if (g.mode === 'lock') answerLock(n); else if (b) answerBattle(n); }
+      if (act === 'ans') { const n = Number(v); if (g.mode === 'lock') answerLock(n); else if (b && b.state === 'block') answerBlock(n); else if (b) answerBattle(n); }
       if (act === 'move') uiMove(v);
       if (act === 'tier' && b && b.state === 'pick') { g.tier = Number(v) || 0; A.sfx('tap'); api.panel(moveBtns(), 'sky-q'); }
       if (act === 'leave' && lock) { const ch = lock.ref; lock = null; api.panel(null); api.ctrl(exploreCtrl()); g.mode = 'explore'; hero.x = ch.x - 60; }
