@@ -49,9 +49,10 @@ store.normalize = function (d) {
     age:PUM.AGES.includes(d.age) ? d.age : 5, stars:num(d.stars), mp:num(d.mp), mpTotal:num(d.mpTotal),
     created:num(d.created), updatedAt:num(d.updatedAt), mode:d.mode === 'keypad' ? 'keypad' : 'choices', speak:!!d.speak,
     start:LV[d.start] ? d.start : 'count', world:LV[d.world] ? d.world : (LV[d.start] ? d.start : 'count'),
-    levels:{}, up:normUp(d.up), prog:normProg(d.prog), rig:normRig(d.rig)};
+    levels:{}, up:normUp(d.up), prog:normProg(d.prog), rig:normRig(d.rig), sky:PUM.SKY.normalize(d.sky)};
   /* Big Rig Builders replaced the old truck race: truck progress starts fresh once. */
   if (p.rig.v < 1) { p.prog.trucks = normProg({}).trucks; p.rig.v = 1; p.rig.job = null; }
+  PUM.SKY.migrate(p, d.up);
   if (d.levels && typeof d.levels === 'object') for (const l of PUM.LEVELS) {
     const x = d.levels[l.id];
     if (x && typeof x === 'object') p.levels[l.id] = {tier:clamp(num(x.tier), 0, l.steps.length - 1), streak:clamp(num(x.streak), 0, 999), misses:clamp(num(x.misses), 0, 99), stars:num(x.stars)};

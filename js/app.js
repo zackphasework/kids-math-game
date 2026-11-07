@@ -35,13 +35,15 @@ const assistOf = p => p.age <= 5 ? 2 : p.age <= 7 ? 1 : 0;
 const UPS = p => CP.upgrades[p.theme];
 const camp = p => CP[p.theme];
 const isRig = p => p && p.theme === 'trucks';
-const curName = p => isRig(p) ? 'coins' : 'math points';
+const isSky = p => p && p.theme === 'anime';
+const curName = p => isRig(p) ? 'coins' : isSky(p) ? 'crystals' : 'math points';
+const curIcon = p => isRig(p) ? icon('coin', 'coin') : isSky(p) ? icon('gem', 'gem') : icon('bolt');
 
 /* ---------- small renderers ---------- */
 const muteBtn = () => `<button class="icon-btn" id="mute" data-act="mute" aria-label="${S.muted ? 'Turn sound on' : 'Turn sound off'}" aria-pressed="${S.muted}">${icon(S.muted ? 'mute' : 'sound')}</button>`;
 const backBtn = (to, label = 'Back') => `<button class="icon-btn" data-act="back" data-to="${to}" aria-label="${label}">${icon('back')}</button>`;
 const avatar = (p, cls) => `<span class="avatar ${cls}">${PUM.avatarSVG(p)}</span>`;
-const mpChip = p => `<span class="mp-chip" id="mp-chip">${icon(isRig(p) ? 'coin' : 'bolt', isRig(p) ? 'coin' : '')} <b>${p.mp}</b> ${curName(p)}</span>`;
+const mpChip = p => `<span class="mp-chip" id="mp-chip">${curIcon(p)} <b>${p.mp}</b> ${curName(p)}</span>`;
 const starsRow = (n, size = '') => `<span class="mini-stars ${size}">${[0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">${icon('star', 'fill')}</i>`).join('')}</span>`;
 function syncChip() {
   const s = store.sync.state, fam = store.family();
@@ -53,7 +55,7 @@ function syncChip() {
   return `<div class="sync" id="sync"><button class="sync-b" data-s="${s}" data-act="sync-info" aria-expanded="${showSync}"><span class="dot"></span>${store.SYNC_TEXT[s]}${!fam ? ' · Join family' : ''}</button>${panel}</div>`;
 }
 store.sync.onChange = () => { const el = document.getElementById('sync'); if (el) el.outerHTML = syncChip(); };
-store.sync.onPulled = () => { if (pid && !P()) { pid = null; if (view !== 'form') view = 'home'; } if (view === 'home' || view === 'base' || view === 'map' || view === 'garage') render(); };
+store.sync.onPulled = () => { if (pid && !P()) { pid = null; if (view !== 'form') view = 'home'; } if (view === 'home' || view === 'base' || view === 'map' || view === 'garage' || view === 'skyGarden' || view === 'skyForge') render(); };
 
 /* ---------- screens ---------- */
 function renderHome() {
@@ -96,7 +98,7 @@ function upgradeCards(p) {
     return `<div class="upg ${max ? 'max' : ''}">
       <div class="upg-head"><b>${u.name}</b><span class="pips" aria-label="Level ${lvl} of ${CP.maxUp}">${Array.from({length:CP.maxUp}, (_, i) => `<i class="${i < lvl ? 'on' : ''}"></i>`).join('')}</span></div>
       <p>${u.what}</p>
-      ${max ? '<span class="upg-max">Maxed out</span>' : `<button class="btn small ${can ? 'go' : ''}" data-act="upgrade" data-k="${u.k}" ${can ? '' : 'aria-disabled="true"'}>${icon(isRig(p) ? 'coin' : 'bolt', isRig(p) ? 'coin' : '')} ${can ? `Upgrade · ${cost}` : `Need ${cost}`}</button>`}
+      ${max ? '<span class="upg-max">Maxed out</span>' : `<button class="btn small ${can ? 'go' : ''}" data-act="upgrade" data-k="${u.k}" ${can ? '' : 'aria-disabled="true"'}>${curIcon(p)} ${can ? `Upgrade · ${cost}` : `Need ${cost}`}</button>`}
     </div>`;
   }).join('');
 }
@@ -175,8 +177,9 @@ function renderTrainDone() {
   return `<div class="results">
     <h2 class="rtitle">+${t.earned} ${curName(p)}!</h2>
     <div class="reward-art">${PUM.avatarSVG(p)}</div>
-    <p class="rmsg">${t.res.filter(Boolean).length} of ${t.len} right. You have ${p.mp} ${curName(p)} to spend at your ${PUM.THEMES[p.theme].base.toLowerCase()}.</p>
-    <div class="ractions"><button class="btn go big" data-act="${isRig(p) ? 'garage' : 'back'}" data-to="base">${icon(isRig(p) ? 'coin' : 'bolt', isRig(p) ? 'coin' : '')} Spend them</button><button class="btn" data-act="train">Earn more</button>${isRig(p) ? '<button class="btn" data-act="back" data-to="base">Back to town</button>' : ''}</div>
+    <p class="rmsg">${t.res.filter(Boolean).length} of ${t.len} right. You have ${p.mp} ${curName(p)} to spend ${isSky(p) ? 'in Sky Village' : `at your ${PUM.THEMES[p.theme].base.toLowerCase()}`}.</p>
+    ${isSky(p) ? `<p class="rnote">+${t.xp || 0} XP${t.snack ? ' &middot; +1 spirit snack for getting 8 or more right!' : ''}</p>` : ''}
+    <div class="ractions"><button class="btn go big" data-act="${isRig(p) ? 'garage' : 'back'}" data-to="base">${curIcon(p)} Spend them</button><button class="btn" data-act="train">Earn more</button>${isRig(p) ? '<button class="btn" data-act="back" data-to="base">Back to town</button>' : ''}</div>
   </div>`;
 }
 function renderResult() {
@@ -199,13 +202,19 @@ function render() {
   if (view === 'form' && !draft) view = 'home';
   if (view === 'job' && !(P().rig && P().rig.job)) view = 'base';
   if (view === 'jobDone' && !jobResult) view = 'base';
+  if (view === 'skyDone' && !skyResult) view = 'base';
+  if (isSky(P()) && !P().sky.made && ['base', 'map', 'skyGarden', 'skyForge'].includes(view)) view = 'skySetup';
+  if (view === 'skySetup' && !setup) setup = P() ? initSetup(P()) : null;
+  if (view === 'skySetup' && !setup) view = 'home';
   document.documentElement.classList.toggle('playing', view === 'train');
   app.hidden = view === 'game';
   stopBg();
   if (view === 'game') return;
-  const rig = isRig(P());
-  app.innerHTML = view === 'form' ? renderForm() : view === 'base' ? (rig ? renderTown() : renderBase()) : view === 'garage' ? renderGarage() : view === 'job' ? renderJob() : view === 'jobDone' ? renderJobDone()
-    : view === 'map' ? renderMap() : view === 'train' ? renderTrain() : view === 'trainDone' ? renderTrainDone() : view === 'result' ? renderResult() : renderHome();
+  const rig = isRig(P()), sky = isSky(P()) && view !== 'home' && view !== 'form';
+  document.documentElement.classList.toggle('skyui', sky);
+  app.innerHTML = view === 'form' ? renderForm() : view === 'base' ? (rig ? renderTown() : sky ? renderVillage() : renderBase()) : view === 'garage' ? renderGarage() : view === 'job' ? renderJob() : view === 'jobDone' ? renderJobDone()
+    : view === 'map' ? (sky ? renderSkyMap() : renderMap()) : view === 'skySetup' ? renderSkySetup() : view === 'skyGarden' ? renderGarden() : view === 'skyForge' ? renderForge() : view === 'skyDone' ? renderSkyDone()
+    : view === 'train' ? renderTrain() : view === 'trainDone' ? renderTrainDone() : view === 'result' ? renderResult() : renderHome();
   afterRender();
   if (view === 'train' && quiz) { quiz.destroy(); quiz = null; }
   if (view === 'train') { quiz = PUM.Quiz(document.getElementById('quiz-mount'), {player:P, onAnswer:onTrainAnswer, onAdvance:advanceTrain}); quiz.next(); }
@@ -227,6 +236,7 @@ function drawTruckCanvases() {
 }
 function afterRender() {
   const p = P(); if (!p) return;
+  if (isSky(p)) { skyAfterRender(p); return; }
   if (view === 'base' && isRig(p)) {
     const c = document.getElementById('town'); if (!c) return;
     const w = c.parentElement.clientWidth || 360; c.style.height = R.townHeight(w) + 'px';
@@ -397,10 +407,248 @@ function rigCrane() {
     }});
 }
 
+
+/* ---------- Sky Quest: village, sky map, hero setup, spirit garden, forge, results ---------- */
+const SK = PUM.SKY, KA = PUM.SKYART;
+let skySel = null, questSel = null, setup = null, skyResult = null, evo = null;
+const SKYKEYS = {ArrowLeft:'left', ArrowRight:'right', ArrowUp:'jump', ' ':'jump', g:'guard', '1':'k1', '2':'k2', '3':'k3', '4':'k4', s:'k0'};
+const spiritImg = (k, stage) => `<img class="sq-spirit" src="${KA.spiritImg(k, stage)}" alt="" draggable="false">`;
+function compList(p) { return Object.keys(p.sky.comps).map(k => ({k, kind:k, c:p.sky.comps[k], stage:k === 'hanamori' ? 3 : SK.stage(p.sky.comps[k].lv), name:SK.compName(k, p.sky.comps[k])})); }
+function heroCard(p) {
+  const s = p.sky, lv = SK.level(s.xp), c = SK.activeComp(p);
+  return `<div class="sq-hero">${KA.portraitImg(KA.lookOf(p), 'sq-port')}<div class="sq-hero-t"><b>${SK.HERO_NAMES[p.hero]} &middot; Lv ${lv}</b><span>${SK.title(lv)}</span><span class="xpbar" aria-label="Experience to next level"><i style="width:${(SK.xpFrac(s.xp) * 100).toFixed(0)}%"></i></span><small>${spiritImg(c.kind, c.stage)} ${esc(c.name)} is with you</small></div></div>`;
+}
+function buildCard(p, B) {
+  const s = p.sky, built = B.k === 'dojo' || s.b[B.k];
+  let act;
+  if (B.k === 'shrine') act = `<span class="lock-note">Purify ${B.guardians} guardians to open (${SK.guardians(p)} of ${B.guardians})</span>`;
+  else if (built) act = ['dojo', 'garden', 'forge'].includes(B.k) ? `<button class="btn small go" data-act="sky-open" data-k="${B.k}">${B.k === 'dojo' ? 'Train' : 'Open'}</button>` : '<span class="upg-max">Built</span>';
+  else { const can = p.mp >= B.cost; act = `<button class="btn small ${can ? 'go' : ''}" data-act="sky-build" data-k="${B.k}" ${can ? '' : 'aria-disabled="true"'}>${icon('gem', 'gem')} ${can ? `Rebuild · ${B.cost}` : `Need ${B.cost}`}</button>`; }
+  return `<div class="upg sq-build ${built ? 'built' : 'broken'} ${skySel === B.k ? 'sel' : ''}" id="b-${B.k}"><div class="upg-head"><b>${B.name}</b>${built ? icon('check') : ''}</div><p>${B.what}</p>${act}</div>`;
+}
+function renderVillage() {
+  const p = P(), s = p.sky, nq = Math.min(p.prog.anime.unlocked, SK.ACTIVE - 1), Q = SK.QUESTS[nq], lv = SK.level(s.xp), all = SK.cleared(p) >= SK.ACTIVE;
+  return `
+  <header class="top">${backBtn('home', 'Back to players')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">Sky Quest &middot; Lv ${lv} ${SK.title(lv)}</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
+  <div class="town-bar">${mpChip(p)}<span class="mp-chip snack">${spiritImg('petal', 1)} <b>${s.snacks}</b> snacks</span><button class="btn small" data-act="sky-setup">${icon('pencil')} Hero</button></div>
+  <div class="town-wrap sq-wrap"><canvas id="village" aria-label="Sky Village. Tap a building to see it."></canvas></div>
+  <section class="sq-next">${heroCard(p)}
+    <div class="sq-quest"><span class="kicker">${all ? 'Blossom Isle saved!' : `Next quest &middot; Blossom Isle`}</span><h3>${all ? 'Replay for more stars' : esc(Q.name)}</h3><p>${all ? 'Tide Grotto and Ember Peak are coming soon. Replay quests for stars, crystals and snacks.' : esc(Q.story)}</p>
+    <button class="btn go big wide" data-act="sky-quest-card" data-i="${nq}">${icon('play')} Sky map</button></div></section>
+  <section class="block"><h2>Sky Village</h2><p class="hint-text" style="margin:-6px 0 12px">Spend crystals to rebuild the village. Every building helps you.</p><div class="upgs sq-builds">${SK.BUILD.map(B => buildCard(p, B)).join('')}</div></section>
+  ${renderSettings(p)}`;
+}
+function renderSkyMap() {
+  const p = P(), pr = p.prog.anime, lv = SK.level(p.sky.xp);
+  let sheet = '';
+  if (questSel != null) {
+    const i = questSel, Q = SK.QUESTS[i], weak = lv < Q.rec, best = pr.stars[i];
+    const foes = Q.foes.map(k => k === 'hanamori' ? 'Hanamori (weak to <b class="el-ember">Ember</b>)' : `${SK.FOES[k].name} (weak to <b class="el-${SK.weakTo(SK.FOES[k].el)}">${SK.EL[SK.weakTo(SK.FOES[k].el)].name}</b>)`).join(', ');
+    const comps = compList(p).map(x => `<button class="sq-pick ${p.sky.comp === x.k ? 'on' : ''}" data-act="sky-comp" data-k="${x.k}" aria-pressed="${p.sky.comp === x.k}">${spiritImg(x.k, x.stage)}<span>${esc(x.name)}</span><small class="el-${KA.SPIRITS[x.k].el}">${SK.EL[KA.SPIRITS[x.k].el].name}</small></button>`).join('');
+    sheet = `<div class="sheet sq-sheet" id="sheet" role="dialog" aria-label="${esc(Q.name)}">
+      <button class="icon-btn sheet-x" data-act="close-qsheet" aria-label="Close">${icon('x')}</button>
+      <span class="kicker">Quest ${i + 1} of ${SK.ACTIVE} &middot; Blossom Isle${Q.boss ? ' &middot; GUARDIAN' : ''}</span>
+      <h3>${esc(Q.name)} ${best ? starsRow(best) : ''}</h3>
+      <p class="act-sub">${esc(Q.story)}</p>
+      <p class="hint-text">Shadows here: ${foes}</p>
+      <div class="lab">Bring a spirit</div><div class="sq-picks">${comps}</div>
+      <p class="hint-text">Your spirit attacks after every right answer, and hits twice as hard when the shadow is weak to its element.</p>
+      <div class="power-row ${weak ? 'weak' : ''}"><span>Your level <b>${lv}</b></span><span>Recommended <b>${Q.rec}</b></span></div>
+      ${weak ? '<p class="hint-text warn">This quest is tough at your level. Train at the dojo or upgrade at the forge first!</p>' : ''}
+      <button class="btn go big wide" data-act="sky-quest" data-i="${i}">${icon('play')} ${best ? 'Play again for more stars' : 'Start quest'}</button>
+      <p class="stars-help">Stars: 1 for finishing, 1 for losing at most one heart, 1 for getting most of the math right.</p>
+    </div>`;
+  }
+  return `<header class="top">${backBtn('base', 'Back to Sky Village')}<h2 class="title">Sky map</h2>${mpChip(p)}</header>
+    <div class="town-wrap sq-wrap"><canvas id="skymap" aria-label="The sky map. Tap a quest on Blossom Isle."></canvas></div>
+    <div class="sq-qlist">${SK.QUESTS.map((Q, i) => `<button class="sq-qrow ${i > pr.unlocked ? 'locked' : ''} ${questSel === i ? 'on' : ''}" data-act="sel-quest" data-i="${i}" ${i > pr.unlocked ? 'aria-disabled="true"' : ''}><span class="sq-qn">${Q.boss ? icon('star', 'fill') : i + 1}</span><span class="sq-qt"><b>${esc(Q.name)}</b><small>${i > pr.unlocked ? 'Locked' : `Recommended level ${Q.rec}`}</small></span>${pr.stars[i] ? starsRow(pr.stars[i], 'tiny') : ''}</button>`).join('')}</div>
+    ${sheet}`;
+}
+function initSetup(p) { const s = p.sky, d = KA.heroDefaults(p.hero); return {hero:p.hero, hair:s.hair || d.hair, outfit:s.outfit || d.outfit, comp:s.comp || 'petal', name:''}; }
+function renderSkySetup() {
+  const p = P(), d = setup, made = p.sky.made, L = KA.look(d.hero, d.hair, d.outfit, p.color);
+  const sw = (k, map) => Object.keys(map).map(c => `<button class="sw ${d[k] === c ? 'on' : ''}" data-act="sky-pick" data-k="${k}" data-v="${c}" style="--c:${map[c]}" aria-label="${c}" aria-pressed="${d[k] === c}"></button>`).join('');
+  return `<header class="top">${made ? backBtn('base', 'Back to Sky Village') : backBtn('home', 'Back to players')}<h2 class="title">${made ? 'Your hero' : 'Make your hero'}</h2><span style="width:52px"></span></header>
+  <div class="form sq-setup">
+    <div class="sq-preview">${KA.portraitImg(L, 'sq-big')}${made ? '' : spiritImg(d.comp, 1)}</div>
+    <div class="lab">Hero</div>
+    <div class="themes">${[0, 1, 2].map(i => `<button class="theme-b ${d.hero === i ? 'on' : ''}" data-act="sky-pick" data-k="hero" data-v="${i}" aria-pressed="${d.hero === i}">${KA.portraitImg(KA.look(i, d.hair, d.outfit, p.color))}<span>${SK.HERO_NAMES[i]}</span><small>${SK.STYLE[i]}</small></button>`).join('')}</div>
+    <div class="lab">Hair colour</div><div class="swatches">${sw('hair', KA.HAIR)}</div>
+    <div class="lab">Outfit colour</div><div class="swatches">${sw('outfit', KA.OUTFIT)}</div>
+    <p class="hint-text">The scarf is ${esc(p.name)}'s player colour. Change it with the pencil on the village screen.</p>
+    ${made ? '' : `<div class="lab">Pick a spirit companion</div>
+    <div class="themes">${['petal', 'ripple', 'ember'].map(k => `<button class="theme-b ${d.comp === k ? 'on' : ''}" data-act="sky-pick" data-k="comp" data-v="${k}" aria-pressed="${d.comp === k}">${spiritImg(k, 1)}<span>${KA.SPIRITS[k].name[0]}</span><small class="el-${KA.SPIRITS[k].el}">${SK.EL[KA.SPIRITS[k].el].name} spirit</small></button>`).join('')}</div>
+    <label class="lab" for="spname">Name your spirit (or keep ${KA.SPIRITS[d.comp].name[0]})</label>
+    <input id="spname" class="field" maxlength="14" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="${KA.SPIRITS[d.comp].name[0]}" value="${esc(d.name)}">`}
+    <button class="btn go big wide" data-act="sky-begin">${made ? 'Save' : `${icon('play')} Begin the adventure`}</button>
+  </div>`;
+}
+function renderGarden() {
+  const p = P(), s = p.sky;
+  const cards = compList(p).map(x => {
+    const guard = x.k === 'hanamori', lv = x.c.lv, next = lv < 5 ? 5 : lv < 10 ? 10 : null;
+    return `<div class="upg sq-comp ${s.comp === x.k ? 'sel' : ''}">${spiritImg(x.k, x.stage)}<div class="upg-head"><b>${esc(x.name)}</b><span class="pmeta">Lv ${lv}</span></div>
+      <p>${guard ? 'Guardian of Blossom Isle. Already fully grown.' : next ? `${next - lv} more snack${next - lv > 1 ? 's' : ''} until it evolves into ${KA.SPIRITS[x.k].name[x.stage]}.` : 'Fully evolved!'}</p>
+      <div class="sq-row">${guard || lv >= 15 ? '' : `<button class="btn small ${s.snacks ? 'go' : ''}" data-act="sky-feed" data-k="${x.k}" ${s.snacks ? '' : 'aria-disabled="true"'}>Feed a snack</button>`}${s.comp === x.k ? '<span class="upg-max">On quests with you</span>' : `<button class="btn small" data-act="sky-comp" data-k="${x.k}">Bring on quests</button>`}</div>
+      ${guard ? '' : `<input class="field small" data-rename="${x.k}" maxlength="14" placeholder="Rename ${esc(KA.SPIRITS[x.k].name[x.stage - 1])}" value="${esc(x.c.name || '')}" aria-label="Rename">`}
+    </div>`;
+  }).join('');
+  return `<header class="top">${backBtn('base', 'Back to Sky Village')}<h2 class="title">Spirit garden</h2><span class="mp-chip snack">${spiritImg('petal', 1)} <b>${s.snacks}</b> snacks</span></header>
+  <div class="town-wrap sq-wrap"><canvas id="garden" aria-label="Your spirits in the garden"></canvas></div>
+  <section class="block"><h2>Your spirits</h2><p class="hint-text" style="margin:-6px 0 12px">Each snack is one level. Spirits evolve at levels 5 and 10. Find snacks in treasure chests, from guardians, and by getting 8 or more right at the dojo.</p><div class="upgs">${cards}</div></section>`;
+}
+function renderForge() {
+  const p = P();
+  return `<header class="top">${backBtn('base', 'Back to Sky Village')}<h2 class="title">Forge</h2>${mpChip(p)}</header>
+  <section class="block"><h2>Gear</h2><p class="hint-text" style="margin:-6px 0 12px">Spend crystals to upgrade your gear. Harder quests need a stronger hero.</p><div class="upgs">${upgradeCards(p)}</div></section>
+  <button class="btn primary wide" data-act="sky-open" data-k="dojo">${icon('brain')} Earn crystals at the dojo</button>`;
+}
+function renderSkyDone() {
+  const p = P(), r = skyResult, Q = SK.QUESTS[r.qi];
+  const lvUp = r.lv1 > r.lv0;
+  return `<div class="results sq-results">
+    <h2 class="rtitle">${r.ok ? (Q.boss ? 'Hanamori purified!' : 'Quest complete!') : 'So close!'}</h2>
+    ${r.ok ? `<div class="rstars">${[0, 1, 2].map(i => `<span class="rs ${i < r.stars ? 'on' : ''}" style="--i:${i}">${icon('star', 'fill')}</span>`).join('')}</div>` : ''}
+    <div class="site-card sq-wrap"><canvas id="skydone" aria-label="${esc(Q.name)}"></canvas></div>
+    ${r.ok ? '' : `<p class="rmsg">You were knocked out. Train at the dojo, upgrade at the forge, or bring a spirit the shadows are weak to.</p>`}
+    ${lvUp ? `<p class="unlock">${icon('up')} Level up! You're now level ${r.lv1}, ${SK.title(r.lv1)}.${r.lv0 < 3 && r.lv1 >= 3 ? ' New move: Storm!' : ''}</p>` : ''}
+    ${r.unlocks.map(u => `<p class="unlock">${icon('star', 'fill')} ${esc(u)}</p>`).join('')}
+    <p class="rnote">${icon('gem', 'gem')} +${r.crystals} crystals &middot; +${r.xp} XP${r.snacks ? ` &middot; +${r.snacks} spirit snack${r.snacks > 1 ? 's' : ''}` : ''}</p>
+    <div class="ractions">
+      ${r.ok && r.qi < SK.ACTIVE - 1 ? `<button class="btn go big" data-act="sky-quest-card" data-i="${r.qi + 1}">${icon('play')} Next quest</button>` : ''}
+      ${r.ok ? '' : `<button class="btn go big" data-act="sky-quest" data-i="${r.qi}">${icon('play')} Try again</button>`}
+      <button class="btn primary" data-act="back" data-to="base">Back to Sky Village</button>
+      ${r.snacks && p.sky.b.garden ? '<button class="btn" data-act="sky-open" data-k="garden">Feed your spirits</button>' : ''}
+    </div>
+  </div>`;
+}
+function skyCanvas(id, scene, hFn) {
+  const c = document.getElementById(id); if (!c) return null;
+  const w = c.parentElement.clientWidth || 360; c.style.height = Math.round(hFn(w)) + 'px';
+  let t = 0, down = null;
+  const g = {update(dt) { t += dt; }, draw(ctx, W, H) { scene.draw(ctx, W, H, t); }, pointer(type, x, y) { if (type === 'down') down = [x, y]; if (type === 'up' && down && Math.hypot(x - down[0], y - down[1]) < 12) { scene.tap && scene.tap(x, y); down = null; } }};
+  bgRun(c, g); c.style.touchAction = 'pan-y'; return g;
+}
+function skyAfterRender(p) {
+  if (view === 'base') {
+    let hits = [];
+    skyCanvas('village', {draw(ctx, W, H, t) { hits = KA.village(ctx, W, H, t, {buildings:p.sky.b, comps:compList(p)}, skySel); },
+      tap(x, y) { const h = hits.find(o => Math.hypot(o.x - x, o.y - y) < o.r); if (!h) return; A.ac(); A.sfx('tap'); skySel = h.k; render(); const el = document.getElementById('b-' + h.k); if (el) el.scrollIntoView({block:'center', behavior:'smooth'}); }}, w => Math.min(460, w * .92));
+  }
+  if (view === 'map') {
+    let nodes = []; const pr = p.prog.anime;
+    skyCanvas('skymap', {draw(ctx, W, H, t) { nodes = KA.skyMap(ctx, W, H, t, {heal:SK.heal(p), sel:questSel, quests:SK.QUESTS.map((Q, i) => ({boss:!!Q.boss, locked:i > pr.unlocked, cur:i === pr.unlocked && !pr.stars[i], stars:pr.stars[i]}))}); },
+      tap(x, y) { const n = nodes.find(o => Math.hypot(o.x - x, o.y - y) < o.r); if (n) { A.ac(); selQuest(n.i); } }}, w => Math.min(520, w * 1.1));
+  }
+  if (view === 'skyGarden') {
+    let t0 = null;
+    skyCanvas('garden', {draw(ctx, W, H, t) {
+      KA.skyGradient(ctx, W, H, '#101A52', '#40308E', '#C77BB8', '#FFC2A8'); KA.stars(ctx, W, H * .6, t, 40, 5);
+      ctx.fillStyle = '#4FBF9A'; ctx.beginPath(); ctx.ellipse(W / 2, H * .92, W * .7, H * .26, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#7FE0BC'; ctx.beginPath(); ctx.ellipse(W / 2, H * .88, W * .64, H * .18, 0, Math.PI, Math.PI * 2); ctx.fill();
+      for (let i = 0; i < 9; i++) KA.blossom(ctx, (i + .5) * W / 9, H * .88 + (i % 2) * 8, 8, '#FFC6DD');
+      const list = compList(p), u = Math.min(W / 360, H / 260);
+      if (evo) {
+        if (t0 == null) t0 = t;
+        const k = (t - t0) / 3.4, x = W / 2, y = H * .52;
+        if (k < .45) { const sp = Math.sin(t * (10 + k * 40)) * .06; ctx.save(); ctx.translate(x, y); ctx.scale(1 + sp, 1 - sp); ctx.translate(-x, -y); KA.spirit(ctx, evo.kind, evo.from, x, y, .8 * u, t); ctx.restore(); ctx.save(); ctx.globalAlpha = k / .45 * .8; ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(x, y, 90 * u * k / .45, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+        else {
+          KA.speedLines(ctx, W, H, x, y, t, 'rgba(255,255,255,.25)', 40); KA.spirit(ctx, evo.kind, evo.to, x, y, .8 * u, t);
+          if (k < .6) { ctx.save(); ctx.globalAlpha = 1 - (k - .45) / .15; ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H); ctx.restore(); }
+          ctx.font = `${Math.min(22, W / 16)}px "Dela Gothic One", Lexend, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#FFFFFF'; ctx.lineWidth = 5; ctx.strokeStyle = '#150E1C'; const msg = `${KA.SPIRITS[evo.kind].name[evo.to - 1]}!`; ctx.strokeText(msg, x, H * .12); ctx.fillText(msg, x, H * .12);
+        }
+        if (k > 1.6) { evo = null; t0 = null; }
+      } else list.forEach((x, i) => { const n = list.length, px = W * (i + 1) / (n + 1), py = H * .55 + Math.sin(t * 2 + i) * 6; if (x.k === 'hanamori') KA.deer(ctx, px, H * .9, .26 * u, t, 1, {}); else KA.spirit(ctx, x.k, x.stage, px, py, .58 * u, t + i, {face:Math.sin(t * .5 + i) > 0 ? 1 : -1}); });
+      KA.petals(ctx, W, H, t, 10);
+    }}, w => Math.min(300, w * .7));
+  }
+  if (view === 'skyDone') {
+    const r = skyResult, Q = SK.QUESTS[r.qi], L = KA.lookOf(p), c = SK.activeComp(p);
+    skyCanvas('skydone', {draw(ctx, W, H, t) {
+      KA.battleBg(ctx, W, H, t, {});
+      const bs = Math.min(W * .7 / 360, H * .95 / 440), boss = Q.boss && r.ok;
+      if (boss) KA.deer(ctx, W * .74, H * .96, Math.min(W / 900, H / 480), t, 1, {});
+      ctx.save(); ctx.translate(W * (boss ? .3 : .4) - 180 * bs, H - 440 * bs); ctx.scale(bs, bs); KA.bust(ctx, L, {mouth:r.ok ? 'grin' : 'smile', blink:Math.sin(t * 1.7) > .985 ? .1 : 1}); ctx.restore();
+      if (!boss) KA.spirit(ctx, c.kind, c.stage, W * .78, H * .5, Math.min(W / 420, H / 260) * .7, t);
+      if (r.ok) KA.petals(ctx, W, H, t, 26); else { ctx.fillStyle = 'rgba(10,10,40,.25)'; ctx.fillRect(0, 0, W, H); }
+    }}, w => Math.min(300, w * .66));
+  }
+}
+function selQuest(i) {
+  const p = P();
+  if (i > p.prog.anime.unlocked) { PUM.fx.toast('Finish the quest before this one to unlock it'); A.sfx('no'); return; }
+  questSel = i; A.sfx('tap'); render();
+}
+function startQuest(i) {
+  const p = P(); if (!p || i > p.prog.anime.unlocked) return;
+  let game = null;
+  openShell({cls:'sky', shellCls:'sky', ctrl:'', gauge:false, keymap:SKYKEYS, level:i,
+    onExit:() => { if (game) { p.sky.xp += game.xpEarned(); store.savePlayer(p); } questSel = i; go('map'); },
+    onFinish:r => skyFinish(r),
+    make:api => (game = PUM.games.sky({player:p, assist:assistOf(p), levelIndex:i, api}))});
+  p.prog.anime.plays++;
+}
+function skyFinish(r) {
+  const p = P(); if (!p || !play) return;
+  const mp = play.mp, s = p.sky, pr = p.prog.anime, qi = r.quest, Q = SK.QUESTS[qi];
+  stopGame();
+  const lv0 = SK.level(s.xp); s.xp += r.xp; const lv1 = SK.level(s.xp);
+  let stars = 0, bonus = 0, snacks = r.snacks;
+  const unlocks = [];
+  if (r.ok) {
+    const math = r.asked ? r.right / r.asked : 1, first = !pr.stars[qi];
+    stars = 1 + (r.lost <= 1 ? 1 : 0) + (math >= .66 ? 1 : 0);
+    pr.stars[qi] = Math.max(pr.stars[qi], stars);
+    if (pr.unlocked === qi && qi < SK.ACTIVE - 1) pr.unlocked = qi + 1;
+    bonus = stars * 2 + (Q.boss ? 5 : 0);
+    if (Q.boss && first) { s.comps.hanamori = s.comps.hanamori || {lv:8, name:''}; s.moves.double = true; snacks += 2; unlocks.push('Hanamori joined your team!', 'You learned double jump. Go back and reach the secret ledges!', 'Blossom badge earned'); }
+  }
+  s.snacks = Math.min(99, s.snacks + snacks);
+  p.mp += bonus; p.mpTotal += bonus;
+  skyResult = {qi, ok:r.ok, stars, crystals:mp + bonus, xp:r.xp, lv0, lv1, snacks, unlocks};
+  store.savePlayer(p); A.sfx(r.ok ? 'fanfare' : 'no');
+  go('skyDone');
+}
+function skyEvent(a, el) {
+  const p = P(); if (!p) return false;
+  const s = p.sky;
+  switch (a) {
+    case 'sky-setup': setup = initSetup(p); A.sfx('tap'); go('skySetup'); return true;
+    case 'sky-pick': { const k = el.dataset.k; setup[k] = k === 'hero' ? Number(el.dataset.v) : el.dataset.v; if (k === 'hero' && !s.made) { const d = KA.heroDefaults(setup.hero); setup.hair = d.hair; setup.outfit = d.outfit; } A.sfx('tap'); render(); return true; }
+    case 'sky-begin': {
+      p.hero = setup.hero; s.hair = setup.hair; s.outfit = setup.outfit;
+      if (!s.made) { s.comps[setup.comp] = {lv:1, name:setup.name.trim().slice(0, 14)}; s.comp = setup.comp; s.made = true; }
+      setup = null; store.savePlayer(p); A.sfx('fanfare'); go('base'); return true;
+    }
+    case 'sky-build': {
+      const B = SK.BUILD.find(x => x.k === el.dataset.k); if (!B || s.b[B.k]) return true;
+      if (p.mp < B.cost) { PUM.fx.toast(`Need ${B.cost - p.mp} more crystals. Go on a quest or train at the dojo!`); A.sfx('no'); return true; }
+      p.mp -= B.cost; s.b[B.k] = true; skySel = B.k; store.savePlayer(p); A.sfx('up'); PUM.fx.toast(`${icon('up')} ${B.name} rebuilt!`); render();
+      PUM.fx.burst(document.getElementById('b-' + B.k)); return true;
+    }
+    case 'sky-open': { const k = el.dataset.k; A.sfx('tap'); if (k === 'dojo') startTrain(); else go(k === 'garden' ? 'skyGarden' : 'skyForge'); return true; }
+    case 'sky-quest-card': questSel = Number(el.dataset.i); A.sfx('tap'); go('map'); return true;
+    case 'sel-quest': selQuest(Number(el.dataset.i)); return true;
+    case 'close-qsheet': questSel = null; A.sfx('tap'); render(); return true;
+    case 'sky-comp': { const k = el.dataset.k; if (!s.comps[k]) return true; s.comp = k; store.savePlayer(p); A.sfx('tap'); render(); return true; }
+    case 'sky-quest': A.sfx('tap'); startQuest(Number(el.dataset.i)); return true;
+    case 'sky-feed': {
+      const k = el.dataset.k, c = s.comps[k]; if (!c || k === 'hanamori') return true;
+      if (s.snacks < 1) { PUM.fx.toast('No snacks yet. Find them in treasure chests!'); A.sfx('no'); return true; }
+      const st0 = SK.stage(c.lv); s.snacks--; c.lv = Math.min(15, c.lv + 1); const st1 = SK.stage(c.lv);
+      store.savePlayer(p); A.sfx(st1 > st0 ? 'fanfare' : 'up');
+      if (st1 > st0) { evo = {kind:k, from:st0, to:st1}; PUM.fx.toast(`${KA.SPIRITS[k].name[st0 - 1]} evolved into ${KA.SPIRITS[k].name[st1 - 1]}!`); if (p.speak) A.say(`Evolved into ${KA.SPIRITS[k].name[st1 - 1]}!`); }
+      else PUM.fx.toast(`${esc(SK.compName(k, c))} is now level ${c.lv}!`);
+      render(); window.scrollTo(0, 0); return true;
+    }
+  }
+  return false;
+}
+
 /* ---------- training ---------- */
 function startTrain() { train = {n:0, len:10, res:[], earned:0}; go('train'); }
 function onTrainAnswer(ok, info) {
   train.res.push(ok); train.earned += info.mp;
+  if (isSky(P()) && ok) { P().sky.xp += 10; train.xp = (train.xp || 0) + 10; }
   store.savePlayer(P());
   const chip = document.getElementById('mp-chip'); if (chip) chip.outerHTML = mpChip(P());
   const pips = app.querySelectorAll('.pip'), i = train.res.length - 1;
@@ -408,7 +656,11 @@ function onTrainAnswer(ok, info) {
 }
 function advanceTrain() {
   train.n++;
-  if (train.n >= train.len) { if (quiz) { quiz.destroy(); quiz = null; } A.sfx('fanfare'); go('trainDone'); return; }
+  if (train.n >= train.len) {
+    if (quiz) { quiz.destroy(); quiz = null; }
+    const p = P(); if (isSky(p) && train.res.filter(Boolean).length >= 8) { p.sky.snacks = Math.min(99, p.sky.snacks + 1); train.snack = true; store.savePlayer(p); }
+    A.sfx('fanfare'); go('trainDone'); return;
+  }
   const pips = app.querySelectorAll('.pip'); if (pips[train.n]) pips[train.n].classList.add('now');
   quiz.next();
 }
@@ -425,7 +677,7 @@ function hudHTML(p, cfg = {}) {
     <div class="hud">
       <button class="icon-btn" data-g="exit" aria-label="Stop and go back">${icon('x')}</button>
       ${cfg.gauge === false ? '<span style="flex:1"></span>' : `<div class="gauge" style="--pc:var(--${th.pc})"><span class="gl">${th.fuel}</span><span class="gbar"><i id="g-fuel"></i></span></div>`}
-      <span class="hud-mp">${icon(isRig(p) ? 'coin' : 'bolt', isRig(p) ? 'coin' : '')}<b id="g-mp">0</b></span>
+      <span class="hud-mp">${curIcon(p)}<b id="g-mp">0</b></span>
     </div>
     <div class="hud2" id="hud2"></div>
     <div class="qbanner" id="qbanner" hidden></div>
@@ -446,7 +698,7 @@ function openShell(cfg) {
   if (quiz) { quiz.destroy(); quiz = null; }
   view = 'game'; render();
   const toastEl = document.getElementById('toast'); if (toastEl) toastEl.hidden = true;
-  shell.hidden = false; shell.innerHTML = hudHTML(p, cfg);
+  shell.hidden = false; shell.className = cfg.shellCls || ''; shell.innerHTML = hudHTML(p, cfg);
   document.documentElement.classList.add('in-game');
   const api = {
     hud: h => hud(h),
@@ -457,6 +709,9 @@ function openShell(cfg) {
     showQuestion: (q, hint) => { const b = document.getElementById('qbanner'); if (!b) return; b.innerHTML = `<span class="qb-hint">${esc(hint || '')}</span><span class="qb-q">${PUM.questionHTML(q)}</span>`; b.hidden = false; b.classList.remove('ok', 'bad'); if (p.speak) A.say(q.spoken); },
     hideQuestion: ok => { const b = document.getElementById('qbanner'); if (!b) return; b.classList.add(ok ? 'ok' : 'bad'); setTimeout(() => { b.hidden = true; }, 900); },
     answer: (ok, q) => { const r = PUM.recordAnswer(p, ok, false); play.mp += r.mp; const el = document.getElementById('g-mp'); if (el) el.textContent = play.mp; if (r.up) PUM.fx.toast(`${icon('up')} Math step up!`); if (p.speak) A.say(ok ? pick(['Yes!', 'Great!', 'Nice!']) : `It was ${q.ans}`); A.sfx(ok ? 'yes' : 'no'); store.savePlayer(p); return r; },
+    say: t => { if (p.speak) A.say(t); },
+    ctrl: html => { const el = shell.querySelector('.controls'); if (el) el.innerHTML = html; },
+    panel: (html, cls) => { const box = document.getElementById('choose'); if (!box) return; if (!html) { box.hidden = true; box.innerHTML = ''; return; } box.className = 'choose ' + (cls || ''); box.innerHTML = html; box.hidden = false; },
     choose: (q, options, title, cb) => {
       const box = document.getElementById('choose'); if (!box) return;
       box.innerHTML = `<div class="choose-card"><span class="qb-hint">${esc(title)}</span><span class="qb-q">${PUM.questionHTML(q)}</span><div class="choose-opts">${options.map(v => `<button class="choice" data-pick="${v}"><span class="cnum">${v}</span></button>`).join('')}</div></div>`;
@@ -504,7 +759,7 @@ function openRefuel(reason) {
   ['left', 'right', 'brake'].forEach(c => play.game.setControl && play.game.setControl(c, false));
   shell.querySelectorAll('.ctl.down').forEach(b => b.classList.remove('down'));
   const titles = {revive:'Knocked out!', repair:'Truck broke down!', fuel:'Out of fuel!', stamina:'Out of stamina!', energy:'Out of energy!'};
-  const subs = {revive:'Answer one question to get back up. You only get one second chance per level!', repair:'Answer a question to fix your truck. You only get one repair per level, so upgrade Armor to take more hits!', fuel:'Each right answer adds half a tank. Upgrade your Fuel tank to drive farther.', stamina:'Each right answer refills half your stamina. Upgrade Stamina to play longer.', energy:'Each right answer refills half your energy. Upgrade Energy to run longer.'};
+  const subs = {revive:isSky(p) ? 'Answer 3 questions to get your hearts back. You get one second chance per quest!' : 'Answer one question to get back up. You only get one second chance per level!', repair:'Answer a question to fix your truck. You only get one repair per level, so upgrade Armor to take more hits!', fuel:'Each right answer adds half a tank. Upgrade your Fuel tank to drive farther.', stamina:'Each right answer refills half your stamina. Upgrade Stamina to play longer.', energy:'Each right answer refills half your energy. Upgrade Energy to run longer.'};
   const ov = document.getElementById('overlay');
   ov.hidden = false;
   ov.innerHTML = `<div class="refuel"><div class="refuel-head"><h2>${titles[reason] || 'Recharge!'}</h2><p>${subs[reason] || ''}</p>
@@ -533,7 +788,7 @@ function stopGame() {
   if (!play) return;
   if (play.refuelQuiz) play.refuelQuiz.destroy();
   play.runner.stop(); play.game.onStop && play.game.onStop(); play.cleanup();
-  shell.hidden = true; shell.innerHTML = ''; document.documentElement.classList.remove('in-game');
+  shell.hidden = true; shell.innerHTML = ''; shell.className = ''; document.documentElement.classList.remove('in-game');
   A.engineOff(); A.hush();
   const p = P(); if (p) store.savePlayer(p);
   play = null;
@@ -572,9 +827,10 @@ app.addEventListener('click', e => {
   if (!el || el.disabled) return;
   A.ac();
   const a = el.dataset.act;
+  if (a.startsWith('sky-') || a === 'sel-quest' || a === 'close-qsheet') { if (skyEvent(a, el)) return; }
   switch (a) {
     case 'add-player': draft = {name:'', color:pick(PUM.COLORS), theme:'trucks', hero:0, age:5}; confirmDel = false; A.sfx('tap'); go('form'); break;
-    case 'open': { pid = el.dataset.id; showWorlds = false; A.sfx('tap'); const p = P(); townSel = isRig(p) ? (p.rig.job ? p.rig.job.i : Math.min(p.prog.trucks.unlocked, R.ACTIVE - 1)) : null; go('base'); break; }
+    case 'open': { pid = el.dataset.id; showWorlds = false; skySel = null; questSel = null; setup = null; A.sfx('tap'); const p = P(); townSel = isRig(p) ? (p.rig.job ? p.rig.job.i : Math.min(p.prog.trucks.unlocked, R.ACTIVE - 1)) : null; go('base'); break; }
     case 'edit': { const p = P(); if (!p) break; draft = {id:p.id, name:p.name, color:p.color, theme:p.theme, hero:p.hero, age:p.age}; confirmDel = false; A.sfx('tap'); go('form'); break; }
     case 'pick': { const k = el.dataset.k; draft[k] = (k === 'age' || k === 'hero') ? Number(el.dataset.v) : el.dataset.v; confirmDel = false; A.sfx('tap'); render(); break; }
     case 'save-player': saveForm(); break;
@@ -586,7 +842,7 @@ app.addEventListener('click', e => {
     case 'back': { const to = el.dataset.to; if ((to === 'base' || to === 'map') && !P()) go('home'); else { go(to); if (to === 'home') store.pull(); } break; }
     case 'end-train': if (quiz) quiz.destroy(); quiz = null; train && train.earned ? go('trainDone') : go('base'); break;
     case 'train': A.sfx('tap'); startTrain(); break;
-    case 'map': { const p = P(); sel = p.prog[p.theme].unlocked; A.sfx('tap'); go('map'); break; }
+    case 'map': { const p = P(); sel = p.prog[p.theme].unlocked; if (isSky(p)) questSel = Math.min(sel, SK.ACTIVE - 1); A.sfx('tap'); go('map'); break; }
     case 'sel-level': { const p = P(), i = Number(el.dataset.i); if (i > p.prog[p.theme].unlocked) { PUM.fx.toast('Beat the level before to unlock this one'); A.sfx('no'); break; } sel = i; A.sfx('tap'); render(); const c = document.getElementById('lvl-card'); if (c) c.scrollIntoView({block:'nearest'}); break; }
     case 'start': A.sfx('tap'); startGame(Number(el.dataset.i)); break;
     case 'garage': A.sfx('tap'); go('garage'); break;
@@ -617,7 +873,7 @@ app.addEventListener('click', e => {
       const p = P(), k = el.dataset.k, lvl = p.up[k];
       if (lvl >= CP.maxUp) break;
       const cost = CP.cost[lvl];
-      if (p.mp < cost) { PUM.fx.toast(isRig(p) ? `Need ${cost - p.mp} more coins. Earn them at the practice yard or on jobs!` : `Need ${cost - p.mp} more math points. Tap Earn math points!`); A.sfx('no'); break; }
+      if (p.mp < cost) { PUM.fx.toast(isRig(p) ? `Need ${cost - p.mp} more coins. Earn them at the practice yard or on jobs!` : isSky(p) ? `Need ${cost - p.mp} more crystals. Go on a quest or train at the dojo!` : `Need ${cost - p.mp} more math points. Tap Earn math points!`); A.sfx('no'); break; }
       p.mp -= cost; p.up[k]++; store.savePlayer(p); A.sfx('up');
       PUM.fx.toast(`${icon('up')} ${UPS(p).find(u => u.k === k).name} level ${p.up[k]}!`);
       render(); PUM.fx.burst(app.querySelector(`[data-k="${k}"]`) || app.querySelector('.upgs'));
@@ -648,7 +904,13 @@ shell.addEventListener('click', e => {
   if (el.dataset.g === 'exit') { const ex = play && play.onExit; stopGame(); if (ex) ex(); else go('base'); }
   if (el.dataset.g === 'resume') closeRefuel();
 });
+shell.addEventListener('click', e => {
+  const el = e.target.closest('[data-gp]'); if (!el || el.disabled || !play || !play.game.ui) return;
+  A.ac(); play.game.ui(el.dataset.gp, el.dataset.v);
+});
 app.addEventListener('input', e => {
+  if (e.target.id === 'spname' && setup) { setup.name = e.target.value.slice(0, 14); return; }
+  if (e.target.dataset.rename) { const p = P(), c = p && p.sky.comps[e.target.dataset.rename]; if (c) { c.name = e.target.value.trim().slice(0, 14); store.savePlayer(p); } return; }
   if (e.target.id !== 'pname' || !draft) return;
   draft.name = e.target.value.slice(0, 16);
   const pv = document.getElementById('pv-name'); if (pv) pv.textContent = draft.name || 'Name';
@@ -697,7 +959,7 @@ function saveForm() {
   draft = null; A.sfx('tap'); go('base');
 }
 
-PUM.app = {go, P, get play() { return play; }, startGame, rigLoad, rigDrive, rigCrane, rigUnload, get view() { return view; }};
+PUM.app = {go, P, get play() { return play; }, startGame, startQuest, rigLoad, rigDrive, rigCrane, rigUnload, get view() { return view; }};
 render();
 store.pull();
 })();

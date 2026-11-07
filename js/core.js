@@ -32,7 +32,7 @@ PUM.AGES = [3,4,5,6,7,8,9,10,11,12];
 PUM.THEMES = {
   trucks: {name:'Trucks', base:'Garage', game:'Big Rig Builders', pc:'marigold', fuel:'Fuel'},
   soccer: {name:'Soccer', base:'Clubhouse', game:'Striker Rush', pc:'leaf', fuel:'Stamina'},
-  anime:  {name:'Hero',   base:'Hero base', game:'Sky Quest', pc:'berry', fuel:'Energy'},
+  anime:  {name:'Hero',   base:'Sky Village', game:'Sky Quest', pc:'berry', fuel:'Hearts'},
 };
 PUM.THEME_IDS = Object.keys(PUM.THEMES);
 PUM.UPGRADES = {
@@ -93,6 +93,7 @@ const IC = {
   pause:'<path d="M8 5v14M16 5v14"/>',
   play:'<path d="M7 5l12 7-12 7z"/>',
   star:'<path d="M12 2.6l2.8 5.9 6.5.8-4.8 4.5 1.2 6.4L12 17.1l-5.7 3.1 1.2-6.4-4.8-4.5 6.5-.8z"/>',
+  gem:'<path d="M12 3l6.5 7L12 21 5.5 10z"/><path d="M5.5 10h13M9 10l3-7 3 7-3 11z"/>',
   coin:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/>',
   wrench:'<path d="M14.5 4.5a4.5 4.5 0 0 0-5.6 5.8L4 15.2 6.8 18l4.9-4.9a4.5 4.5 0 0 0 5.8-5.6l-2.6 2.6-2.4-.6-.6-2.4z"/>',
   down:'<path d="M12 5v14M6 13l6 6 6-6"/>',

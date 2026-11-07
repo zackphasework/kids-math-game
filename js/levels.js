@@ -20,11 +20,9 @@ L.upgrades = {
     {k:'pass', name:'Passing', what:'Power shots charge faster from math passes.'},
   ],
   anime: [
-    {k:'hearts', name:'Hearts', what:'One more heart per level.'},
-    {k:'attack', name:'Attack', what:'Hit bosses harder.'},
-    {k:'energy', name:'Energy', what:'Run longer before you need a refill.'},
-    {k:'agility', name:'Agility', what:'Jump higher. Level 1 unlocks double jump.'},
-    {k:'shield', name:'Shield', what:'Longer safety after a hit, and blocks some hits.'},
+    {k:'weapon', name:'Weapon', what:'Every attack hits harder.'},
+    {k:'charm', name:'Spirit charm', what:'Your Spirit meter fills faster, so special moves come sooner.'},
+    {k:'boots', name:'Sky boots', what:'Run faster and jump higher on the islands.'},
   ],
 };
 L.cost = [6, 12, 20, 32, 50];
@@ -84,9 +82,9 @@ L.soccer = {
 };
 L.anime = {
   worlds:[
-    {name:'Misty Forest', color:'leaf', sky:['#9FD9C9', '#E6F7EE'], hills:'#5FA889', ground:'#4E8A5F', boss:'Gloom Blob'},
-    {name:'Crystal Caves', color:'sea', sky:['#6E86D8', '#C9D8FF'], hills:'#4A5FAE', ground:'#5A5F8E', boss:'Crystal Snapper'},
-    {name:'Volcano Peak', color:'rose', sky:['#E86A5A', '#FFD0A8'], hills:'#9A4A42', ground:'#6E3A36', boss:'Magma King'},
+    {name:'Blossom Isle', color:'rose', boss:'Hanamori'},
+    {name:'Tide Grotto', color:'sea', boss:'Umikaze'},
+    {name:'Ember Peak', color:'marigold', boss:'Homura'},
   ],
   levels:[
     {name:'Into the forest', len:3600, obs:{gap:.4, rock:.5}, foes:1, nw:'Jump over rocks and gaps. Reach the portal!'},
