@@ -13,7 +13,7 @@ let loading = null;
 S3.ensure = () => {
   if (window.THREE || loading) return;
   loading = document.createElement('script');
-  loading.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  loading.src = 'js/vendor/three.min.js';  /* three.js r128 (MIT), stored with the game */
   loading.async = true; loading.onerror = () => { loading = null; };
   document.head.appendChild(loading);
 };

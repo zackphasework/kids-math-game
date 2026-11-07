@@ -665,3 +665,10 @@ html.skyui .kicker{color:#9FD9FF}
 .sync-panel .lab-sm{margin:10px 0 4px; font-weight:800; font-size:14px}
 .sync-panel .fam-new{font-weight:800}
 .sync-panel .code.big{display:block; margin:4px 0 8px; font:800 26px Lexend, sans-serif; letter-spacing:.06em; color:var(--ink); user-select:all}
+
+/* What we save */
+.privacy{margin-top:14px}
+.link-b{border:none; background:none; padding:4px 0; color:var(--ink-soft); font:700 14px Lexend, sans-serif; text-decoration:underline; cursor:pointer}
+.privacy-box{margin-top:8px; padding:12px 14px; border:2px solid var(--line-soft); border-radius:16px; background:var(--card); font-size:14px; line-height:1.45}
+.privacy-box p{margin:0 0 8px}
+.privacy-box p:last-child{margin:0}

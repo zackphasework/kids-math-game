@@ -85,6 +85,17 @@ function installCard() {
   return '';
 }
 
+/* what the game keeps, in plain words, for the grown-ups */
+let showPrivacy = false;
+function privacyNote() {
+  return `<div class="privacy"><button class="link-b" data-act="privacy" aria-expanded="${showPrivacy}">${showPrivacy ? 'Hide' : 'What we save'}</button>${showPrivacy ? `<div class="privacy-box">
+    <p><b>What Power-Up Math saves:</b> each kid's first name or nickname, age, colour and game progress. Nothing else.</p>
+    <p><b>Where:</b> on this device. If you share with your family, also in a private family save (a cloud database at Supabase) that only devices with your family code can open.</p>
+    <p><b>Never:</b> no ads, no tracking, no accounts, no emails, no photos and no chat. Nothing is sold or shared, and the game loads nothing from other websites.</p>
+    <p><b>To delete:</b> tap a kid, the pencil, then <b>Remove player</b>. That removes them from every device in the family. To remove a whole family, ask the person who shared the game with you.</p>
+  </div>` : ''}</div>`;
+}
+
 function renderHome() {
   const ps = [...S.players].sort((a, b) => a.created - b.created);
   return `
@@ -96,7 +107,8 @@ function renderHome() {
       <button class="player add" data-act="add-player">${icon('plus')}<span>Add player</span></button></div>
     ${ps.length ? '' : `<p class="empty-note">Add each kid once with their name, age and colour. They'll start at the right math level and can play every game.</p>`}
     ${syncChip()}
-  </section>`;
+  </section>
+  ${privacyNote()}`;
 }
 function renderForm() {
   const d = draft, editing = !!d.id;
@@ -106,7 +118,8 @@ function renderForm() {
   <div class="form">
     <div class="preview">${avatar(d, 'av-big')}<span id="pv-name">${esc(d.name || 'Name')}</span></div>
     <label class="lab" for="pname">Name</label>
-    <input id="pname" class="field" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Type a name" value="${esc(d.name)}">
+    <input id="pname" class="field" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="First name or nickname" value="${esc(d.name)}">
+    <p class="hint-text">Use a first name or a nickname only.</p>
     <div class="lab">Colour</div>
     <div class="swatches">${PUM.COLORS.map(c => `<button class="sw ${d.color === c ? 'on' : ''}" data-act="pick" data-k="color" data-v="${c}" style="--c:var(--${c})" aria-label="${c}" aria-pressed="${d.color === c}"></button>`).join('')}</div>
     <div class="lab">Age</div>
@@ -984,6 +997,7 @@ app.addEventListener('click', e => {
     }
     case 'install': { if (!installEvt) break; const ev = installEvt; installEvt = null; ev.prompt(); ev.userChoice.finally(() => render()); break; }
     case 'install-later': { try { localStorage.setItem('pum-install-later', String(Date.now())); } catch (e) {} A.sfx('tap'); render(); break; }
+    case 'privacy': showPrivacy = !showPrivacy; A.sfx('tap'); render(); break;
     case 'mute': { S.muted = !S.muted; store.saveLocal(); if (S.muted) A.hush(); else A.sfx('tap'); const m = document.getElementById('mute'); if (m) m.outerHTML = muteBtn(); break; }
     case 'set': {
       const p = P(); if (!p) break;
