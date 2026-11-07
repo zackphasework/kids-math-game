@@ -45,14 +45,23 @@ const backBtn = (to, label = 'Back') => `<button class="icon-btn" data-act="back
 const avatar = (p, cls) => `<span class="avatar ${cls}">${PUM.avatarSVG(p)}</span>`;
 const mpChip = p => `<span class="mp-chip" id="mp-chip">${curIcon(p)} <b>${p.mp}</b> ${curName(p)}</span>`;
 const starsRow = (n, size = '') => `<span class="mini-stars ${size}">${[0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">${icon('star', 'fill')}</i>`).join('')}</span>`;
+let famStart = false, famNew = false;
 function syncChip() {
   const s = store.sync.state, fam = store.family();
   let panel = '';
+  const err = store.sync.joinErr ? `<p class="err">${esc(store.sync.joinErr)}</p>` : '';
   if (showSync) {
-    if (fam && s !== 'badcode') panel = `<div class="sync-panel"><p>Players and progress show up on every phone or tablet that has joined with this family code: <span class="code">${store.prettyCode(fam)}</span></p><div class="join-row"><button class="btn small" data-act="copy-link">Copy family link</button></div><p id="copy-note" hidden style="overflow-wrap:anywhere"></p></div>`;
-    else panel = `<div class="sync-panel"><p>Enter the family code to share players and progress with the family's other phones and tablets.</p><div class="join-row"><input id="joincode" class="field" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH-JKLM"><button class="btn small primary" data-act="join">Join</button></div>${store.sync.joinErr ? `<p class="err">${esc(store.sync.joinErr)}</p>` : ''}</div>`;
+    if (fam && s !== 'badcode') panel = `<div class="sync-panel">${famNew
+      ? `<p class="fam-new">Your family is ready! Your family code is:</p><p class="code big">${store.prettyCode(fam)}</p><p><b>Write it down.</b> Every other phone or tablet needs this code (or the family link) to join.</p>`
+      : `<p>Players and progress show up on every phone or tablet that has joined with this family code: <span class="code">${store.prettyCode(fam)}</span></p>`}
+      <div class="join-row"><button class="btn small ${famNew ? 'go' : ''}" data-act="copy-link">Copy family link</button></div><p id="copy-note" hidden style="overflow-wrap:anywhere"></p></div>`;
+    else if (famStart) panel = `<div class="sync-panel"><p><b>Start a new family?</b> This makes a family code for your family's phones and tablets. Kids already on this device move into the family.</p>
+      <div class="join-row"><button class="btn small go" data-act="fam-create">Yes, start a family</button><button class="btn small ghost" data-act="fam-cancel">Cancel</button></div>${err}</div>`;
+    else panel = `<div class="sync-panel"><p>Share players and progress across your family's phones and tablets.</p>
+      <p class="lab-sm">First device in your family?</p><div class="join-row"><button class="btn small go" data-act="fam-start">${icon('plus')} Start a new family</button></div>
+      <p class="lab-sm">Already have a family code?</p><div class="join-row"><input id="joincode" class="field" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH-JKLM"><button class="btn small primary" data-act="join">Join</button></div>${err}</div>`;
   }
-  return `<div class="sync" id="sync"><button class="sync-b" data-s="${s}" data-act="sync-info" aria-expanded="${showSync}"><span class="dot"></span>${store.SYNC_TEXT[s]}${!fam ? ' · Join family' : ''}</button>${panel}</div>`;
+  return `<div class="sync" id="sync"><button class="sync-b" data-s="${s}" data-act="sync-info" aria-expanded="${showSync}"><span class="dot"></span>${store.SYNC_TEXT[s]}${!fam ? ' · Share with family' : ''}</button>${panel}</div>`;
 }
 store.sync.onChange = () => { const el = document.getElementById('sync'); if (el) el.outerHTML = syncChip(); };
 store.sync.onPulled = () => { if (pid && !P()) { pid = null; if (view !== 'form') view = 'home'; } if (view === 'home' || view === 'games' || view === 'base' || view === 'map' || view === 'garage' || view === 'skyGarden' || view === 'skyForge') render(); };
@@ -76,6 +85,17 @@ function installCard() {
   return '';
 }
 
+/* what the game keeps, in plain words, for the grown-ups */
+let showPrivacy = false;
+function privacyNote() {
+  return `<div class="privacy"><button class="link-b" data-act="privacy" aria-expanded="${showPrivacy}">${showPrivacy ? 'Hide' : 'What we save'}</button>${showPrivacy ? `<div class="privacy-box">
+    <p><b>What Power-Up Math saves:</b> each kid's first name or nickname, age, colour and game progress. Nothing else.</p>
+    <p><b>Where:</b> on this device. If you share with your family, also in a private family save (a cloud database at Supabase) that only devices with your family code can open.</p>
+    <p><b>Never:</b> no ads, no tracking, no accounts, no emails, no photos and no chat. Nothing is sold or shared, and the game loads nothing from other websites.</p>
+    <p><b>To delete:</b> tap a kid, the pencil, then <b>Remove player</b>. That removes them from every device in the family. To remove a whole family, ask the person who shared the game with you.</p>
+  </div>` : ''}</div>`;
+}
+
 function renderHome() {
   const ps = [...S.players].sort((a, b) => a.created - b.created);
   return `
@@ -87,7 +107,8 @@ function renderHome() {
       <button class="player add" data-act="add-player">${icon('plus')}<span>Add player</span></button></div>
     ${ps.length ? '' : `<p class="empty-note">Add each kid once with their name, age and colour. They'll start at the right math level and can play every game.</p>`}
     ${syncChip()}
-  </section>`;
+  </section>
+  ${privacyNote()}`;
 }
 function renderForm() {
   const d = draft, editing = !!d.id;
@@ -97,7 +118,8 @@ function renderForm() {
   <div class="form">
     <div class="preview">${avatar(d, 'av-big')}<span id="pv-name">${esc(d.name || 'Name')}</span></div>
     <label class="lab" for="pname">Name</label>
-    <input id="pname" class="field" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Type a name" value="${esc(d.name)}">
+    <input id="pname" class="field" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="First name or nickname" value="${esc(d.name)}">
+    <p class="hint-text">Use a first name or a nickname only.</p>
     <div class="lab">Colour</div>
     <div class="swatches">${PUM.COLORS.map(c => `<button class="sw ${d.color === c ? 'on' : ''}" data-act="pick" data-k="color" data-v="${c}" style="--c:var(--${c})" aria-label="${c}" aria-pressed="${d.color === c}"></button>`).join('')}</div>
     <div class="lab">Age</div>
@@ -975,6 +997,7 @@ app.addEventListener('click', e => {
     }
     case 'install': { if (!installEvt) break; const ev = installEvt; installEvt = null; ev.prompt(); ev.userChoice.finally(() => render()); break; }
     case 'install-later': { try { localStorage.setItem('pum-install-later', String(Date.now())); } catch (e) {} A.sfx('tap'); render(); break; }
+    case 'privacy': showPrivacy = !showPrivacy; A.sfx('tap'); render(); break;
     case 'mute': { S.muted = !S.muted; store.saveLocal(); if (S.muted) A.hush(); else A.sfx('tap'); const m = document.getElementById('mute'); if (m) m.outerHTML = muteBtn(); break; }
     case 'set': {
       const p = P(); if (!p) break;
@@ -984,7 +1007,10 @@ app.addEventListener('click', e => {
     }
     case 'toggle-worlds': showWorlds = !showWorlds; A.sfx('tap'); render(); break;
     case 'set-world': { const p = P(); if (!p || !PUM.LV[el.dataset.level]) break; p.world = el.dataset.level; store.lv(p, p.world); showWorlds = false; store.savePlayer(p); A.sfx('tap'); render(); break; }
-    case 'sync-info': showSync = !showSync; store.sync.joinErr = ''; store.sync.onChange(); break;
+    case 'sync-info': showSync = !showSync; famStart = false; famNew = false; store.sync.joinErr = ''; store.sync.onChange(); break;
+    case 'fam-start': famStart = true; store.sync.joinErr = ''; A.sfx('tap'); store.sync.onChange(); break;
+    case 'fam-cancel': famStart = false; store.sync.joinErr = ''; store.sync.onChange(); break;
+    case 'fam-create': { if (el.dataset.busy) break; el.dataset.busy = '1'; el.textContent = 'Starting…'; store.create().then(ok => { famStart = !ok; famNew = ok; showSync = true; if (ok) A.sfx('fanfare'); render(); }); break; }
     case 'join': { const f = document.getElementById('joincode'); store.join(f ? f.value : '').then(ok => { if (ok) showSync = false; render(); }); break; }
     case 'copy-link': {
       const link = store.familyLink(), note = document.getElementById('copy-note');
