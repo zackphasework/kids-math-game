@@ -89,7 +89,19 @@ S.GUARDIANS = {
 };
 S.MOVE_INFO = {double:{name:'Double jump', how:'Tap Jump again in the air'}, dash:{name:'Dash', how:'Tap Dash to zoom across long gaps'}, glide:{name:'Glide', how:'Hold Glide in the air to float down slowly'}};
 
-/* ---------- shadow foes ---------- */
+/* ---------- enemy types: each one is beaten a different way ----------
+   blockMul: how long the block timer is (x the normal time). blockD: block question steps from the kid's level.
+   attacks: block questions per enemy turn. hurt: hearts lost on a missed block. xp: XP for a block. gems: crystals when defeated. */
+S.TYPES = {
+  shadow:{name:'Shadow', tag:'Shadow', rule:'Normal timer', how:'Pick the move it is weak to!', blockMul:1, blockD:-1, attacks:1, hurt:1, xp:6, gems:3, col:'#B04CFF'},
+  imp:{name:'Imp', tag:'Fast', rule:'Short timer, easy questions', how:'Super fast! It attacks twice, but the block questions are easy. Answer quick!', blockMul:.55, blockD:-2, attacks:2, hurt:1, xp:4, gems:2, col:'#7FF0FF'},
+  golem:{name:'Golem', tag:'Heavy', rule:'Long timer, hard questions', how:'Very tough! Light moves bounce off, so use Strong or Mega. You get lots of time to block.', blockMul:1.7, blockD:0, attacks:1, hurt:2, xp:12, gems:6, armor:true, col:'#FFB347'},
+  knight:{name:'Shield Knight', tag:'Shield', rule:'2 right in a row breaks its shield', how:'It hides behind a shield. Get 2 right in a row to break it, then attack!', blockMul:1, blockD:-1, attacks:1, hurt:1, xp:6, gems:5, shield:2, col:'#9FD9FF'},
+  trick:{name:'Trickster', tag:'Trick', rule:'Its weakness changes after each hit', how:'Tricky! After every hit it changes colour. Look at its weakness again before you pick!', blockMul:1, blockD:-1, attacks:1, hurt:1, xp:6, gems:4, trick:true, col:'#FF9AC8'},
+};
+S.typeOf = kind => (FOES[kind] && FOES[kind].type) || 'shadow';
+
+/* ---------- foes ---------- */
 const FOES = {
   petal:{el:'blossom', name:'Petal Wisp', hp:70},
   puddle:{el:'tide', name:'Puddle Wisp', hp:70},
@@ -107,6 +119,20 @@ const FOES = {
   geyser:{el:'tide', name:'Geyser Wisp', hp:88, look:'steam'},
   bramble:{el:'blossom', name:'Bramble Shade', hp:132, big:true, look:'thorn'},
   magma:{el:'ember', name:'Magma Shade', hp:138, big:true, look:'magma'},
+  /* fast imps: low HP, two quick attacks */
+  petalimp:{type:'imp', el:'blossom', name:'Petal Imp', hp:44, isle:0},
+  bubblebat:{type:'imp', el:'tide', name:'Bubble Bat', hp:50, isle:1},
+  sparkimp:{type:'imp', el:'ember', name:'Spark Imp', hp:54, isle:2},
+  /* heavy golems: lots of HP, armour */
+  mossgolem:{type:'golem', el:'blossom', name:'Moss Golem', hp:130, big:true, isle:0},
+  crabgolem:{type:'golem', el:'tide', name:'Crab Golem', hp:140, big:true, isle:1},
+  magmagolem:{type:'golem', el:'ember', name:'Magma Golem', hp:150, big:true, isle:2},
+  /* shield knights */
+  shellknight:{type:'knight', el:'tide', name:'Shell Knight', hp:92, big:true, isle:1},
+  coralknight:{type:'knight', el:'blossom', name:'Coral Knight', hp:96, big:true, isle:1},
+  ashknight:{type:'knight', el:'ember', name:'Ash Knight', hp:104, big:true, isle:2},
+  /* tricksters: masked foxes whose element keeps changing */
+  maskfox:{type:'trick', el:'tide', name:'Masked Fox', hp:90, isle:2},
 };
 S.FOES = FOES;
 /* foes get tougher quest by quest */
@@ -115,36 +141,36 @@ S.QUESTS = [
   {name:'The Lost Cubs', rec:1, goal:'cage', story:'Shadow wisps have trapped the blossom cubs. Find them and set them free!', obj:'Free the cubs',
     foes:['petal'], route:[['flat', 360], ['foe', 'petal'], ['gap', 100], ['flat', 260], ['chest', 'snack'], ['up', 60], ['flat', 220], ['gap', 110], ['down', 60], ['flat', 260], ['foe', 'petal'], ['secret'], ['flat', 160], ['goal']]},
   {name:'Lantern Path', rec:2, goal:'lanterns', story:'Light the three shrine lanterns so lost spirits can find their way home.', obj:'Light the lanterns',
-    foes:['puddle', 'petal'], route:[['flat', 300], ['lantern'], ['hop', 2], ['flat', 200], ['foe', 'puddle'], ['lantern'], ['gate'], ['up', 70], ['flat', 220], ['gap', 110], ['chest', 'snack'], ['down', 70], ['foe', 'petal'], ['lantern'], ['secret'], ['goal']]},
+    foes:['puddle', 'petalimp'], route:[['flat', 300], ['lantern'], ['hop', 2], ['flat', 200], ['foe', 'puddle'], ['lantern'], ['gate'], ['up', 70], ['flat', 220], ['gap', 110], ['chest', 'snack'], ['down', 70], ['foe', 'petalimp'], ['lantern'], ['secret'], ['goal']]},
   {name:'The Silent Bell', rec:3, goal:'bell', story:'Climb to the hilltop and ring the old bell to wake the island up.', obj:'Ring the bell',
-    foes:['cinder', 'thorn'], route:[['flat', 300], ['up', 70], ['flat', 180], ['up', 80], ['foe', 'cinder'], ['hop', 3], ['chest', 'snack'], ['up', 60], ['gate'], ['flat', 200], ['foe', 'thorn'], ['gap', 110], ['secret'], ['goal']]},
+    foes:['petalimp', 'mossgolem'], route:[['flat', 300], ['up', 70], ['flat', 180], ['up', 80], ['foe', 'petalimp'], ['hop', 3], ['chest', 'snack'], ['up', 60], ['gate'], ['flat', 200], ['foe', 'mossgolem'], ['gap', 110], ['secret'], ['goal']]},
   {name:'Sakura Falls', rec:4, goal:'falls', story:'Chase the shadows from the river so the waterfall can flow again.', obj:'Restore the falls',
-    foes:['puddle', 'cinder', 'surge'], route:[['flat', 300], ['foe', 'puddle'], ['gap', 110], ['flat', 160], ['hop', 2], ['foe', 'cinder'], ['chest', 'snack'], ['down', 60], ['gate'], ['flat', 200], ['up', 80], ['foe', 'surge'], ['secret'], ['goal']]},
+    foes:['puddle', 'petalimp', 'mossgolem'], route:[['flat', 300], ['foe', 'puddle'], ['gap', 110], ['flat', 160], ['hop', 2], ['foe', 'petalimp'], ['chest', 'snack'], ['down', 60], ['gate'], ['flat', 200], ['up', 80], ['foe', 'mossgolem'], ['secret'], ['goal']]},
   {name:'Hanamori', rec:5, goal:'grove', boss:true, story:'Hanamori, the Blossom Deer, has been taken over by shadow. Defeat the guardian!', obj:'Reach the grove',
-    foes:['hanamori'], route:[['flat', 380], ['chest', 'snack'], ['gap', 110], ['flat', 260], ['foe', 'petal'], ['flat', 120], ['goal']]},
+    foes:['hanamori', 'petalimp'], route:[['flat', 380], ['chest', 'snack'], ['gap', 110], ['flat', 260], ['foe', 'petalimp'], ['flat', 120], ['goal']]},
   /* ---- Tide Grotto: sea caves, tide pools and glowing jellyfish. 'secret' ledges need double jump;
      a 'cliff' is a high ledge with a far-away secret island that needs dash or glide. ---- */
   {name:'Pearl of the Grotto', rec:5, goal:'pearl', story:'Shadows hid the great pearl of the sea caves. Find the giant shell and wake the pearl!', obj:'Find the pearl',
-    foes:['jelly', 'coral'], route:[['flat', 340], ['foe', 'jelly'], ['gap', 120], ['flat', 240], ['chest', 'snack'], ['up', 70], ['flat', 200], ['hop', 2], ['foe', 'coral'], ['down', 70], ['flat', 220], ['gap', 130], ['flat', 160], ['secret'], ['foe', 'jelly'], ['flat', 200], ['goal']]},
+    foes:['jelly', 'shellknight', 'bubblebat'], route:[['flat', 340], ['foe', 'jelly'], ['gap', 120], ['flat', 240], ['chest', 'snack'], ['up', 70], ['flat', 200], ['hop', 2], ['foe', 'shellknight'], ['down', 70], ['flat', 220], ['gap', 130], ['flat', 160], ['secret'], ['foe', 'bubblebat'], ['flat', 200], ['goal']]},
   {name:'Jelly Lights', rec:6, goal:'jellies', story:'The glowing jellyfish fell asleep. Wake all three so the dark tunnel shines again!', obj:'Wake the jellies',
-    foes:['steam', 'jelly', 'coral'], route:[['flat', 300], ['lantern'], ['hop', 3], ['foe', 'steam'], ['lantern'], ['gate'], ['up', 80], ['flat', 200], ['gap', 130], ['chest', 'snack'], ['down', 80], ['foe', 'coral'], ['flat', 180], ['lantern'], ['secret'], ['foe', 'jelly'], ['goal']]},
+    foes:['steam', 'bubblebat', 'shellknight'], route:[['flat', 300], ['lantern'], ['hop', 3], ['foe', 'steam'], ['lantern'], ['gate'], ['up', 80], ['flat', 200], ['gap', 130], ['chest', 'snack'], ['down', 80], ['foe', 'bubblebat'], ['flat', 180], ['lantern'], ['secret'], ['foe', 'shellknight'], ['goal']]},
   {name:'Coral Garden', rec:7, goal:'coral', story:'Shadow ink covered the coral garden. Chase it away so the coral can bloom!', obj:'Save the coral',
-    foes:['coral', 'steam', 'reef'], route:[['flat', 300], ['foe', 'coral'], ['gap', 130], ['flat', 200], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'dash'], ['foe', 'steam'], ['hop', 3], ['chest', 'snack'], ['gate'], ['flat', 200], ['foe', 'reef'], ['secret'], ['goal']]},
+    foes:['coral', 'coralknight', 'crabgolem'], route:[['flat', 300], ['foe', 'coral'], ['gap', 130], ['flat', 200], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'dash'], ['foe', 'coralknight'], ['hop', 3], ['chest', 'snack'], ['gate'], ['flat', 200], ['foe', 'crabgolem'], ['secret'], ['goal']]},
   {name:'The Sleepy Turtle', rec:8, goal:'turtle', story:'A giant sea turtle is stuck in shadow vines. Free it so it can carry you to the dragon!', obj:'Free the turtle',
-    foes:['jelly', 'steam', 'abyss', 'reef'], route:[['flat', 300], ['foe', 'jelly'], ['hop', 3], ['flat', 160], ['up', 80], ['foe', 'steam'], ['gap', 140], ['chest', 'snack'], ['down', 80], ['gate'], ['flat', 200], ['foe', 'abyss'], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'glide'], ['hop', 2], ['foe', 'reef'], ['secret'], ['flat', 200], ['goal']]},
+    foes:['bubblebat', 'steam', 'crabgolem', 'shellknight'], route:[['flat', 300], ['foe', 'bubblebat'], ['hop', 3], ['flat', 160], ['up', 80], ['foe', 'steam'], ['gap', 140], ['chest', 'snack'], ['down', 80], ['gate'], ['flat', 200], ['foe', 'crabgolem'], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'glide'], ['hop', 2], ['foe', 'shellknight'], ['secret'], ['flat', 200], ['goal']]},
   {name:'Umikaze', rec:9, goal:'lair', boss:true, story:'Umikaze, the Tide Dragon, has been taken over by shadow. Defeat the guardian!', obj:'Reach the dragon\'s cave',
-    foes:['umikaze', 'jelly', 'coral'], route:[['flat', 360], ['chest', 'snack'], ['gap', 130], ['flat', 240], ['foe', 'jelly'], ['hop', 2], ['flat', 160], ['foe', 'coral'], ['flat', 140], ['goal']]},
+    foes:['umikaze', 'bubblebat', 'coralknight'], route:[['flat', 360], ['chest', 'snack'], ['gap', 130], ['flat', 240], ['foe', 'bubblebat'], ['hop', 2], ['flat', 160], ['foe', 'coralknight'], ['flat', 140], ['goal']]},
   /* ---- Ember Peak: volcano slopes, lava glow and torii on the cliffs. 'dash' gaps are too long to jump. ---- */
   {name:'Ash Trail', rec:10, goal:'spring', story:'Grey ash covered the hot spring. Clear the trail so the warm water can bubble again!', obj:'Wake the hot spring',
-    foes:['ash', 'geyser'], route:[['flat', 320], ['foe', 'ash'], ['dash', 330], ['flat', 240], ['chest', 'snack'], ['up', 80], ['flat', 200], ['foe', 'geyser'], ['gap', 140], ['flat', 160], ['hop', 2], ['down', 80], ['flat', 200], ['secret'], ['foe', 'ash'], ['flat', 200], ['goal']]},
+    foes:['ash', 'maskfox', 'sparkimp'], route:[['flat', 320], ['foe', 'ash'], ['dash', 330], ['flat', 240], ['chest', 'snack'], ['up', 80], ['flat', 200], ['foe', 'maskfox'], ['gap', 140], ['flat', 160], ['hop', 2], ['down', 80], ['flat', 200], ['secret'], ['foe', 'sparkimp'], ['flat', 200], ['goal']]},
   {name:'Fire Bowls', rec:11, goal:'bowls', story:'Light the three fire bowls on the cliff path so travellers can find the way up.', obj:'Light the fire bowls',
-    foes:['geyser', 'ash', 'bramble'], route:[['flat', 300], ['lantern'], ['up', 80], ['flat', 160], ['foe', 'geyser'], ['dash', 340], ['lantern'], ['gate'], ['hop', 3], ['foe', 'bramble'], ['up', 80], ['flat', 200], ['chest', 'snack'], ['dash', 340], ['down', 80], ['lantern'], ['foe', 'ash'], ['secret'], ['goal']]},
+    foes:['sparkimp', 'magmagolem', 'maskfox'], route:[['flat', 300], ['lantern'], ['up', 80], ['flat', 160], ['foe', 'sparkimp'], ['dash', 340], ['lantern'], ['gate'], ['hop', 3], ['foe', 'magmagolem'], ['up', 80], ['flat', 200], ['chest', 'snack'], ['dash', 340], ['down', 80], ['lantern'], ['foe', 'maskfox'], ['secret'], ['goal']]},
   {name:'The Great Drum', rec:12, goal:'drum', story:'Climb the high cliffs and beat the great drum to wake the mountain up!', obj:'Beat the drum',
-    foes:['ash', 'geyser', 'magma'], route:[['flat', 300], ['foe', 'ash'], ['up', 90], ['up', 90], ['foe', 'geyser'], ['up', 90], ['up', 90], ['cliff', 'glide'], ['dash', 340], ['chest', 'snack'], ['foe', 'magma'], ['hop', 3], ['gate'], ['secret'], ['flat', 200], ['goal']]},
+    foes:['maskfox', 'ashknight', 'magmagolem'], route:[['flat', 300], ['foe', 'maskfox'], ['up', 90], ['up', 90], ['foe', 'ashknight'], ['up', 90], ['up', 90], ['cliff', 'glide'], ['dash', 340], ['chest', 'snack'], ['foe', 'magmagolem'], ['hop', 3], ['gate'], ['secret'], ['flat', 200], ['goal']]},
   {name:'Lava River', rec:13, goal:'flame', story:'The sacred flame on the peak went dark. Cross the lava river and light it again!', obj:'Light the sacred flame',
-    foes:['cinder', 'bramble', 'magma', 'ash'], route:[['flat', 300], ['foe', 'cinder'], ['dash', 350], ['flat', 200], ['hop', 3], ['foe', 'bramble'], ['up', 80], ['flat', 160], ['dash', 350], ['chest', 'snack'], ['gate'], ['down', 80], ['foe', 'magma'], ['gap', 140], ['flat', 160], ['dash', 350], ['foe', 'ash'], ['secret'], ['flat', 200], ['goal']]},
+    foes:['sparkimp', 'ashknight', 'magmagolem', 'maskfox'], route:[['flat', 300], ['foe', 'sparkimp'], ['dash', 350], ['flat', 200], ['hop', 3], ['foe', 'ashknight'], ['up', 80], ['flat', 160], ['dash', 350], ['chest', 'snack'], ['gate'], ['down', 80], ['foe', 'magmagolem'], ['gap', 140], ['flat', 160], ['dash', 350], ['foe', 'maskfox'], ['secret'], ['flat', 200], ['goal']]},
   {name:'Homura', rec:14, goal:'summit', boss:true, story:'Homura, the Flame Fox, has been taken over by shadow. Defeat the last guardian!', obj:'Reach the summit',
-    foes:['homura', 'ash', 'magma'], route:[['flat', 360], ['chest', 'snack'], ['dash', 340], ['flat', 240], ['foe', 'ash'], ['up', 80], ['flat', 160], ['hop', 2], ['foe', 'magma'], ['flat', 160], ['goal']]},
+    foes:['homura', 'maskfox', 'magmagolem'], route:[['flat', 360], ['chest', 'snack'], ['dash', 340], ['flat', 240], ['foe', 'maskfox'], ['up', 80], ['flat', 160], ['hop', 2], ['foe', 'magmagolem'], ['flat', 160], ['goal']]},
 ];
 S.QUESTS.forEach((Q, i) => { Q.isle = S.isleOf(i); });
 S.ACTIVE = S.QUESTS.length;
@@ -166,7 +192,8 @@ S.normalize = function (raw, p) {
   const mv = (x.moves && typeof x.moves === 'object') ? x.moves : {};
   return {v:num(x.v), made:!!x.made, name:String(x.name || '').trim().slice(0, 16), hair:K.HAIR[x.hair] ? x.hair : null, outfit:K.OUTFIT[x.outfit] ? x.outfit : null, xp:clamp(num(x.xp), 0, 1e6),
     comp:K.SPIRITS[x.comp] ? x.comp : null, comps, snacks:clamp(num(x.snacks), 0, 99),
-    b:{garden:!!b.garden, forge:!!b.forge, spring:!!b.spring, tower:!!b.tower, shrine:!!b.shrine}, moves:{double:!!mv.double, dash:!!mv.dash, glide:!!mv.glide}};
+    b:{garden:!!b.garden, forge:!!b.forge, spring:!!b.spring, tower:!!b.tower, shrine:!!b.shrine}, moves:{double:!!mv.double, dash:!!mv.dash, glide:!!mv.glide},
+    seen:Object.fromEntries(Object.keys(S.TYPES).filter(k => x.seen && x.seen[k]).map(k => [k, true]))};
 };
 /* Called by store.normalize. Sky Quest replaced the old runner: progress starts fresh once and
    old hero upgrades turn into crystals. */
@@ -261,7 +288,7 @@ PUM.games.sky = function (o) {
   const parts = E.Particles();
   const hero = {x:90, y:0, vx:0, vy:0, ground:true, face:1, run:0, coyote:0, buf:0, used2:false, inv:0, safe:{x:90, y:0}, dashT:0, dashQ:0, dashCd:0, usedDash:false, gliding:false};
   const g = {tier:1, mode:'explore', t:0, hearts:st.hearts, maxH:st.hearts, meter:0, revived:false, lost:0, right:0, asked:0, snacks:0, crystals:0, beaten:0,
-    shake:0, banner:null, nums:[], trans:0, heal:S.heal(p, isle), healTo:S.heal(p, isle), camX:0, camY:0, comp:{x:40, y:-110}, endT:0, lit:0, xp:0, dashes:0, glides:0};
+    shake:0, banner:null, nums:[], trans:0, heal:S.heal(p, isle), healTo:S.heal(p, isle), camX:0, camY:0, comp:{x:40, y:-110}, endT:0, lit:0, xp:0, dashes:0, glides:0, blockLog:[]};
   const ctl = {left:false, right:false, glide:false};
   let Wd = 360, Hd = 640, s = 1, gy = 400, b = null, lock = null;
   const SPEED = 250 * (1 + .06 * st.boots), JV = -880 * (1 + .025 * st.boots), JV2 = -700, GRAV = 2300, HW = 14;
@@ -380,9 +407,19 @@ PUM.games.sky = function (o) {
   const easy = assist >= 2 ? .7 : assist ? .85 : 1;
   function newBattle(f) {
     const GD = S.GUARDIANS[f.kind];
-    if (GD) { const hp = Math.round(GD.hp * easy); return {f, boss:true, guard:f.kind, el:GD.el, name:GD.name, hp, max:hp, phase:0, phases:GD.phases, shield:null, pure:0, x:0, state:'intro', tm:0}; }
-    const F = FOES[f.kind], hp = Math.round(F.hp * S.foeScale(qi) * easy);
-    return {f, el:F.el, name:F.name, hp, max:hp, big:F.big, look:F.look, state:'intro', tm:0, x:0, seed:Math.round(f.x)};
+    if (GD) { const hp = Math.round(GD.hp * easy); return {f, boss:true, guard:f.kind, type:'boss', TY:Object.assign({}, S.TYPES.shadow, {gems:0}), el:GD.el, name:GD.name, hp, max:hp, phase:0, phases:GD.phases, shield:null, pure:0, x:0, state:'intro', tm:0}; }
+    const F = FOES[f.kind], type = F.type || 'shadow', TY = S.TYPES[type], hp = Math.round(F.hp * S.foeScale(qi) * easy);
+    const nb = {f, type, TY, el:F.el, name:F.name, hp, max:hp, big:F.big, look:F.look, isle:F.isle, state:'intro', tm:0, x:0, seed:Math.round(f.x)};
+    if (TY.shield) { nb.shield = {got:0, need:TY.shield}; nb.reshield = true; }
+    if (TY.armor && g.tier === 0) g.tier = 1;
+    return nb;
+  }
+  const foeArt = () => ({type:b.type, el:b.el, look:b.look, isle:b.isle, big:b.big});
+  /* the first time a kid meets an enemy type: a short card on how to beat it */
+  function meetCard() {
+    const TY = b.TY; p.sky.seen = p.sky.seen || {}; p.sky.seen[b.type] = true;
+    api.panel(`<div class="sq-card meet"><div class="sq-title">New enemy!</div><img class="sq-foeimg" src="${K.foeImg(foeArt())}" alt="" draggable="false"><b class="sq-meet-name">${b.name} <span class="sq-tag t-${b.type}">${TY.tag}</span></b><p class="sq-meet-how">${TY.how}</p><button class="sq-go" data-gp="meet">Got it!</button></div>`, 'sky-q');
+    say(`${b.name}! ${TY.how}`); setState('meet');
   }
   function setState(s2) { b.state = s2; b.tm = 0; }
   function moveName(el) { return S.MOVES[el][p.hero] || S.MOVES[el][0]; }
@@ -390,11 +427,13 @@ PUM.games.sky = function (o) {
   function moveBtns() {
     const els = ['blossom', 'tide', 'ember'].concat(st.storm ? ['storm'] : []);
     const spec = g.meter >= 1 ? specBtns('Special move ready!') : '';
-    const tiers = `<div class="sq-tiers" role="group" aria-label="Move strength">${S.TIERS.map((T, i) => `<button class="sq-tier ${g.tier === i ? 'on' : ''}" data-gp="tier" data-v="${i}" aria-pressed="${g.tier === i}"><b>${T.name} ${'&#9733;'.repeat(T.stars)}</b><small>${T.what}</small></button>`).join('')}</div>`;
-    return `<div class="sq-card moves"><div class="sq-title">${g.meter >= 1 ? 'Your Spirit meter is full!' : 'Pick how strong, then a move'}</div>${spec}${tiers}<div class="sq-moves n${els.length}">${els.map((el, i) => `<button class="sq-move el-${el}" data-gp="move" data-v="${el}"><small>${S.EL[el].name}</small><b>${moveName(el)}</b><i>${i + 1}</i></button>`).join('')}</div></div>`;
+    const armor = b.TY.armor;
+    const tiers = `<div class="sq-tiers" role="group" aria-label="Move strength">${S.TIERS.map((T, i) => `<button class="sq-tier ${g.tier === i ? 'on' : ''} ${armor && T.k === 'light' ? 'weak' : ''}" data-gp="tier" data-v="${i}" aria-pressed="${g.tier === i}"><b>${T.name} ${'&#9733;'.repeat(T.stars)}</b><small>${armor && T.k === 'light' ? 'Bounces off this one!' : T.what}</small></button>`).join('')}</div>`;
+    const title = g.meter >= 1 ? 'Your Spirit meter is full!' : armor ? 'Too tough for Light moves! Pick Strong or Mega' : b.TY.trick ? `Weak to ${S.EL[S.weakTo(b.el)].name} right now! Pick a move` : 'Pick how strong, then a move';
+    return `<div class="sq-card moves"><div class="sq-title">${title}</div>${spec}${tiers}<div class="sq-moves n${els.length}">${els.map((el, i) => `<button class="sq-move el-${el}" data-gp="move" data-v="${el}"><small>${S.EL[el].name}</small><b>${moveName(el)}</b><i>${i + 1}</i></button>`).join('')}</div></div>`;
   }
   function toPick() {
-    if (b.boss && b.shield) { toAsk('shield'); return; }
+    if (b.shield) { toAsk('shield'); return; }
     if (assist >= 2) {
       if (g.meter >= 1) { api.panel(`<div class="sq-card moves"><div class="sq-title">Your Spirit meter is full!</div>${specBtns('Tap for your special move!')}</div>`, 'sky-q'); setState('pick'); say('Special move ready! Tap it!'); return; }
       toAsk(S.weakTo(b.el)); return;
@@ -407,7 +446,7 @@ PUM.games.sky = function (o) {
     const {q, options} = move === 'shield' ? PUM.gateQuestion(p, nOpts()) : S.question(p, T.d, nOpts());
     b.q = q; b.opts = options; b.answered = false; b.askT = 0;
     b.crit = age >= 10 ? 5 : age >= 8 ? 7 : 0; if (b.crit && T.k === 'mega') b.crit += 3;
-    const title = move === 'shield' ? `Break the shadow shield! ${b.shield.got} of 3` : `${assist >= 2 ? '' : T.name + ' '}${moveName(move)}: answer to power it up`;
+    const title = move === 'shield' ? `Break the ${b.boss ? 'shadow ' : ''}shield! ${b.shield.got} of ${b.shield.need || 3}` : `${assist >= 2 ? '' : T.name + ' '}${moveName(move)}: answer to power it up`;
     const bar = b.crit && move !== 'shield' ? `<div class="sq-crit"><i style="animation-duration:${b.crit}s"></i><span>Quick answer = critical hit!</span></div>` : '';
     api.panel(qPanel(title, q, options, null, bar), 'sky-q'); say(q.spoken);
     setState('ask');
@@ -436,7 +475,15 @@ PUM.games.sky = function (o) {
     g.shake = Math.max(g.shake, big ? 16 : 6); A.sfx(big ? 'blast' : 'slash');
   }
   function afterHeroTurn() {
-    if (b.hp <= 0) { setState('win'); A.sfx('chime'); banner('Defeated!', b.boss ? '' : `+3 crystals`, 1.6); if (!b.boss) { api.addMp(3); g.crystals += 3; } g.beaten++; return; }
+    if (b.hp <= 0) { const gems = b.TY.gems; setState('win'); A.sfx('chime'); banner('Defeated!', b.boss ? '' : `+${gems} crystals`, 1.6); if (!b.boss) { api.addMp(gems); g.crystals += gems; } g.beaten++; return; }
+    /* shield knights raise their shield once more when they're hurt */
+    if (b.reshield && !b.shield && b.hp / b.max <= .5) { b.reshield = false; b.shield = {got:0, need:b.TY.shield}; setState('shieldUp'); A.sfx('block'); banner('Shield up again!', `${b.TY.shield} right in a row breaks it`, 1.8); say('Shield up again!'); return; }
+    /* tricksters change element after every hit */
+    if (b.TY.trick) {
+      const els = ['blossom', 'tide', 'ember'].filter(e => e !== b.el), el = els[Math.floor(Math.random() * els.length)], wk = S.weakTo(el);
+      b.el = el; b.elFx = 1; g.tricks = (g.tricks || 0) + 1;
+      banner('It changed!', `Now weak to ${S.EL[wk].name.toUpperCase()}`, 1.6, S.EL[wk].col); say(`It changed! Now it is weak to ${S.EL[wk].name}.`);
+    }
     if (b.boss) {
       const th = b.phase === 0 ? .66 : b.phase === 1 ? .33 : -1;
       if (b.hp / b.max <= th) { b.hp = Math.ceil(th * b.max); b.shield = {got:0}; setState('shieldUp'); A.sfx('boss'); banner('Shadow shield!', '3 right answers in a row break it', 2); say('Shadow shield! Answer 3 in a row to break it!'); return; }
@@ -447,15 +494,22 @@ PUM.games.sky = function (o) {
   /* Enemy attacks are blocked with math: answer before the timer runs out to raise your shield.
      The block question is one step easier than the kid's level, because there's a clock. */
   const blockTime = () => (age <= 5 ? 10 : age <= 7 ? 8 : age <= 9 ? 7 : 6) * (assist >= 2 ? 1.6 : assist ? 1.25 : 1);
-  function enemyTurn() {
-    const base = b.boss ? b.phases[b.phase].hits.slice() : [1.4];
+  /* Each type sets its own clock and question: fast imps give a short timer with easy questions (twice a turn),
+     heavy golems a long timer with questions at the kid's level. */
+  function enemyTurn(again) {
+    const TY = b.TY;
+    if (!again) b.attacksLeft = TY.attacks;
+    const base = b.boss ? b.phases[b.phase].hits.slice() : [TY.attacks > 1 ? .8 : TY.armor ? 1.8 : 1.4];
     b.hits = base.map(t0 => ({t:t0 * .7 + .25, done:false, blocked:false}));
-    b.windDur = b.hits[b.hits.length - 1].t + .8;
+    b.windDur = b.hits[b.hits.length - 1].t + (TY.attacks > 1 ? .5 : .8);
     b.atkName = b.boss ? b.phases[b.phase].name : 'attack';
-    const {q, options} = S.question(p, -1, nOpts());
-    b.q = q; b.opts = options; b.answered = false; b.blockLim = blockTime();
-    const bar = `<div class="sq-crit block"><i style="animation-duration:${b.blockLim}s"></i><span>Answer before it hits!</span></div>`;
-    api.ctrl(''); api.panel(qPanel(`${b.name} is attacking! Answer to block`, q, options, null, bar), 'sky-q'); say(q.spoken);
+    const {q, options} = S.question(p, TY.blockD, nOpts());
+    b.q = q; b.opts = options; b.answered = false; b.blockLim = blockTime() * TY.blockMul;
+    g.blockLog.push({type:b.type, lim:+b.blockLim.toFixed(2), d:TY.blockD, q:q.text || q.spoken || '', ans:q.ans});
+    const two = TY.attacks > 1 ? ` (${TY.attacks - b.attacksLeft + 1} of ${TY.attacks})` : '';
+    const title = b.type === 'imp' ? `${b.name} darts in!${two} Quick, block it!` : b.type === 'golem' ? `${b.name} winds up a big hit! Answer to block` : `${b.name} is attacking! Answer to block`;
+    const bar = `<div class="sq-crit block ${b.type === 'imp' ? 'fast' : b.type === 'golem' ? 'slow' : ''}"><i style="animation-duration:${b.blockLim}s"></i><span>${b.type === 'imp' ? 'Quick! Answer before it hits!' : b.type === 'golem' ? 'Lots of time. Think it through!' : 'Answer before it hits!'}</span></div>`;
+    api.ctrl(''); api.panel(qPanel(title, q, options, null, bar), 'sky-q'); say(q.spoken);
     setState('block');
     if (b.boss) banner(b.atkName, 'Answer to block it!', 1.1, '#FF6FD8');
   }
@@ -464,7 +518,7 @@ PUM.games.sky = function (o) {
     const timeUp = v == null, ok = !timeUp && v === b.q.ans; b.answered = true;
     if (!timeUp) { g.asked++; api.answer(ok, b.q); }
     const perfect = ok && b.tm <= b.blockLim * .4;
-    if (ok) { g.right++; g.xp += 6; }
+    if (ok) { g.right++; g.xp += b.TY.xp; }
     api.panel(qPanel(ok ? (perfect ? 'PERFECT BLOCK!' : 'Shield up!') : timeUp ? `Too slow! It was ${b.q.ans}.` : `Not quite. It's ${b.q.ans}.`, b.q, b.opts, timeUp ? null : {picked:v}), 'sky-q');
     for (const h of b.hits) { h.blocked = ok; h.perfect = perfect; }
     setState('wind');
@@ -478,7 +532,9 @@ PUM.games.sky = function (o) {
       parts.burst(hx, hy, 16, {speed:200, life:.5, size:3, color:['#7FF0FF', '#FFFFFF']});
     } else {
       g.hurtFx = 1; g.shake = 14; A.sfx('hurt');
-      if (!b.hurt) { b.hurt = true; g.hearts--; g.lost++; num(hx + 40, hy - 70, '-1', '#FF6FB0', true); if (g.hearts <= 0) { b.ko = true; } }
+      /* heavy hits take 2 hearts (1 for the youngest kids and in easy mode) */
+      const n = b.TY.hurt > 1 && age > 5 && assist < 2 ? b.TY.hurt : 1;
+      if (!b.hurt) { b.hurt = true; g.hearts = Math.max(0, g.hearts - n); g.lost += n; num(hx + 40, hy - 70, '-' + n, '#FF6FB0', true); if (n > 1) g.shake = 22; if (g.hearts <= 0) { b.ko = true; } }
     }
   }
   function knockedOut() {
@@ -488,14 +544,19 @@ PUM.games.sky = function (o) {
   function updateBattle(dt) {
     b.tm += dt; b.flash = Math.max(0, (b.flash || 0) - dt * 4); b.x *= Math.exp(-dt * 10); b.lunge = Math.max(0, (b.lunge || 0) - dt * 3);
     g.blockFx = Math.max(0, (g.blockFx || 0) - dt * 2.5); g.hurtFx = Math.max(0, (g.hurtFx || 0) - dt * 2.5);
-    if (b.state === 'intro' && b.tm > 1.5) toPick();
+    b.elFx = Math.max(0, (b.elFx || 0) - dt * .8);
+    if (b.state === 'intro' && b.tm > 1.5) { if (!b.boss && b.type !== 'shadow' && !(p.sky.seen && p.sky.seen[b.type])) meetCard(); else toPick(); }
     else if (b.state === 'ask') b.askT += dt;
     else if (b.state === 'resolve' && b.tm > .55) {
       api.panel(null);
       if (b.move === 'shield') {
         b.shield.got++; A.sfx('shatter'); parts.burst(Wd * .66, Hd * .3, 30, {speed:300, life:.6, size:4, color:['#B04CFF', '#FFFFFF'], shape:'rect'}); g.shake = 8;
         g.meter = Math.min(1, g.meter + st.meter * .5);
-        if (b.shield.got >= 3) { b.shield = null; b.phase++; setState('shieldBreak'); banner('Shield broken!', `Phase ${b.phase + 1}: ${b.phases[b.phase].name}`, 1.8); g.shake = 18; }
+        if (b.shield.got >= (b.shield.need || 3)) {
+          b.shield = null; setState('shieldBreak'); g.shake = 18;
+          if (b.boss) { b.phase++; banner('Shield broken!', `Phase ${b.phase + 1}: ${b.phases[b.phase].name}`, 1.8); }
+          else { g.shieldsBroken = (g.shieldsBroken || 0) + 1; banner('Shield broken!', 'Now attack!', 1.6); }
+        }
         else setState('crack');
         return;
       }
@@ -513,6 +574,8 @@ PUM.games.sky = function (o) {
     else if (b.state === 'dodge' && b.tm > .8) enemyTurn();
     else if (b.state === 'atk') {
       const col = S.EL[b.move].col;
+      const bounce = b.TY.armor && b.tierUsed && b.tierUsed.k === 'light';
+      if (b.hitsLeft > 0 && bounce && b.tm > .35) { b.hitsLeft = 0; g.bounces = (g.bounces || 0) + 1; A.sfx('block'); b.x = 6; num(Wd * .66, Hd * .3 - 40, 'BOUNCE!', '#FFE27A', true); parts.burst(Wd * .66, Hd * .3, 14, {speed:220, life:.5, size:3, color:['#FFE27A', '#FFFFFF']}); banner('Too tough!', 'Use a Strong or Mega move', 1.6, '#FFB347'); say('Too tough! Use a Strong or Mega move.'); }
       if (b.hitsLeft > 0 && b.tm > (p.hero === 0 ? (b.hitsLeft === 2 ? .3 : .55) : .35)) { b.hitsLeft--; hitFoe(damage(b.move, (p.hero === 0 ? .55 : 1) * (b.isCrit ? 1.35 : 1) * (b.tierUsed ? b.tierUsed.mult : 1)), col, b.isCrit || (b.tierUsed && b.tierUsed.k === 'mega')); }
       if (!b.compDone && b.tm > .95) { b.compDone = true; b.compFx = 1; hitFoe(Math.max(1, Math.round(st.atk * (.25 + .04 * comp.lv) * S.mult(comp.el, b.el))), S.EL[comp.el].col, false); }
       if (b.tm > 1.5) { b.compDone = false; afterHeroTurn(); }
@@ -534,7 +597,7 @@ PUM.games.sky = function (o) {
       if (b.tm < .05) { b.hurt = false; b.perfectGiven = false; }
       for (const h of b.hits) if (!h.done && b.tm >= h.t) enemyHit(h);
       if (b.ko && !g.koWait) { b.ko = false; setState('ko'); api.panel(null); knockedOut(); return; }
-      if (b.tm > b.windDur) { api.panel(null); api.ctrl(''); toPick(); }
+      if (b.tm > b.windDur) { api.panel(null); api.ctrl(''); if (b.attacksLeft > 1) { b.attacksLeft--; enemyTurn(true); } else toPick(); }
     }
     else if (b.state === 'win') {
       if (b.boss) { b.pure = Math.min(1, b.tm / 2.4); if (b.tm > 1 && !b.joined) { const GD = S.GUARDIANS[b.guard]; b.joined = true; banner(`${b.name} is free!`, `${GD.title.replace(/^the/, 'The')} joins your team!`, 2.4, '#FFC6DD'); } if (b.tm > 3.6) { finishQuest(); } }
@@ -638,7 +701,7 @@ PUM.games.sky = function (o) {
     for (const f of W.foes) if (!f.done && f.x > vx0 - 100 && f.x < vx1 + 100) {
       const F = FOES[f.kind] || {el:'blossom'};
       c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(f.x, f.y, 44, 9, 0, 0, TAU); c.fill();
-      K.shadow(c, F.el, f.x, f.y - 80, F.big ? .55 : .42, t + f.x, {face:-1, big:F.big, seed:Math.round(f.x), look:F.look});
+      K.foe(c, F, f.x, f.y - 80, F.big ? .55 : .42, t + f.x, {face:-1, seed:Math.round(f.x), shield:F.type === 'knight' ? 0 : -1});
     }
     K.spirit(c, comp.kind, comp.stage, g.comp.x, g.comp.y, .42, t, {face:hero.face});
     c.fillStyle = 'rgba(0,0,0,.28)'; c.beginPath(); c.ellipse(hero.x, hero.ground ? hero.y : hero.y + 4, 22, 5, 0, 0, TAU); c.fill();
@@ -674,8 +737,11 @@ PUM.games.sky = function (o) {
     const fx = Wd * .66 + b.x - (b.lunge || 0) * Wd * .2, fy = Hd * .3 + (b.lunge || 0) * Hd * .08, fk = Math.min(Wd / 420, Hd / 760);
     const winA = b.state === 'win' && !b.boss ? Math.max(0, 1 - b.tm / 1.2) : 1;
     if (b.boss) K.guardian(c, b.guard, fx + 20 * fk, Hd * .47, fk * .62, t, b.pure, {flash:b.flash, hit:b.flash > .5, charge:(b.state === 'wind' || b.state === 'block') && b.phase === 2});
-    else K.shadow(c, b.el, fx, fy, fk * (b.big ? .95 : .8), t, {face:-1, big:b.big, flash:b.flash, alpha:winA, seed:b.seed, look:b.look});
-    if (b.boss && b.shield) { c.save(); c.translate(Wd * .66, Hd * .3); const r = 150 * fk; c.shadowColor = '#B04CFF'; c.shadowBlur = 24; c.strokeStyle = 'rgba(200,120,255,.9)'; c.fillStyle = 'rgba(120,40,200,.18)'; c.lineWidth = 3; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + t * .3; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.fill(); c.stroke();
+    /* golems, knights and foxes stand on the ground, lower than the floating shadows */
+    const stand = b.type === 'golem' || b.type === 'knight' || b.type === 'trick', fs = fk * (b.big ? .95 : .8);
+    if (!b.boss) K.foe(c, foeArt(), fx, stand ? fy + Hd * .22 - 140 * fs : fy, fs, t, {face:-1, flash:b.flash, alpha:winA, seed:b.seed, shield:b.shield ? b.shield.got / b.shield.need : -1, hit:b.flash > .5, atk:b.state === 'wind'});
+    /* guardians get a shadow barrier; a knight's own shield (drawn on the knight) shows the cracks */
+    if (b.shield && b.boss) { c.save(); c.translate(Wd * .66, Hd * .3); const r = 150 * fk; c.shadowColor = '#B04CFF'; c.shadowBlur = 24; c.strokeStyle = 'rgba(200,120,255,.9)'; c.fillStyle = 'rgba(120,40,200,.18)'; c.lineWidth = 3; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + t * .3; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.fill(); c.stroke();
       c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 2; for (let i = 0; i < b.shield.got; i++) { c.beginPath(); c.moveTo(0, 0); for (let j = 1; j < 5; j++) c.lineTo(Math.cos(i * 2.1 + j * .4) * r * j / 4, Math.sin(i * 2.1 + j * .3) * r * j / 4); c.stroke(); } c.restore(); }
     /* slash effects */
     if (b.state === 'atk' && b.tm < 1) { const col = S.EL[b.move].col, k2 = clamp((b.tm - .2) / .35, 0, 1); c.save(); c.shadowColor = col; c.shadowBlur = 20; c.strokeStyle = '#FFFFFF'; c.lineWidth = 6 * (1 - k2) + 1; c.beginPath(); c.arc(Wd * .66, Hd * .3, 90 * fk, -2.4 + k2 * 2.6, -2.4 + k2 * 2.6 + 1.2); c.stroke(); c.strokeStyle = col; c.lineWidth = 3; c.stroke(); c.restore(); }
@@ -705,8 +771,10 @@ PUM.games.sky = function (o) {
     label(c, b.name, px + 14, 80, 15, '#FFFFFF', 'left', 'D');
     c.save(); E.rr(c, px + 14, 94, pw - 28, 10, 5); c.fillStyle = 'rgba(0,0,0,.45)'; c.fill(); c.beginPath(); c.rect(px + 15, 95, (pw - 30) * b.hp / b.max, 8); c.clip(); c.fillStyle = b.boss ? '#FF6FD8' : '#FF6FB0'; c.shadowColor = '#FF6FB0'; c.shadowBlur = 10; c.fillRect(px, 94, pw, 10); c.restore();
     if (b.boss) for (let i = 1; i < 3; i++) { c.fillStyle = '#FFFFFF'; c.fillRect(px + 14 + (pw - 28) * i / 3 - 1, 92, 2, 14); }
-    const wk = S.weakTo(b.el); c.save(); E.rr(c, px + pw - 128, 120, 128, 24, 12); c.fillStyle = S.EL[wk].soft; c.fill(); c.strokeStyle = S.EL[wk].col; c.lineWidth = 2; c.stroke(); c.restore();
+    const wk = S.weakTo(b.el); c.save(); if (b.elFx > 0) { c.translate(px + pw - 64, 132); c.scale(1 + b.elFx * .35, 1 + b.elFx * .35); c.translate(-(px + pw - 64), -132); c.shadowColor = S.EL[wk].col; c.shadowBlur = 24 * b.elFx; } E.rr(c, px + pw - 128, 120, 128, 24, 12); c.fillStyle = S.EL[wk].soft; c.fill(); c.strokeStyle = S.EL[wk].col; c.lineWidth = 2; c.stroke(); c.restore();
     label(c, `Weak to ${S.EL[wk].name.toUpperCase()}`, px + pw - 64, 132, 12, '#FFFFFF');
+    /* the enemy type's rule, so kids know how this one works */
+    if (!b.boss) { const TY = b.TY, txt = `${TY.tag}: ${TY.rule}`; c.save(); c.font = '800 11px Lexend, sans-serif'; const bw = Math.min(Wd - 24, c.measureText(txt).width + 26); c.restore(); c.save(); E.rr(c, Wd - 12 - bw, 150, bw, 22, 11); c.fillStyle = 'rgba(16,20,64,.85)'; c.fill(); c.strokeStyle = TY.col; c.lineWidth = 2; c.stroke(); c.restore(); label(c, txt, Wd - 12 - bw / 2, 161, 11, TY.col); }
     /* hero status */
     const sy = Hd * .575;
     glass(c, 10, sy - 18, Math.min(Wd - 20, 360), 40);
@@ -714,7 +782,7 @@ PUM.games.sky = function (o) {
     drawMeter(c, Math.min(Wd - 20, 360) - 150, sy, 140);
     if (b.state === 'cutin') K.cutin(c, Wd, Hd, b.tm / 1.8, L, b.spec === 'special2' ? S.SPECIAL2 : S.SPECIAL[p.hero], b.spec === 'special2' ? '#FFB347' : S.EL[comp.el].col, t);
     if (b.state === 'specAtk' && b.tm < .8) { c.save(); c.globalAlpha = Math.max(0, .9 - b.tm * 1.4); c.fillStyle = '#FFFFFF'; c.fillRect(0, 0, Wd, Hd); c.restore(); K.speedLines(c, Wd, Hd, Wd * .66, Hd * .3, t, 'rgba(255,255,255,.6)', 80); }
-    if (b.state === 'intro') { const a = Math.min(1, b.tm * 3) * Math.min(1, (1.5 - b.tm) * 3); c.save(); c.globalAlpha = a; label(c, b.boss ? 'GUARDIAN BATTLE' : 'A shadow appears!', Wd / 2, Hd * .5, Math.min(28, Wd / 13), '#FFFFFF', 'center', 'D'); c.restore(); }
+    if (b.state === 'intro') { const a = Math.min(1, b.tm * 3) * Math.min(1, (1.5 - b.tm) * 3); c.save(); c.globalAlpha = a; label(c, b.boss ? 'GUARDIAN BATTLE' : b.type === 'shadow' ? 'A shadow appears!' : `A ${b.TY.tag.toLowerCase()} enemy!`, Wd / 2, Hd * .5, Math.min(28, Wd / 13), '#FFFFFF', 'center', 'D'); c.restore(); }
   }
   function drawTrans(c, k, into) {
     const n = 7, h = Hd / n;
@@ -766,6 +834,7 @@ PUM.games.sky = function (o) {
     ui(act, v) {
       if (act === 'ans') { const n = Number(v); if (g.mode === 'lock') answerLock(n); else if (b && b.state === 'block') answerBlock(n); else if (b) answerBattle(n); }
       if (act === 'move') uiMove(v);
+      if (act === 'meet' && b && b.state === 'meet') { A.sfx('tap'); api.panel(null); toPick(); }
       if (act === 'tier' && b && b.state === 'pick') { g.tier = Number(v) || 0; A.sfx('tap'); api.panel(moveBtns(), 'sky-q'); }
       if (act === 'leave' && lock) { const ch = lock.ref; lock = null; api.panel(null); api.ctrl(exploreCtrl()); g.mode = 'explore'; hero.x = ch.x - 60; }
     },

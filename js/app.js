@@ -499,7 +499,8 @@ function renderVillage() {
 }
 function foeLine(k) {
   const G = SK.GUARDIANS[k], F = G || SK.FOES[k], wk = SK.weakTo(F.el);
-  return `${G ? `<b>${G.name}</b>` : F.name} (weak to <b class="el-${wk}">${SK.EL[wk].name}</b>)`;
+  const TY = !G && F.type && SK.TYPES[F.type];
+  return `${G ? `<b>${G.name}</b>` : F.name}${TY ? ` <span class="sq-tag t-${F.type}">${TY.tag}</span>` : ''} (${TY && TY.trick ? 'its weakness keeps changing!' : `weak to <b class="el-${wk}">${SK.EL[wk].name}</b>`})`;
 }
 function renderSkyMap() {
   const p = P(), pr = p.prog.anime, lv = SK.level(p.sky.xp);
