@@ -276,7 +276,7 @@ function afterRender() {
       },
     });
     c.style.touchAction = 'pan-y';
-    if (townScroll) { townScroll = false; const ly = cur === 4 ? 150 + 4 * 170 + 38 : 150 + cur * 170 + 40; const top = c.getBoundingClientRect().top + window.scrollY; if (ly > 260) setTimeout(() => { try { window.scrollTo({top:Math.max(0, top + ly - window.innerHeight * .55), behavior:'smooth'}); } catch (e) {} }, 60); }
+    if (townScroll) { townScroll = false; const ly = R.lotY(cur); const top = c.getBoundingClientRect().top + window.scrollY; if (ly > 260) setTimeout(() => { try { window.scrollTo({top:Math.max(0, top + ly - window.innerHeight * .55), behavior:'smooth'}); } catch (e) {} }, 60); }
   }
   if (view === 'job' || view === 'jobDone') {
     const c = document.getElementById('site'); if (!c) return;
@@ -295,7 +295,7 @@ function selectLot(i) {
 function nextJobBtn(p) {
   const pr = p.prog.trucks, j = p.rig.job, all = R.builtCount(p) >= R.ACTIVE;
   const i = j ? j.i : Math.min(pr.unlocked, R.ACTIVE - 1), J = R.job(i);
-  const what = j ? `Keep building: step ${j.stage + 1} of ${J.steps.length}` : all ? 'Main Street is built! Replay for stars' : R.built(p, i) ? 'Build it again for more stars' : `Next job: ${J.steps.length} steps`;
+  const what = j ? `Keep building: step ${j.stage + 1} of ${J.steps.length}` : all ? 'The whole town is built! Replay for stars' : i % 5 === 0 && i && !R.built(p, i) ? `New: ${CP.trucks.worlds[J.world].name}! ${J.steps.length} steps` : R.built(p, i) ? 'Build it again for more stars' : `Next job: ${J.steps.length} steps`;
   return `<button class="next-job" data-act="sel-lot" data-i="${i}"><span class="nj-t"><small>${esc(what)}</small><b>${esc(J.name)}</b></span><span class="nj-go">${icon('play')} Go</span></button>`;
 }
 function renderTown() {
@@ -309,7 +309,7 @@ function renderTown() {
       : `<button class="btn go big wide" data-act="job-start" data-i="${i}">${icon('play')} ${built ? 'Build it again for more stars' : 'Start this job'}</button>`;
     sheet = `<div class="sheet" id="sheet" role="dialog" aria-label="${esc(J.name)}">
       <button class="icon-btn sheet-x" data-act="close-sheet" aria-label="Close">${icon('x')}</button>
-      <span class="kicker">Job ${i + 1} of ${R.ACTIVE} &middot; Main Street${J.boss ? ' &middot; BOSS' : ''}</span>
+      <span class="kicker">Job ${i + 1} of ${R.ACTIVE} &middot; ${esc(CP.trucks.worlds[J.world].name)}${J.boss ? ' &middot; BOSS' : ''}</span>
       <h3>${esc(J.name)} ${built ? starsRow(pr.stars[i]) : ''}</h3>
       <ol class="steps mini">${steps}</ol>
       <p class="goal">${icon('star', 'fill')} ${esc(J.givesText)}</p>
@@ -323,7 +323,7 @@ function renderTown() {
   <header class="top">${backBtn('games', 'Back to games')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">Big Rig Builders &middot; ${R.builtCount(p)} of ${R.ACTIVE} built</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
   ${nextJobBtn(p)}
   <div class="town-bar">${mpChip(p)}<button class="btn small" data-act="garage">${icon('wrench')} Garage</button><button class="btn small primary" data-act="train">${icon('brain')} Practice yard</button></div>
-  <div class="town-wrap"><canvas id="town" aria-label="Main Street. Tap a building lot to see the job."></canvas></div>
+  <div class="town-wrap"><canvas id="town" aria-label="The town: Main Street, the Hills and Big City. Tap a building lot to see the job."></canvas></div>
   ${sheet}
   ${renderSettings(p)}`;
 }
@@ -335,7 +335,7 @@ function renderGarage() {
     return `<div class="truck-card ${own ? '' : 'locked'}"><canvas data-truck="${t.k}" aria-hidden="true"></canvas><b>${t.name}</b><small>${t.carries}. ${t.how}.</small>${sw}</div>`;
   }).join('');
   return `<header class="top">${backBtn('base', 'Back to town')}<h2 class="title">Garage</h2>${mpChip(p)}</header>
-  <section class="block"><h2>Your trucks</h2><p class="hint-text" style="margin:-6px 0 12px">Tap a colour to paint a truck. Each paint job costs ${R.paintCost} coins.</p><div class="truck-cards">${cards}</div></section>
+  <section class="block"><h2>Your trucks</h2><p class="hint-text" style="margin:-6px 0 12px">Tap a colour to paint a truck. ${R.paintPrice(p) ? `Each paint job costs ${R.paintPrice(p)} coins.` : 'Painting is free at your paint shop!'}</p><div class="truck-cards">${cards}</div></section>
   <section class="block"><h2>Upgrades</h2><p class="hint-text" style="margin:-6px 0 12px">Upgrades work on every truck. Harder jobs need more power.</p><div class="upgs">${upgradeCards(p)}</div></section>
   <button class="btn primary wide" data-act="train">${icon('brain')} Earn coins at the practice yard</button>`;
 }
@@ -378,7 +378,7 @@ function rigComplete() {
   const before = R.TRUCKS.filter(t => R.owns(p, t.k)).map(t => t.k);
   pr.stars[i] = Math.max(pr.stars[i], stars);
   if (pr.unlocked === i && i < R.ACTIVE - 1) pr.unlocked = i + 1;
-  const bonus = stars * 2 + (J.boss ? 5 : 0);
+  const bonus = stars * 2 + (J.boss ? 5 : 0) + (R.bonus(p, 'crew') ? 5 : 0);
   p.mp += bonus; p.mpTotal += bonus;
   jobResult = {i, stars, coins:j.coins + bonus, cargo, newTrucks:R.TRUCKS.filter(t => R.owns(p, t.k) && !before.includes(t.k)).map(t => t.name)};
   p.rig.job = null; townSel = null; townScroll = true;
@@ -391,7 +391,7 @@ const truckCtrl = () => `<button class="ctl steer" data-ctl="left" aria-label="S
 function rigLoad(mat, truck) {
   const p = P(), j = p.rig.job, dig = mat === 'dirt';
   openShell({cls:'loader', ctrl:loaderCtrl(p), gauge:false, keymap:LOADKEYS, onExit:() => go('job'),
-    make:api => PUM.games.load({player:p, assist:assistOf(p), mat, dig, color:R.paint(p, truck), api}),
+    make:api => PUM.games.load({player:p, assist:assistOf(p), mat, dig, color:R.paint(p, truck), world:R.world(j.i), api}),
     onFinish:r => {
       const mp = play ? play.mp : 0; stopGame();
       j.n++; if (r.exact) j.ok++; j.coins += mp;
@@ -408,11 +408,12 @@ function rigDrive(mat, truck) {
       j.coins += mp;
       if (r.ok) {
         j.n += r.gates || 0; j.ok += r.gatesOk || 0;
-        const pay = Math.max(1, Math.round((5 + j.i) * r.cargo * (1 + .25 * p.up.bed)));
+        const pay = Math.max(1, Math.round((5 + j.i) * r.cargo * (1 + .25 * p.up.bed))) + R.tripBonus(p, mat);
         j.cargo.push(r.cargo); store.savePlayer(p);
         rigUnload(mat, truck, r.cargo, pay);
       } else {
         j.msg = r.reason === 'lost' ? 'The whole load fell off! Load up and try again. Slow down for potholes and dodge the rocks.'
+          : r.reason === 'boss' ? `${CP.trucks.worlds[R.world(j.i)].racer || 'The rival'} won the race! Load up and try again. Right answers at the gates give you turbo.`
           : truck === 'mixer' ? 'Oh no, the concrete set before you got there! Load up and try again.' : "Time's up! Load up and try again. Upgrade your engine to go faster.";
         store.savePlayer(p); go('job');
       }
@@ -898,8 +899,9 @@ app.addEventListener('click', e => {
     case 'paint': {
       const p = P(), k = el.dataset.k, c = el.dataset.v;
       if (!R.owns(p, k) || R.paint(p, k) === c) break;
-      if (p.mp < R.paintCost) { PUM.fx.toast(`Painting costs ${R.paintCost} coins. Earn more at the practice yard!`); A.sfx('no'); break; }
-      p.mp -= R.paintCost; p.rig.paint[k] = c; store.savePlayer(p); A.sfx('up'); render();
+      const price = R.paintPrice(p);
+      if (p.mp < price) { PUM.fx.toast(`Painting costs ${price} coins. Earn more at the practice yard!`); A.sfx('no'); break; }
+      p.mp -= price; p.rig.paint[k] = c; store.savePlayer(p); A.sfx('up'); render();
       PUM.fx.burst(app.querySelector(`canvas[data-truck="${k}"]`)); break;
     }
     case 'upgrade': {

@@ -14,7 +14,7 @@ PUM.games.trucks = function (o) {
   const RIG = PUM.RIG, kind = trip.truck, mat = RIG.MATS[trip.mat] || RIG.MATS.gravel;
   const up = player.up;
   const LV = PUM.CAMPAIGN.trucks.levels[levelIndex], WD0 = PUM.CAMPAIGN.trucks.worlds[LV.world];
-  const WD = LV.storm ? Object.assign({}, WD0, {sky:['#8D99A0', '#C9C3B4'], grass:['#8FA06C', '#869866']}) : Object.assign({}, WD0, {sky:['#A7CBD3', '#F2D9A8'], grass:['#A5B97C', '#99AE72']});
+  const WD = LV.storm ? Object.assign({}, WD0, {sky:['#8D99A0', '#C9C3B4'], grass:['#8FA06C', '#869866']}) : WD0;
   const truckSpeed = kind === 'flatbed' ? 1.06 : kind === 'mixer' ? .93 : 1;
   const rand = mulberry32(7001 + levelIndex * 7919 + Math.floor(Math.random() * 1000));
   const SEG = 200, ROAD = 2000, CAMH = 1000, DRAW = 140, LANES = [-2 / 3, 0, 2 / 3];
@@ -72,7 +72,7 @@ PUM.games.trucks = function (o) {
   const deco = [];
   for (let i = 0; i < total; i += 3 + Math.floor(rand() * 4)) {
     const side = rand() < .5 ? -1 : 1;
-    deco.push({i, x:side * (1.35 + rand() * 1.6), kind:LV.world === 0 ? (rand() < .6 ? 'tree' : 'bush') : LV.world === 1 ? (rand() < .5 ? 'cactus' : 'mesa') : (rand() < .6 ? 'pine' : 'snowman'), s:.8 + rand() * .6});
+    deco.push({i, x:side * (1.35 + rand() * 1.6), kind:LV.world === 0 ? (rand() < .6 ? 'tree' : 'bush') : LV.world === 1 ? (rand() < .5 ? 'cactus' : 'mesa') : (rand() < .45 ? 'block' : rand() < .5 ? 'lamp' : 'tree'), s:.8 + rand() * .6, c:Math.floor(rand() * 4)});
   }
   for (let i = 0; i < finishI; i += 50) deco.push({i, x:-1.3, kind:'sign', s:1, n:Math.max(0, Math.round((finishI - i) * SEG / 1000) / 10)});
   const gates = gateIdx.map(i => ({i, z:i * SEG + SEG / 2, q:null, opts:null, done:false, shown:false}));
@@ -83,13 +83,15 @@ PUM.games.trucks = function (o) {
   const refSpeed = (6000 + recEngine * 520) * (assist >= 2 ? .82 : 1) * truckSpeed;
   const cap = 100 * (1 + .3 * up.tank) * (RIG.bonus(player, 'tank') ? 1.3 : 1);
   const steerPow = 1.15 + .14 * up.tires + assist * .1, centrif = .32 - .035 * up.tires - assist * .06;
-  const timeLimit = Math.round((finishI * SEG / (refSpeed * .88) + 8) * (1 + assist * .25) * (kind === 'mixer' ? .92 : 1) * (LV.storm ? .96 : 1) * 1.08);
-  const lossMul = (assist >= 2 ? 0 : assist ? .7 : 1) * (1 - .13 * up.suspension) * (kind === 'flatbed' ? 1.1 : 1);
+  const timeLimit = Math.round((finishI * SEG / (refSpeed * .88) + 8) * (1 + assist * .25) * (kind === 'mixer' ? .92 : 1) * (LV.storm ? .96 : 1) * 1.08) + (RIG.bonus(player, 'fans') ? 5 : 0);
+  const lossMul = (assist >= 2 ? 0 : assist ? .7 : 1) * (1 - .13 * up.suspension) * (kind === 'flatbed' ? 1.1 : 1) * (RIG.bonus(player, 'medic') ? .8 : 1);
+  const turbo = RIG.bonus(player, 'siren') ? 3.8 : 2.8, crowd = RIG.bonus(player, 'crowd');
   const g = {pos:0, x:0, vx:0, speed:0, left:false, right:false, brake:false, cargo:1, fuel:cap, time:timeLimit, t:0, boost:0, shake:0, flash:0, inv:0,
     state:'intro', introT:2.2, gatesOk:0, gatesDone:0, mp:0, skyX:0, hudT:0, msg:'', msgT:0, bump:0, wob:0, bumper:RIG.bonus(player, 'bumper'), spin:0};
   const parts = E.Particles();
   let rival = null;
-  if (LV.rival) rival = {z:22 * SEG, x:0, tx:0, speed:refSpeed * .9, laneT:2, throwT:3, name:WD.boss, lead:true};
+  /* the rival is a bit slower than an engine at level 4, so turbo from right answers and a few upgrades win the race */
+  if (LV.rival) rival = {z:22 * SEG, x:0, tx:0, speed:(6000 + Math.min(recEngine, 4) * 520) * (assist >= 2 ? .82 : 1) * truckSpeed * (LV.world > 1 ? .83 : .86), laneT:2, throwT:3, name:WD.racer || WD.boss, lead:true};
   const rain = LV.storm ? Array.from({length:70}, () => ({x:Math.random(), y:Math.random(), s:.6 + Math.random() * .6})) : null;
 
   let W = 0, H = 0, hz = 0, HS = 0, VS = 0;
@@ -194,7 +196,7 @@ PUM.games.trucks = function (o) {
         g.gatesDone++;
         const r = api.answer(ok, gt.q);
         setFace(ok ? 'grin' : 'worry', 1.4);
-        if (ok) { g.gatesOk++; g.boost = 2.8; if (timeLimit) g.time += 3; say('TURBO!', 1.2); PUM.audio.sfx('up'); g.mp += r.mp; }
+        if (ok) { g.gatesOk++; g.boost = turbo; if (timeLimit) g.time += 3; say('TURBO!', 1.2); PUM.audio.sfx('up'); g.mp += r.mp; if (crowd) { g.mp++; api.addMp(1); } }
         else { hit(null, 'mud'); say(`Mud! It was ${gt.q.ans}`, 1.6); PUM.audio.sfx('no'); parts.burst(W / 2, H * .8, 20, {speed:200, angle:-Math.PI / 2, spread:2, color:['#7A5A3A', '#9C7650'], size:6, g:600, life:.8}); }
         api.hideQuestion(ok);
       }
@@ -221,7 +223,7 @@ PUM.games.trucks = function (o) {
     if (ahead !== r.lead) { r.lead = ahead; if (!ahead) { say(`You passed ${r.name}!`, 1.6); PUM.audio.sfx('up'); } else say(`${r.name} passed you!`, 1.4); }
     r.throwT -= dt;
     if (ahead && r.throwT <= 0 && r.z - pz < 70 * SEG && r.z - pz > 10 * SEG && g.state === 'run') {
-      r.throwT = (assist >= 2 ? 4.2 : assist ? 3.4 : 2.6) - Math.min(1, LV.world * .4) + Math.random();
+      r.throwT = (assist >= 2 ? 4.2 : assist ? 3.4 : 2.6) - Math.min(.6, LV.world * .3) + Math.random();
       obs.push({type:'barrel', z:r.z - SEG * 2, x:LANES[Math.floor(Math.random() * 3)], w:.2, arc:1});
       PUM.audio.sfx('kick');
     }
@@ -245,8 +247,19 @@ PUM.games.trucks = function (o) {
       for (let sx = 0; sx <= W + 8; sx += 8) { const u = (sx / W + g.skyX * k) * 6.28; ctx.lineTo(sx, hz - h * (.5 + .3 * Math.sin(u * f) + .2 * Math.sin(u * f * 2.7 + 1))); }
       ctx.lineTo(W, hz + 2); ctx.closePath(); ctx.fill();
     };
-    layer(.3, H * .12, LV.world === 2 ? '#C9C6BE' : LV.world === 1 ? '#D2A57A' : '#B8C08A', 1.3);
-    layer(.6, H * .07, LV.world === 2 ? '#DAD5CA' : LV.world === 1 ? '#BF8C62' : '#93AD72', 2.1);
+    /* Big City: a skyline of towers that slides as the road curves */
+    const city = (k, h, col, sd) => {
+      const n = 14, bw = W / 9, off = ((g.skyX * k * W * 6) % (bw * n) + bw * n) % (bw * n);
+      for (let i = 0; i < n; i++) {
+        const r = mulberry32(sd * 97 + i), x = i * bw - off + (i * bw - off < -bw ? bw * n : 0), th = h * (.45 + r() * .55), tw = bw * (.7 + r() * .25);
+        ctx.fillStyle = col; ctx.fillRect(x, hz - th, tw, th + 2);
+        if (r() < .35) ctx.fillRect(x + tw * .45, hz - th - h * .12, 2, h * .12);
+        ctx.fillStyle = 'rgba(255,248,225,.4)'; for (let yy = hz - th + 5; yy < hz - 6; yy += 9) for (let xx = x + 4; xx < x + tw - 5; xx += 8) if (r() < .55) ctx.fillRect(xx, yy, 3, 4);
+      }
+    };
+    if (LV.world === 2) { city(.2, H * .2, '#A9B7C7', 1); city(.45, H * .12, '#8F9DAF', 2); return; }
+    layer(.3, H * .12, LV.world === 1 ? '#DDA675' : '#B8C08A', 1.3);
+    layer(.6, H * .07, LV.world === 1 ? '#C98E5C' : '#93AD72', 2.1);
   }
   function quad(ctx, x1, y1, w1, x2, y2, w2, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x1 - w1, y1); ctx.lineTo(x2 - w2, y2); ctx.lineTo(x2 + w2, y2); ctx.lineTo(x1 + w1, y1); ctx.closePath(); ctx.fill(); }
   function drawSeg(ctx, s) {
@@ -277,6 +290,8 @@ PUM.games.trucks = function (o) {
     else if (type === 'pine') { const s = w * .6; ctx.fillStyle = '#7A5A3A'; ctx.fillRect(x - s * .04, y - s * .2, s * .08, s * .2); ctx.fillStyle = '#2E7D52'; ctx.beginPath(); ctx.moveTo(x, y - s * 1.1); ctx.lineTo(x + s * .3, y - s * .2); ctx.lineTo(x - s * .3, y - s * .2); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.moveTo(x, y - s * 1.1); ctx.lineTo(x + s * .12, y - s * .75); ctx.lineTo(x - s * .12, y - s * .75); ctx.closePath(); ctx.fill(); }
     else if (type === 'snowman') { const s = w * .3; ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(x, y - s * .3, s * .3, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y - s * .78, s * .2, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = P('marigold'); ctx.beginPath(); ctx.moveTo(x, y - s * .78); ctx.lineTo(x + s * .2, y - s * .74); ctx.lineTo(x, y - s * .72); ctx.fill(); }
     else if (type === 'cactus') { const s = w * .45; ctx.fillStyle = '#4E9A42'; E.rr(ctx, x - s * .08, y - s, s * .16, s, s * .08); ctx.fill(); ctx.stroke(); E.rr(ctx, x - s * .3, y - s * .7, s * .12, s * .35, s * .06); ctx.fill(); ctx.stroke(); E.rr(ctx, x + s * .18, y - s * .8, s * .12, s * .4, s * .06); ctx.fill(); ctx.stroke(); }
+    else if (type === 'block') { const s = w * .9, bh = s * (.7 + (extra % 3) * .25), col = ['#9AA6B5', '#B5A898', '#C9A98A', '#A3B0A0'][extra % 4]; ctx.fillStyle = col; ctx.fillRect(x - s * .3, y - bh, s * .6, bh); ctx.strokeRect(x - s * .3, y - bh, s * .6, bh); ctx.fillStyle = '#E6EEF2'; for (let yy = y - bh + s * .06; yy < y - s * .12; yy += s * .12) for (let k = 0; k < 3; k++) ctx.fillRect(x - s * .24 + k * s * .18, yy, s * .1, s * .06); }
+    else if (type === 'lamp') { const s = w * .6; ctx.fillStyle = '#5E5650'; ctx.fillRect(x - s * .02, y - s, s * .04, s); ctx.fillRect(x - s * .02, y - s, s * .2, s * .035); ctx.fillStyle = '#FFE3A0'; ctx.beginPath(); ctx.ellipse(x + s * .16, y - s * .95, s * .05, s * .03, 0, 0, 7); ctx.fill(); }
     else if (type === 'mesa') { const s = w * .9; ctx.fillStyle = '#B86A42'; ctx.beginPath(); ctx.moveTo(x - s * .5, y); ctx.lineTo(x - s * .35, y - s * .5); ctx.lineTo(x + s * .35, y - s * .5); ctx.lineTo(x + s * .5, y); ctx.closePath(); ctx.fill(); }
     else if (type === 'sign') { const s = w * .3; ctx.fillStyle = '#7A5A3A'; ctx.fillRect(x - s * .04, y - s, s * .08, s); ctx.fillStyle = '#22A06B'; E.rr(ctx, x - s * .5, y - s * 1.3, s, s * .45, s * .06); ctx.fill(); ctx.stroke(); if (s > 14) { ctx.fillStyle = '#FFFFFF'; ctx.font = `800 ${s * .24}px Sniglet, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(`${extra} km`, x, y - s * 1.07); } }
     ctx.restore();
@@ -373,7 +388,7 @@ PUM.games.trucks = function (o) {
       const a = s.p1, u = a.sw;
       ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, s.clip); ctx.clip();
       for (const it of s.dyn) {
-        if (it.k === 'deco') { if (it.d.kind === 'sign') sprite(ctx, 'sign', a.sx + it.d.x * u, a.sy, u, null, it.d.n); else sprite(ctx, it.d.kind, a.sx + it.d.x * u, a.sy, u * it.d.s); }
+        if (it.k === 'deco') { if (it.d.kind === 'sign') sprite(ctx, 'sign', a.sx + it.d.x * u, a.sy, u, null, it.d.n); else sprite(ctx, it.d.kind, a.sx + it.d.x * u, a.sy, u * it.d.s, null, it.d.c); }
         else if (it.k === 'ob') { const ob = it.ob; let yy = a.sy, xx = a.sx + ob.x * u; if (ob.flyT > 0) { yy -= (1 - ob.flyT) * u * .8; xx += (ob.x >= 0 ? 1 : -1) * (1 - ob.flyT) * u; } sprite(ctx, ob.type, xx, yy, u, ob, ob.type === 'car' ? ['#2F95D6', '#E8577A', '#7357DB', '#FFFFFF'][Math.floor(Math.abs(ob.x * 3 + 5)) % 4] : null); }
         else if (it.k === 'bolt') sprite(ctx, 'bolt', a.sx + it.b.x * u, a.sy, u);
         else if (it.k === 'gate') drawGate(ctx, s, it.gt);

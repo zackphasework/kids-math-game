@@ -33,9 +33,9 @@ const POWER = [0, 1, 2, 3, 4, 5, 6, 8, 9, 11, 12, 14, 16, 18, 20];
 
 L.trucks = {
   worlds:[
-    {name:'Main Street', color:'leaf', sky:['#69C2F0', '#D6F0FF'], grass:['#7CC765', '#6DB857'], boss:'River Bridge'},
-    {name:'The Hills', color:'marigold', sky:['#F59A5B', '#FFE1B8'], grass:['#D9A066', '#CC9059'], boss:'Mountain Tunnel'},
-    {name:'Big City', color:'sea', sky:['#7FA8E8', '#E6F0FF'], grass:['#9AA6B5', '#8C98A8'], boss:'Skyscraper'},
+    {name:'Main Street', color:'leaf', sky:['#A7CBD3', '#F2D9A8'], grass:['#A5B97C', '#99AE72'], boss:'River Bridge'},
+    {name:'The Hills', color:'marigold', sky:['#E9A877', '#FBE0B8'], grass:['#D8B07A', '#CDA26C'], boss:'Mountain Tunnel', racer:'Rusty'},
+    {name:'Big City', color:'sea', sky:['#93AECB', '#E4E7E6'], grass:['#B4B6B0', '#A8ABA6'], boss:'Skyscraper', racer:'Turbo Tess'},
   ],
   /* Each level is one building job. Road settings are for each trip of the job. */
   levels:[
@@ -44,16 +44,16 @@ L.trucks = {
     {name:'Mechanic', len:600, curve:.5, hills:.4, obs:{cone:.3, rock:.35, hole:.5}, gates:3, nw:'New: potholes, and the cement mixer. Concrete sets, so be quick!'},
     {name:'School', len:640, curve:.65, hills:.8, obs:{cone:.35, rock:.5, hole:.5}, gates:3, nw:'Hills and sharp curves. Brake before the corners!'},
     {name:'River Bridge', len:560, curve:.5, hills:.4, obs:{cone:.3, rock:.35, hole:.35, ice:.6, bridge:.45}, gates:3, boss:true, storm:true, nw:'BOSS: a storm is coming! Wet roads are slippery and the river is rising.'},
-    {name:'Quarry', soon:true, len:600, curve:.5, hills:.5, obs:{rock:.4, tractor:.5}, gates:3, nw:''},
-    {name:'Soccer field', soon:true, len:640, curve:.6, hills:.5, obs:{rock:.3, tractor:.4, car:.5}, gates:3, nw:''},
-    {name:'Hospital', soon:true, len:680, curve:.6, hills:.6, obs:{tractor:.3, car:.4, boulder:.5}, gates:4, nw:''},
-    {name:'Fire station', soon:true, len:720, curve:.8, hills:.7, obs:{rock:.4, hole:.4, tractor:.4, car:.5, boulder:.4}, gates:4, nw:''},
-    {name:'Mountain Tunnel', soon:true, len:700, curve:.7, hills:.6, obs:{rock:.3, car:.3, hole:.4}, gates:4, boss:true, rival:true, nw:''},
-    {name:'Train station', soon:true, len:700, curve:.7, hills:.6, obs:{rock:.3, ice:.6}, gates:4, nw:''},
-    {name:'Apartment tower', soon:true, len:740, curve:.7, hills:.7, obs:{car:.4, ice:.4, bridge:.6}, gates:4, nw:''},
-    {name:'Shopping mall', soon:true, len:780, curve:.8, hills:.8, obs:{rock:.4, car:.4, ice:.5, bridge:.4, boulder:.3}, gates:5, nw:''},
-    {name:'Stadium', soon:true, len:820, curve:.9, hills:.9, obs:{cone:.3, rock:.4, hole:.4, tractor:.3, car:.5, ice:.4, bridge:.4, boulder:.4}, gates:5, nw:''},
-    {name:'Skyscraper', soon:true, len:800, curve:.9, hills:.8, obs:{rock:.3, car:.3, ice:.5, bridge:.3}, gates:5, boss:true, rival:true, nw:''},
+    {name:'Quarry', len:600, curve:.5, hills:.6, obs:{rock:.4, hole:.3, tractor:.5}, gates:3, nw:'Welcome to the Hills! New: slow tractors. Steer around them.'},
+    {name:'Soccer field', len:640, curve:.55, hills:.6, obs:{rock:.3, tractor:.4, car:.45}, gates:3, nw:'New: cars coming toward you. Stay out of their lane!'},
+    {name:'Hospital', len:680, curve:.6, hills:.7, obs:{rock:.3, tractor:.3, car:.4, boulder:.5}, gates:4, nw:'New: boulders roll down the hills. Watch for the shadow on the road!'},
+    {name:'Fire station', len:700, curve:.8, hills:.7, obs:{rock:.35, hole:.35, tractor:.3, car:.4, boulder:.4}, gates:4, nw:'Twisty mountain roads. Brake before the sharp curves!'},
+    {name:'Mountain Tunnel', len:680, curve:.65, hills:.6, obs:{rock:.3, car:.3, hole:.35}, gates:4, boss:true, rival:true, nw:'BOSS: race Rusty to the tunnel! Right answers give turbo to pass him. Dodge his barrels.'},
+    {name:'Train station', len:700, curve:.6, hills:.5, obs:{rock:.3, car:.35, ice:.6}, gates:4, nw:'Welcome to Big City! New: icy roads. Steer gently on the ice.'},
+    {name:'Apartment tower', len:720, curve:.65, hills:.6, obs:{hole:.35, car:.4, ice:.4, bridge:.6}, gates:4, nw:'New: narrow canal bridges. Stay in the middle lane or splash!'},
+    {name:'Shopping mall', len:760, curve:.75, hills:.7, obs:{rock:.3, car:.45, ice:.4, bridge:.4, boulder:.3}, gates:5, nw:'Busy city traffic with ice and bridges. Take it slow!'},
+    {name:'Stadium', len:800, curve:.85, hills:.8, obs:{cone:.3, rock:.35, hole:.35, tractor:.3, car:.45, ice:.4, bridge:.4, boulder:.35}, gates:5, nw:'Game day! Everything at once. Upgrade your trucks first.'},
+    {name:'Skyscraper', len:760, curve:.75, hills:.7, obs:{rock:.25, car:.3, ice:.4, bridge:.3}, gates:5, boss:true, rival:true, nw:'FINAL BOSS: race Turbo Tess across Big City! Every right answer is a turbo.'},
   ],
 };
 L.soccer = {
@@ -105,6 +105,8 @@ L.anime = {
   ],
 };
 for (const t of ['trucks', 'soccer', 'anime']) L[t].levels.forEach((lv, i) => { lv.i = i; lv.world = Math.floor(i / 5); lv.power = POWER[i]; });
+/* Big Rig Builders ramps more gently: each job is several trips, so coins for upgrades come slower. */
+L.trucks.levels.forEach((lv, i) => { lv.power = i; });
 L.count = 15;
 L.level = (theme, i) => L[theme].levels[Math.max(0, Math.min(L.count - 1, i))];
 })();
