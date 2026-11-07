@@ -608,7 +608,7 @@ function skyAfterRender(p) {
     let hits = [];
     const isles = isleInfo(p);
     skyCanvas('village', {draw(ctx, W, H, t) { hits = KA.village(ctx, W, H, t, {buildings:p.sky.b, comps:compList(p), isles}, skySel); },
-      tap(x, y) { const h = hits.find(o => Math.hypot(o.x - x, o.y - y) < o.r); if (!h) return; A.ac(); A.sfx('tap'); skySel = h.k; render(); const el = document.getElementById('b-' + h.k); if (el) el.scrollIntoView({block:'center', behavior:'smooth'}); }}, w => Math.min(460, w * .92));
+      tap(x, y) { const h = hits.find(o => Math.hypot(o.x - x, o.y - y) < o.r); if (!h) return; A.ac(); A.sfx('tap'); skySel = h.k; render(); const el = document.getElementById('b-' + h.k); if (el) el.scrollIntoView({block:'center', behavior:'smooth'}); }}, w => Math.min(500, w * 1.02));
   }
   if (view === 'map') {
     let nodes = []; const isles = isleInfo(p), look = KA.lookOf(p);

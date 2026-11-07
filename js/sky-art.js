@@ -1088,43 +1088,79 @@ function roofHouse(c, x, y, w, h, wall, roof, lit, t) {
   c.fillStyle = '#2E2A48'; c.fillRect(x - w * .1, y - h * .45, w * .2, h * .45);
   c.fillStyle = roof; c.beginPath(); c.moveTo(x - w * .72, y - h + 2); c.quadraticCurveTo(x, y - h - h * .25, x + w * .72, y - h + 2); c.lineTo(x + w * .5, y - h - h * .5); c.quadraticCurveTo(x, y - h - h * .62, x - w * .5, y - h - h * .5); c.closePath(); c.fill(); c.stroke();
 }
-function ruin(c, x, y, w, h) {
-  c.strokeStyle = 'rgba(200,190,230,.5)'; c.lineWidth = 2; c.setLineDash([5, 5]); c.strokeRect(x - w / 2, y - h, w, h); c.setLineDash([]);
-  c.fillStyle = '#4A4466'; c.beginPath(); c.moveTo(x - w / 2, y); c.lineTo(x - w / 2, y - h * .4); c.lineTo(x - w * .2, y - h * .25); c.lineTo(x, y - h * .5); c.lineTo(x + w * .25, y - h * .2); c.lineTo(x + w / 2, y - h * .35); c.lineTo(x + w / 2, y); c.closePath(); c.fill(); c.strokeStyle = LINE; c.stroke();
-  c.strokeStyle = '#8A7A5A'; c.lineWidth = 3; c.beginPath(); c.moveTo(x - w * .4, y); c.lineTo(x - w * .4, y - h * 1.1); c.moveTo(x + w * .4, y); c.lineTo(x + w * .4, y - h * 1.1); c.moveTo(x - w * .45, y - h * .8); c.lineTo(x + w * .45, y - h * .8); c.stroke();
+/* an empty lot waiting to be rebuilt: a stone foundation, broken low walls, fallen blocks,
+   a faint outline of what will stand there, and a little sign with a hammer */
+function ruin(c, x, y, w, h, t = 0) {
+  c.save();
+  c.fillStyle = 'rgba(0,0,0,.22)'; c.beginPath(); c.ellipse(x, y + 2, w * .62, w * .16, 0, 0, TAU); c.fill();
+  c.fillStyle = '#B7ADC8'; c.strokeStyle = LINE; c.lineWidth = 2;
+  c.beginPath(); c.moveTo(x - w * .55, y); c.lineTo(x - w * .45, y - h * .14); c.lineTo(x + w * .45, y - h * .14); c.lineTo(x + w * .55, y); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#D6CFE2'; c.beginPath(); c.moveTo(x - w * .45, y - h * .14); c.lineTo(x - w * .4, y - h * .2); c.lineTo(x + w * .4, y - h * .2); c.lineTo(x + w * .45, y - h * .14); c.closePath(); c.fill(); c.stroke();
+  /* broken walls */
+  const wall = (x0, x1, hs) => { c.fillStyle = '#9C91B2'; c.beginPath(); c.moveTo(x0, y - h * .2); hs.forEach(([f, hh]) => c.lineTo(x0 + (x1 - x0) * f, y - h * .2 - h * hh)); c.lineTo(x1, y - h * .2); c.closePath(); c.fill(); c.stroke();
+    c.strokeStyle = 'rgba(34,55,75,.35)'; c.lineWidth = 1; for (let i = 1; i < 3; i++) { c.beginPath(); c.moveTo(x0 + 2, y - h * .2 - i * h * .13); c.lineTo(x1 - 2, y - h * .2 - i * h * .13); c.stroke(); } c.strokeStyle = LINE; c.lineWidth = 2; };
+  wall(x - w * .38, x - w * .08, [[0, .5], [.35, .42], [.55, .26], [.8, .33], [1, .12]]);
+  wall(x + w * .12, x + w * .38, [[0, .2], [.3, .38], [.6, .3], [1, .46]]);
+  /* fallen blocks */
+  for (const [dx, dy, s2, a2] of [[-.5, -.02, .12, .3], [.48, .0, .1, -.4], [.0, -.16, .09, .2]]) { c.save(); c.translate(x + dx * w, y + dy * h); c.rotate(a2); c.fillStyle = '#A79CBD'; c.fillRect(-w * s2 / 2, -w * s2 * .6, w * s2, w * s2 * .6); c.strokeRect(-w * s2 / 2, -w * s2 * .6, w * s2, w * s2 * .6); c.restore(); }
+  /* the ghost of the building to come */
+  c.globalAlpha = .45 + .15 * Math.sin(t * 2); c.strokeStyle = '#FFE27A'; c.lineWidth = 1.6; c.setLineDash([4, 4]);
+  c.beginPath(); c.moveTo(x - w * .36, y - h * .2); c.lineTo(x - w * .36, y - h * .9); c.lineTo(x - w * .46, y - h * .9); c.lineTo(x, y - h * 1.25); c.lineTo(x + w * .46, y - h * .9); c.lineTo(x + w * .36, y - h * .9); c.lineTo(x + w * .36, y - h * .2); c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
+  /* sign with a hammer */
+  const sx = x + w * .5, sy = y - h * .02;
+  c.fillStyle = '#8A6A4A'; c.fillRect(sx - 1.5, sy - h * .62, 3, h * .62);
+  c.fillStyle = '#F3E2C6'; E.rr(c, sx - w * .17, sy - h * .82, w * .34, h * .26, 3); c.fill(); c.stroke();
+  c.strokeStyle = '#6A4A3A'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(sx - w * .07, sy - h * .6); c.lineTo(sx + w * .05, sy - h * .76); c.stroke();
+  c.fillStyle = '#5A6070'; c.save(); c.translate(sx + w * .05, sy - h * .76); c.rotate(-.9); c.fillRect(-w * .06, -h * .05, w * .12, h * .1); c.restore();
+  c.restore();
 }
+/* where each village building stands, in island units (x across, y front-to-back) */
+const VSPOT = {shrine:[-.04, -.3], tower:[.62, -.26], garden:[-.56, .02], dojo:[0, .03], forge:[.5, .16], spring:[-.24, .28]};
 K.village = function (c, W, H, t, st, sel) {
   K.skyGradient(c, W, H, '#101A52', '#40308E', '#C77BB8', '#FFC2A8');
   K.stars(c, W, H * .7, t, 50, 21);
-  /* Tide Grotto and Ember Peak float nearby: misty until they open, greyer until they're healed */
-  const isl = st.isles || [], uu = Math.min(W / 360, H / 360);
-  for (const [k, px, py, r] of [[1, .11, .13, 24], [2, .89, .16, 28]]) isleArt(c, k, W * px, H * py, r * uu, t, {heal:isl[k] ? isl[k].heal : 0, locked:!(isl[k] && isl[k].open)});
-  /* the island */
-  const cx = W / 2, top = H * .2, iw = W * .48;
-  c.fillStyle = '#2B2660'; c.beginPath(); c.moveTo(cx - iw, H * .82); c.quadraticCurveTo(cx - iw * .5, H * 1.05, cx, H * 1.1); c.quadraticCurveTo(cx + iw * .5, H * 1.05, cx + iw, H * .82); c.closePath(); c.fill();
-  const ig = c.createRadialGradient(cx, H * .45, 10, cx, H * .58, iw * 1.1); ig.addColorStop(0, '#8FEAC6'); ig.addColorStop(.7, '#4FBF9A'); ig.addColorStop(1, '#2F8F7A');
-  c.fillStyle = ig; c.beginPath(); c.ellipse(cx, H * .58, iw * 1.02, H * .3, 0, 0, TAU); c.fill(); c.strokeStyle = LINE; c.lineWidth = 2; c.stroke();
-  const R0 = seed(44); for (let i = 0; i < 70; i++) { const a = R0() * TAU, rr = Math.sqrt(R0()); c.fillStyle = i % 3 ? 'rgba(255,255,255,.12)' : 'rgba(255,198,221,.55)'; c.beginPath(); c.ellipse(cx + Math.cos(a) * rr * iw * .95, H * .58 + Math.sin(a) * rr * H * .27, 3, 1.6, 0, 0, TAU); c.fill(); }
-  /* paths */
-  c.strokeStyle = 'rgba(255,240,220,.55)'; c.lineWidth = Math.max(6, W * .02); c.lineCap = 'round';
-  c.beginPath(); for (const k of ['garden', 'forge', 'spring', 'tower', 'shrine']) { c.moveTo(VPOS.dojo[0] * W, VPOS.dojo[1] * H); c.lineTo(VPOS[k][0] * W, VPOS[k][1] * H); } c.stroke();
-  const R = seed(31); for (const [tx, ty] of [[-.88, .5], [.86, .48], [-.55, .78], [.6, .8], [-.1, .36], [.02, .86]]) { c.save(); c.globalAlpha = .92; sakura(c, cx + tx * iw, H * ty, .3 + R() * .1, R, true); c.restore(); }
-  const u = Math.min(W / 360, H / 360) * 1.05, hits = [];
-  const B = st.buildings || {};
-  for (const k of ['shrine', 'tower', 'garden', 'dojo', 'forge', 'spring']) {
-    const [px, py] = VPOS[k], x = px * W, y = py * H, built = k === 'dojo' || B[k];
-    if (sel === k) { c.save(); c.shadowColor = '#FFE27A'; c.shadowBlur = 20; c.fillStyle = 'rgba(255,226,122,.35)'; c.beginPath(); c.ellipse(x, y, 52 * u, 14 * u, 0, 0, TAU); c.fill(); c.restore(); }
-    if (!built) ruin(c, x, y, 54 * u, 40 * u);
-    else if (k === 'dojo') roofHouse(c, x, y, 70 * u, 40 * u, '#F3E6D0', '#C8384A', true, t);
-    else if (k === 'garden') { roofHouse(c, x, y, 46 * u, 26 * u, '#E8F6EE', '#2F7A5E', true, t); for (let i = 0; i < 5; i++) blossom(c, x - 28 * u + i * 14 * u, y + 4 * u, 6 * u, '#FFC6DD'); }
-    else if (k === 'forge') { roofHouse(c, x, y, 52 * u, 34 * u, '#5A4A5E', '#3A3448', true, t); c.save(); c.shadowColor = '#FF8A3D'; c.shadowBlur = 16; c.fillStyle = '#FF8A3D'; c.fillRect(x - 6 * u, y - 14 * u, 12 * u, 12 * u); c.restore(); for (let i = 0; i < 3; i++) { c.fillStyle = 'rgba(200,190,220,.35)'; c.beginPath(); c.arc(x + 18 * u + Math.sin(t + i) * 4, y - 62 * u - ((t * 14 + i * 12) % 36) * u, (5 + i * 2) * u, 0, TAU); c.fill(); } }
-    else if (k === 'spring') { c.save(); c.shadowColor = '#7FF0FF'; c.shadowBlur = 18; c.fillStyle = '#9BE8FF'; c.beginPath(); c.ellipse(x, y - 6 * u, 34 * u, 12 * u, 0, 0, TAU); c.fill(); c.restore(); c.strokeStyle = LINE; c.lineWidth = 2; c.stroke(); c.strokeStyle = 'rgba(255,255,255,.6)'; for (let i = 0; i < 3; i++) { c.beginPath(); c.ellipse(x, y - 6 * u, (10 + ((t * 10 + i * 8) % 24)) * u, (3 + ((t * 10 + i * 8) % 24) * .3) * u, 0, 0, TAU); c.stroke(); } }
-    else if (k === 'tower') { c.fillStyle = '#5A4A7E'; c.fillRect(x - 10 * u, y - 70 * u, 20 * u, 70 * u); c.strokeStyle = LINE; c.lineWidth = 2; c.strokeRect(x - 10 * u, y - 70 * u, 20 * u, 70 * u); K.lantern(c, x, y - 64 * u, .5 * u, true, t); }
-    else if (k === 'shrine') { c.save(); const sg = c.createRadialGradient(x, y - 40 * u, 4, x, y - 40 * u, 70 * u); sg.addColorStop(0, `rgba(255,226,122,${.35 + Math.sin(t * 2) * .1})`); sg.addColorStop(1, 'rgba(255,226,122,0)'); c.fillStyle = sg; c.beginPath(); c.arc(x, y - 40 * u, 70 * u, 0, TAU); c.fill(); c.restore(); pagoda(c, x, y, .5 * u, '#C8384A'); }
-    hits.push({k, x, y: y - 20 * u, r: 40 * u});
+  const isl = st.isles || [], dpr = (c.getTransform ? c.getTransform().a : 1) || 1, uu = Math.min(W / 360, H / 380);
+  /* Tide Grotto and Ember Peak float nearby: in clouds until they open */
+  for (const [k, px, py, rr] of [[1, .12, .14, 30], [2, .88, .15, 32]]) {
+    const O = isl[k] || {}, x = W * px, y = H * py + Math.sin(t * .8 + k * 2) * 2 * uu, sr = rr * uu;
+    const sm = isleCached(k, sr, {dpr, small:true, heal:O.heal, locked:!O.open}); c.drawImage(sm.cv, x - sm.ox, y - sm.oy, sm.w, sm.h); isleLive(c, k, x, y, sr, t, true);
+    if (!O.open) { c.save(); c.fillStyle = 'rgba(225,230,255,.5)'; for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + t * .15; c.beginPath(); c.arc(x + Math.cos(a) * sr * .8, y - sr * .05 + Math.sin(a) * sr * .3, sr * (.3 + (i % 2) * .08), 0, TAU); c.fill(); } c.restore();
+      const lr = 7 * uu, ly = y - sr * .15; c.save(); c.fillStyle = '#FFFFFF'; c.strokeStyle = LINE; c.lineWidth = 2; c.beginPath(); c.arc(x, ly, lr + 5 * uu, 0, TAU); c.fill(); c.stroke(); c.strokeStyle = '#4A4466'; c.lineWidth = 2.5 * uu; c.beginPath(); c.arc(x, ly - 2 * uu, lr * .5, Math.PI, 0); c.stroke(); c.fillStyle = '#4A4466'; E.rr(c, x - lr * .7, ly - 2 * uu, lr * 1.4, lr * 1.05, 2 * uu); c.fill(); c.restore(); }
   }
+  /* the village island */
+  const cx = W / 2, cy = H * .5 + Math.sin(t * .8) * 2 * uu, r = Math.min(W * .47, 200 * uu);
+  const isle = isleCached(0, r, {dpr, bare:true});
+  c.drawImage(isle.cv, cx - isle.ox, cy - isle.oy, isle.w, isle.h);
+  isleLive(c, 0, cx, cy, r, t, false, true);
+  const at = k => [cx + VSPOT[k][0] * r, cy + VSPOT[k][1] * r];
+  /* stone paths from the dojo out to every building */
+  const [dx0, dy0] = at('dojo');
+  const paths = () => { c.beginPath(); for (const k of ['garden', 'forge', 'spring', 'tower', 'shrine']) { const [x, y] = at(k); c.moveTo(dx0, dy0); c.quadraticCurveTo((dx0 + x) / 2 + (y - dy0) * .25, (dy0 + y) / 2 - (x - dx0) * .08, x, y); } };
+  c.save(); c.lineCap = 'round'; paths(); c.strokeStyle = 'rgba(0,0,0,.2)'; c.lineWidth = r * .1; c.stroke(); paths(); c.strokeStyle = '#C9A98A'; c.lineWidth = r * .08; c.stroke(); paths(); c.strokeStyle = '#F6E7CF'; c.lineWidth = r * .055; c.stroke(); paths(); c.setLineDash([r * .018, r * .04]); c.strokeStyle = 'rgba(120,90,70,.35)'; c.lineWidth = r * .018; c.stroke(); c.restore();
+  const u = r / 190, hits = [], B = st.buildings || {}, items = [];
+  /* cherry trees around the edge */
+  for (const [x, y, s2] of [[-.86, -.1, .34], [-.3, -.3, .3], [.26, -.34, .28], [.86, -.06, .32], [.18, .34, .28], [-.66, .3, .3], [.82, .2, .28], [.36, -.3, .26]]) items.push([y, () => { c.save(); c.globalAlpha = .95; sakura(c, cx + x * r, cy + y * r, s2 * u, seed(Math.round(x * 100 + 700)), true); c.restore(); }]);
+  for (const k of ['shrine', 'tower', 'garden', 'dojo', 'forge', 'spring']) {
+    const [x, y] = at(k), built = k === 'dojo' || B[k];
+    items.push([VSPOT[k][1], () => {
+      if (sel === k) { c.save(); c.shadowColor = '#FFE27A'; c.shadowBlur = 20; c.fillStyle = 'rgba(255,226,122,.4)'; c.beginPath(); c.ellipse(x, y, 52 * u, 14 * u, 0, 0, TAU); c.fill(); c.restore(); }
+      if (!built) ruin(c, x, y, 60 * u, 44 * u, t);
+      else if (k === 'dojo') roofHouse(c, x, y, 76 * u, 44 * u, '#F3E6D0', '#C8384A', true, t);
+      else if (k === 'garden') { roofHouse(c, x, y, 50 * u, 28 * u, '#E8F6EE', '#2F7A5E', true, t); for (let i = 0; i < 5; i++) blossom(c, x - 28 * u + i * 14 * u, y + 4 * u, 6 * u, '#FFC6DD'); }
+      else if (k === 'forge') { roofHouse(c, x, y, 54 * u, 36 * u, '#5A4A5E', '#3A3448', true, t); c.save(); c.shadowColor = '#FF8A3D'; c.shadowBlur = 16; c.fillStyle = '#FF8A3D'; c.fillRect(x - 6 * u, y - 14 * u, 12 * u, 12 * u); c.restore(); for (let i = 0; i < 3; i++) { c.fillStyle = 'rgba(200,190,220,.35)'; c.beginPath(); c.arc(x + 18 * u + Math.sin(t + i) * 4, y - 62 * u - ((t * 14 + i * 12) % 36) * u, (5 + i * 2) * u, 0, TAU); c.fill(); } }
+      else if (k === 'spring') { c.save(); c.fillStyle = '#B7ADC8'; c.beginPath(); c.ellipse(x, y - 4 * u, 40 * u, 15 * u, 0, 0, TAU); c.fill(); c.strokeStyle = LINE; c.lineWidth = 2; c.stroke(); c.shadowColor = '#7FF0FF'; c.shadowBlur = 18; c.fillStyle = '#9BE8FF'; c.beginPath(); c.ellipse(x, y - 6 * u, 33 * u, 11 * u, 0, 0, TAU); c.fill(); c.restore(); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 1.5; for (let i = 0; i < 3; i++) { const q = (t * 10 + i * 8) % 24; c.beginPath(); c.ellipse(x, y - 6 * u, (10 + q) * u, (3 + q * .3) * u, 0, 0, TAU); c.stroke(); } for (let i = 0; i < 3; i++) { const q = (t * .5 + i / 3) % 1; c.fillStyle = `rgba(255,255,255,${.4 * (1 - q)})`; c.beginPath(); c.arc(x - 10 * u + i * 10 * u, y - 14 * u - q * 26 * u, (4 + q * 6) * u, 0, TAU); c.fill(); } }
+      else if (k === 'tower') {
+        c.fillStyle = '#E8DCC8'; c.strokeStyle = LINE; c.lineWidth = 2; c.beginPath(); c.moveTo(x - 12 * u, y); c.lineTo(x - 9 * u, y - 66 * u); c.lineTo(x + 9 * u, y - 66 * u); c.lineTo(x + 12 * u, y); c.closePath(); c.fill(); c.stroke();
+        c.fillStyle = '#C8384A'; for (const yy of [-30, -66]) { c.beginPath(); c.moveTo(x - 20 * u, y + yy * u); c.quadraticCurveTo(x, y + (yy - 8) * u, x + 20 * u, y + yy * u); c.lineTo(x + 12 * u, y + (yy - 10) * u); c.lineTo(x - 12 * u, y + (yy - 10) * u); c.closePath(); c.fill(); c.stroke(); }
+        c.fillStyle = '#3A2F78'; c.fillRect(x - 3 * u, y - 18 * u, 6 * u, 10 * u); K.lantern(c, x, y - 76 * u, .5 * u, true, t);
+      }
+      else if (k === 'shrine') { c.save(); const sg = c.createRadialGradient(x, y - 40 * u, 4, x, y - 40 * u, 70 * u); sg.addColorStop(0, `rgba(255,226,122,${.35 + Math.sin(t * 2) * .1})`); sg.addColorStop(1, 'rgba(255,226,122,0)'); c.fillStyle = sg; c.beginPath(); c.arc(x, y - 40 * u, 70 * u, 0, TAU); c.fill(); c.restore(); pagoda(c, x, y, .5 * u, '#C8384A'); }
+    }]);
+    hits.push({k, x, y:y - 20 * u, r:40 * u});
+  }
+  items.sort((a, b) => a[0] - b[0]).forEach(([, f]) => f());
   /* companions playing near the garden */
-  if (st.comps && st.comps.length) st.comps.slice(0, 4).forEach((cp, i) => K.spirit(c, cp.kind, cp.stage, VPOS.garden[0] * W + (i - .5) * 30 * u + Math.sin(t * .8 + i) * 10 * u, VPOS.garden[1] * H + 22 * u, .22 * u, t + i, {glow:false, face:Math.sin(t * .8 + i) > 0 ? 1 : -1}));
+  if (st.comps && st.comps.length) st.comps.slice(0, 4).forEach((cp, i) => K.spirit(c, cp.kind, cp.stage, at('garden')[0] + (i - .5) * 30 * u + Math.sin(t * .8 + i) * 10 * u, at('garden')[1] + 22 * u, .22 * u, t + i, {glow:false, face:Math.sin(t * .8 + i) > 0 ? 1 : -1}));
   K.petals(c, W, H, t, 14);
   return hits;
 };
@@ -1179,6 +1215,7 @@ function drawIsleStatic(c, k, r, o) {
   c.save(); tracePath(c, top, 0, 0); c.strokeStyle = LINE; c.lineWidth = Math.max(1.5, r * .013); c.stroke();
   c.beginPath(); top.forEach(([x, y], i) => { if (y > 0) return; i ? c.lineTo(x, y + r * .012) : c.moveTo(x, y + r * .012); }); c.strokeStyle = S.rim; c.globalAlpha = .55; c.lineWidth = Math.max(1.5, r * .016); c.stroke(); c.restore();
   if (k === 2) { c.save(); c.strokeStyle = '#FF6A2A'; c.shadowColor = '#FF6A2A'; c.shadowBlur = r * .05; c.lineWidth = Math.max(1, r * .008); for (const [x0, y0] of [[-.5, .05], [.15, -.05], [.45, .22], [-.15, .3]]) { c.beginPath(); c.moveTo(x0 * r, y0 * r); c.lineTo(x0 * r + r * .06, y0 * r + r * .03); c.lineTo(x0 * r + r * .1, y0 * r + r * .01); c.lineTo(x0 * r + r * .16, y0 * r + r * .04); c.stroke(); } c.restore(); }
+  if (o.bare) return;
   /* the winding path through the five stops (big island only) */
   const P = MAP_NODES.map(([x, y]) => [x * r, y * r]);
   const pathLine = () => { const Q = [[P[0][0] - r * .26, P[0][1] + r * .14], ...P]; c.beginPath(); c.moveTo(Q[0][0], Q[0][1]); for (let i = 0; i < Q.length - 1; i++) { const p0 = Q[Math.max(0, i - 1)], p1 = Q[i], p2 = Q[i + 1], p3 = Q[Math.min(Q.length - 1, i + 2)]; c.bezierCurveTo(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]); } };
@@ -1212,9 +1249,9 @@ function drawIsleStatic(c, k, r, o) {
   items.sort((a, b) => a[0] - b[0]).forEach(([, f]) => f());
 }
 function isleCached(k, r, o) {
-  const dpr = o.dpr, key = `${k}|${Math.round(r)}|${dpr}|${o.small ? 1 : 0}|${Math.round((o.heal || 0) * 10)}|${o.locked ? 1 : 0}`;
+  const dpr = o.dpr, key = `${k}|${Math.round(r)}|${dpr}|${o.small ? 1 : o.bare ? 2 : 0}|${Math.round((o.heal || 0) * 10)}|${o.locked ? 1 : 0}`;
   if (mapCache[key]) return mapCache[key];
-  for (const kk of Object.keys(mapCache)) if (kk.startsWith(`${k}|`) && kk.split('|')[3] === (o.small ? '1' : '0')) delete mapCache[kk];
+  for (const kk of Object.keys(mapCache)) if (kk.startsWith(`${k}|`) && kk.split('|')[3] === String(o.small ? 1 : o.bare ? 2 : 0)) delete mapCache[kk];
   const w = r * 2.5, h = r * 2.4, cv = document.createElement('canvas'); cv.width = Math.ceil(w * dpr); cv.height = Math.ceil(h * dpr);
   const c = cv.getContext('2d'); c.scale(dpr, dpr); c.translate(w / 2, h * .38);
   drawIsleStatic(c, k, r, o);
@@ -1228,7 +1265,7 @@ function isleCached(k, r, o) {
   return (mapCache[key] = {cv, w, h, ox:w / 2, oy:h * .38});
 }
 /* live, animated bits on top of the cached island */
-function isleLive(c, k, x, y, r, t, small) {
+function isleLive(c, k, x, y, r, t, small, noProps) {
   const S = MAP_STYLE[k], th = r * .13;
   /* hanging crystals */
   c.save(); c.shadowColor = S.crystal; c.shadowBlur = r * (.06 + .02 * Math.sin(t * 2 + k));
@@ -1244,6 +1281,7 @@ function isleLive(c, k, x, y, r, t, small) {
   for (let i = 0; i < 4; i++) { const q = (t * .9 + i / 4) % 1, yy = fy + q * fh * .8; c.globalAlpha = (1 - q) * .8; c.beginPath(); c.moveTo(fx - fw * .5, yy); c.lineTo(fx - fw * .5, yy + r * .05); c.moveTo(fx + fw * .4, yy + r * .03); c.lineTo(fx + fw * .4, yy + r * .07); c.stroke(); }
   c.restore();
   c.save(); c.fillStyle = S.mist; for (let i = 0; i < 4; i++) { const q = (t * .3 + i / 4) % 1; c.globalAlpha = .5 * (1 - q); c.beginPath(); c.arc(fx + Math.sin(i * 2) * r * .05, fy - r * .01 + Math.sin(t + i) * 2, r * (.025 + q * .04), 0, TAU); c.fill(); } c.restore();
+  if (noProps) return;
   if (k === 1) for (let i = 0; i < 4; i++) jellyDot(c, x + [-.7, -.2, .3, .85][i] * r, y - r * (.5 + .08 * i) + Math.sin(t * 1.3 + i) * r * .03, r * .035, i % 2 ? '#FF8FD8' : '#7FF0FF', t + i);
   if (k === 2) { const vx = x + .3 * r, vy = y - .16 * r - r * .58; c.save(); c.shadowColor = '#FF6A2A'; c.shadowBlur = r * .08; c.fillStyle = '#FF7A3A'; c.beginPath(); c.ellipse(vx, vy, r * .06, r * .018, 0, 0, TAU); c.fill(); c.restore(); for (let i = 0; i < 3; i++) { const q = (t * .15 + i / 3) % 1; c.fillStyle = `rgba(70,40,60,${.5 * (1 - q)})`; c.beginPath(); c.arc(vx + q * r * .15, vy - q * r * .4, r * (.03 + q * .07), 0, TAU); c.fill(); } }
   if (k === 0) { c.save(); for (let i = 0; i < 3; i++) K.lantern(c, x + [-.47, .15, .47][i] * r, y + [.06, -.02, .1][i] * r, .22 * r / 190, true, t + i); c.restore(); }
