@@ -212,7 +212,7 @@ S3.create = function (o) {
   const blob = () => { const m = new T3.Mesh(blobGeo, blobMat); m.rotation.x = -Math.PI / 2; scene.add(m); return m; };
   const heroB = bill(256, 256, 1.07, 1.07, 10 / 256), heroShadow = blob();
   const compB = bill(256, 256, 1.08, 1.08, .5);
-  const foes = W.foes.map(f => { const F = PUM.SKY.FOES[f.kind] || {el:'blossom'}; const big = F.big, k = big ? .55 : .42; const b = bill(320, 320, 320 / .62 * k * U, 320 / .62 * k * U, .47); b.sp.position.set(f.x * U, -(f.y - 80) * U, 0); return {f, b, el:F.el, look:F.look, big, sh:blob()}; });
+  const foes = W.foes.map(f => { const F = PUM.SKY.FOES[f.kind] || {el:'blossom'}; const big = F.big, k = big ? .55 : .42; const b = bill(320, 320, 320 / .62 * k * U, 320 / .62 * k * U, .47); b.sp.position.set(f.x * U, -(f.y - 80) * U, 0); return {f, b, F, el:F.el, look:F.look, big, sh:blob()}; });
   const chests = W.chests.map(ch => { const b = bill(128, 128, .64, .64, 8 / 128); b.sp.position.set(ch.x * U, -ch.y * U, 0); return {ch, b, last:null}; });
   const gates = W.gates.map(gt => { const b = bill(256, 256, 1.6, 1.6, 6 / 256); b.sp.position.set(gt.x * U, -gt.y * U, -.05); return {gt, b}; });
   const lanterns = W.lanterns.map(l => { const b = bill(128, 256, .64, 1.28, 6 / 256); b.sp.position.set(l.x * U, -l.y * U, -.1); const gl = glow(world, [l.x * U, -l.y * U + .86, 0], 1.6, TH.lit); gl.visible = false; return {l, b, gl}; });
@@ -244,7 +244,7 @@ S3.create = function (o) {
     for (const fo of foes) {
       fo.b.sp.visible = !fo.f.done; fo.sh.visible = !fo.f.done;
       if (fo.f.done || !near(fo.f.x)) continue;
-      if (frame % 2 === 0) draw(fo.b, c => K.shadow(c, fo.el, 160, 170, .62, t + fo.f.x, {face:-1, big:fo.big, seed:Math.round(fo.f.x), look:fo.look}));
+      if (frame % 2 === 0) draw(fo.b, c => K.foe(c, fo.F, 160, 170, .62, t + fo.f.x, {face:-1, seed:Math.round(fo.f.x), shield:fo.F.type === 'knight' ? 0 : -1}));
       fo.sh.position.set(fo.f.x * U, -fo.f.y * U + .02, .05); fo.sh.scale.setScalar(fo.big ? 1.6 : 1.3);
     }
     for (const c0 of chests) { if (!near(c0.ch.x)) continue; if (c0.last !== c0.ch.open || (!c0.ch.open && frame % 3 === 0)) { c0.last = c0.ch.open; draw(c0.b, c => K.chest(c, 64, 120, 2, c0.ch.open, t)); } }

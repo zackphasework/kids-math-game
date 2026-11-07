@@ -567,6 +567,18 @@ html.skyui .kicker{color:#9FD9FF}
 .sq-crit i{display:block; width:100%; height:6px; border-radius:3px; background:linear-gradient(90deg, #FFE27A, #FF6FB0); animation:crit linear forwards; transform-origin:left}
 .sq-crit.block i{background:linear-gradient(90deg, #7FF0FF, #FF6FB0)}
 .sq-crit span{font-size:12px; color:#FFE27A; font-weight:700}
+/* Sky Quest: enemy types */
+.sq-crit.block.fast i{height:8px; background:linear-gradient(90deg, #FF6FB0, #FF3D6A)}
+.sq-crit.block.slow i{background:linear-gradient(90deg, #FFE27A, #FFB347)}
+.sq-card.meet{gap:6px; text-align:center}
+.sq-foeimg{width:120px; height:120px; object-fit:contain; filter:drop-shadow(0 0 12px rgba(127,240,255,.35))}
+.sq-meet-name{font:900 20px "Zen Kaku Gothic New", Lexend, sans-serif; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center}
+.sq-meet-how{margin:0; max-width:420px; color:#D9E4FF; font-size:16px; line-height:1.35}
+.sq-tag{font:800 12px Lexend, sans-serif; letter-spacing:.06em; text-transform:uppercase; padding:2px 10px; border-radius:999px; border:1.5px solid currentColor}
+.sq-tag.t-imp{color:#7FF0FF} .sq-tag.t-golem{color:#FFB347} .sq-tag.t-knight{color:#9FD9FF} .sq-tag.t-trick{color:#FF9AC8}
+.sq-go{min-width:180px; min-height:58px; border:1.5px solid rgba(255,255,255,.45); border-radius:16px; background:linear-gradient(180deg, #3BE0C6, #1F9BD8); color:#06202A; font:900 20px "Zen Kaku Gothic New", Lexend, sans-serif; cursor:pointer; touch-action:manipulation}
+.sq-tier.weak{opacity:.6; border-style:dashed}
+.sq-tier.weak small{color:#FFB347}
 @keyframes crit{from{transform:scaleX(1)} to{transform:scaleX(0)}}
 .sq-leave{border:none; background:none; color:#B9C8FF; text-decoration:underline; font:700 14px Lexend, sans-serif; cursor:pointer; padding:2px 8px}
 #game.sky .refuel{border:1.5px solid rgba(143,230,255,.7); background:rgba(16,20,64,.95); color:#F3F6FF; box-shadow:0 0 30px rgba(127,240,255,.3)}

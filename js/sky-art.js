@@ -1032,6 +1032,205 @@ const BOSS_ICON = (c, k, x, y, r, locked) => {
 };
 K.bossIcon = BOSS_ICON;
 
+/* ======================================================================
+   Enemy types beyond the shadows: fast imps, heavy golems, shield knights and masked tricksters.
+   Each is centred on (x, y) like the shadows (about 220 wide at k = 1); golems, knights and foxes stand
+   with their feet near y + 140. F: {type, el, isle}. o: {face, alpha, flash, hit, shield (0..1 cracked, -1 none), atk}
+   ====================================================================== */
+const EM = {blossom:{a:'#FF9AC8', b:'#C2557F', c:'#FFE0EE'}, tide:{a:'#6FD8FF', b:'#2F7BC8', c:'#DFF8FF'}, ember:{a:'#FFA04A', b:'#C2452E', c:'#FFE8C8'}};
+function foeFrame(c, x, y, k, t, o, fn) {
+  c.save(); c.translate(x, y); c.scale(k * (o.face || 1), k);
+  if (o.hit) c.translate(Math.sin(t * 60) * 5, 0);
+  c.globalAlpha = o.alpha != null ? o.alpha : 1;
+  fn();
+  if (o.flash) { c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(0, 0, 10, 0, 0, 130); g.addColorStop(0, `rgba(255,255,255,${.7 * o.flash})`); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, 130, 0, TAU); c.fill(); }
+  c.restore();
+}
+const inkW = (c, w, k) => { c.strokeStyle = LINE; c.lineWidth = w / Math.max(.3, k); c.lineJoin = 'round'; c.lineCap = 'round'; };
+function glowEyes(c, P, pts, rx, ry, t, seed2) {
+  const blink = Math.sin(t * 1.4 + seed2) > .97 ? .2 : 1;
+  c.save(); c.shadowColor = P.eye; c.shadowBlur = 16; c.fillStyle = P.eye;
+  for (const [ex, ey] of pts) { c.beginPath(); c.ellipse(ex, ey, rx, ry * blink, 0, 0, TAU); c.fill(); }
+  c.shadowBlur = 0; c.fillStyle = '#FFFFFF'; for (const [ex, ey] of pts) { c.beginPath(); c.arc(ex - rx * .3, ey - ry * .3 * blink, Math.max(1.5, rx * .28), 0, TAU); c.fill(); }
+  c.restore();
+}
+
+/* fast imp: a little winged shadow that darts about. Petal wings on Blossom Isle, fin wings in the grotto, flame wings on the peak. */
+K.imp = function (c, F, x, y, k, t, o = {}) {
+  const P = SH[F.el] || SH.blossom, M = EM[F.el] || EM.blossom, isle = F.isle || 0, flap = Math.sin(t * (o.atk ? 22 : 14)), bob = Math.sin(t * 5) * 8;
+  foeFrame(c, x, y + bob * k, k, t, o, () => {
+    if (o.atk) { c.strokeStyle = `rgba(255,255,255,.35)`; c.lineWidth = 4; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(60 + i * 8, -30 + i * 20); c.lineTo(130 + i * 10, -30 + i * 20); c.stroke(); } }
+    /* wings */
+    for (const f of [-1, 1]) {
+      c.save(); c.scale(f, 1); c.translate(30, -10); c.rotate(-.3 + flap * .45);
+      c.beginPath();
+      if (isle === 1) { c.moveTo(0, 0); c.quadraticCurveTo(40, -60, 96, -40); c.lineTo(76, -18); c.lineTo(96, 0); c.lineTo(72, 10); c.lineTo(84, 30); c.quadraticCurveTo(30, 20, 0, 14); }
+      else if (isle === 2) { c.moveTo(0, 0); c.quadraticCurveTo(30, -70, 70, -86); c.quadraticCurveTo(66, -50, 98, -54); c.quadraticCurveTo(74, -24, 100, -12); c.quadraticCurveTo(60, 4, 76, 26); c.quadraticCurveTo(30, 16, 0, 14); }
+      else { c.moveTo(0, 0); c.quadraticCurveTo(20, -66, 60, -70); c.quadraticCurveTo(70, -40, 98, -36); c.quadraticCurveTo(80, -10, 96, 8); c.quadraticCurveTo(50, 6, 64, 30); c.quadraticCurveTo(26, 18, 0, 14); }
+      c.closePath();
+      const g = c.createLinearGradient(0, 0, 100, -40); g.addColorStop(0, P.core); g.addColorStop(1, M.b); c.fillStyle = g; c.fill(); inkW(c, 2.4, k); c.stroke();
+      c.strokeStyle = M.a; c.lineWidth = 2; c.globalAlpha *= .8; c.beginPath(); c.moveTo(4, 6); c.lineTo(80, -40); c.moveTo(4, 8); c.lineTo(70, 18); c.stroke();
+      if (isle === 2) { c.globalAlpha = 1; flameShape(c, 70, -84, .32, t, ['#FF6A2A', '#FFB347', '#FFF1C2']); }
+      c.restore();
+    }
+    /* tail */
+    c.strokeStyle = LINE; c.lineWidth = 7; c.beginPath(); c.moveTo(-10, 36); c.quadraticCurveTo(-30, 80 + flap * 6, -60, 70); c.stroke(); c.strokeStyle = P.core; c.lineWidth = 4; c.stroke();
+    c.fillStyle = M.a; c.beginPath(); c.moveTo(-60, 70); c.lineTo(-76, 58); c.lineTo(-74, 80); c.closePath(); c.fill();
+    /* body */
+    c.save(); c.shadowColor = P.glow; c.shadowBlur = 22;
+    const g = c.createRadialGradient(-10, -14, 6, 0, 0, 52); g.addColorStop(0, P.core); g.addColorStop(1, P.edge); c.fillStyle = g; c.beginPath(); c.ellipse(0, 0, 46, 42, 0, 0, TAU); c.fill(); c.restore();
+    inkW(c, 2.6, k); c.beginPath(); c.ellipse(0, 0, 46, 42, 0, 0, TAU); c.stroke();
+    /* horns or ears */
+    for (const f of [-1, 1]) { c.beginPath(); c.moveTo(f * 16, -36); c.quadraticCurveTo(f * 30, -70, f * 40, -66); c.quadraticCurveTo(f * 34, -50, f * 32, -32); c.closePath(); c.fillStyle = M.b; c.fill(); inkW(c, 2, k); c.stroke(); }
+    if (isle === 0) blossom(c, 0, -40, 11, M.a, '#FFE27A');
+    if (isle === 1) { c.strokeStyle = 'rgba(200,255,250,.7)'; c.lineWidth = 2; for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(-40 + i * 12, -60 - ((t * 30 + i * 16) % 40), 4 + i, 0, TAU); c.stroke(); } }
+    glowEyes(c, P, [[-16, -6], [16, -6]], 11, 9, t, F.isle || 0);
+    c.strokeStyle = P.eye; c.lineWidth = 3; c.beginPath(); c.moveTo(-14, 18); c.quadraticCurveTo(0, 26, 14, 18); c.stroke();
+    c.fillStyle = '#FFFFFF'; c.beginPath(); c.moveTo(6, 21); c.lineTo(10, 30); c.lineTo(13, 20); c.closePath(); c.fill();
+  });
+};
+
+/* heavy golem: a big block of stone. Moss and blossoms on Blossom Isle, a coral crab in the grotto, cracked magma on the peak. */
+K.golem = function (c, F, x, y, k, t, o = {}) {
+  const P = SH[F.el] || SH.blossom, M = EM[F.el] || EM.blossom, isle = F.isle || 0;
+  const rock = isle === 1 ? '#B8503E' : isle === 2 ? '#3A1E2A' : '#6A6A8A', rockS = isle === 1 ? '#7E2E2A' : isle === 2 ? '#1E0C14' : '#45455E', rockH = isle === 1 ? '#E07A5A' : isle === 2 ? '#5A3440' : '#8E8EAE';
+  const breathe = Math.sin(t * 1.6) * 2, sw = o.atk ? Math.sin(t * 10) * .3 : Math.sin(t * 1.2) * .06;
+  foeFrame(c, x, y, k, t, o, () => {
+    const blockP = (bx, by, bw, bh, r) => { E.rr(c, bx, by, bw, bh, r); c.fillStyle = rock; c.fill(); c.save(); c.clip(); c.fillStyle = rockS; c.fillRect(bx + bw * .55, by, bw, bh); c.fillStyle = rockH; c.fillRect(bx, by, bw, 6); c.restore(); inkW(c, 3, k); E.rr(c, bx, by, bw, bh, r); c.stroke(); };
+    /* aura */
+    const ag = c.createRadialGradient(0, 20, 10, 0, 20, 150); ag.addColorStop(0, P.glow + '44'); ag.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = ag; c.beginPath(); c.arc(0, 20, 150, 0, TAU); c.fill();
+    /* legs */
+    blockP(-56, 82, 40, 58, 10); blockP(16, 82, 40, 58, 10);
+    /* arms (back one first) */
+    const arm = (side, front) => {
+      c.save(); c.translate(side * 78, -36); c.rotate(side * (.12 + sw));
+      blockP(-20, -6, 40, 70, 12);
+      if (isle === 1) { /* crab claw */ c.save(); c.translate(0, 76); c.rotate(side * -.2); c.beginPath(); c.moveTo(-24, -8); c.quadraticCurveTo(-34, 30, -6, 46); c.lineTo(-2, 18); c.lineTo(4, 46); c.quadraticCurveTo(34, 30, 24, -8); c.closePath(); c.fillStyle = front ? rockH : rock; c.fill(); inkW(c, 3, k); c.stroke(); c.restore(); }
+      else blockP(-26, 60, 52, 40, 14);
+      c.restore();
+    };
+    arm(-1, false);
+    /* body */
+    c.beginPath(); c.moveTo(-74, -64 + breathe); c.lineTo(74, -64 + breathe); c.lineTo(62, 92); c.lineTo(-62, 92); c.closePath(); c.fillStyle = rock; c.fill();
+    c.save(); c.clip(); c.fillStyle = rockS; c.beginPath(); c.moveTo(10, -70); c.lineTo(80, -70); c.lineTo(70, 100); c.lineTo(24, 100); c.closePath(); c.fill(); c.restore();
+    inkW(c, 3.2, k); c.beginPath(); c.moveTo(-74, -64 + breathe); c.lineTo(74, -64 + breathe); c.lineTo(62, 92); c.lineTo(-62, 92); c.closePath(); c.stroke();
+    /* stone seams */
+    c.strokeStyle = 'rgba(20,14,30,.45)'; c.lineWidth = 3; c.beginPath(); c.moveTo(-60, 0); c.lineTo(-10, 6); c.lineTo(20, -10); c.lineTo(66, -2); c.moveTo(-40, 50); c.lineTo(30, 46); c.stroke();
+    if (isle === 2) { c.save(); c.shadowColor = '#FF6A2A'; c.shadowBlur = 14; c.strokeStyle = '#FF8A3D'; c.lineWidth = 4; for (const [a, b2] of [[-50, -40], [30, 20], [-20, 60], [50, -50]]) { c.beginPath(); c.moveTo(a, b2); c.lineTo(a + 14, b2 + 12); c.lineTo(a + 6, b2 + 24); c.lineTo(a + 18, b2 + 34); c.stroke(); } c.restore(); }
+    if (isle === 0) { c.fillStyle = '#4FBF9A'; c.beginPath(); c.moveTo(-74, -64 + breathe); c.quadraticCurveTo(-40, -48, -10, -64 + breathe); c.quadraticCurveTo(20, -50, 74, -64 + breathe); c.lineTo(74, -56); c.quadraticCurveTo(0, -38, -74, -54); c.closePath(); c.fill(); for (const bx of [-50, -6, 40]) blossom(c, bx, -58, 8, M.a, '#FFE27A'); }
+    if (isle === 1) for (const f of [-1, 1]) for (let i = 0; i < 3; i++) { c.fillStyle = '#FF7FA8'; c.beginPath(); c.moveTo(f * (50 + i * 10), -64); c.lineTo(f * (56 + i * 10), -92 - i * 6); c.lineTo(f * (62 + i * 10), -64); c.closePath(); c.fill(); }
+    /* core gem */
+    c.save(); c.shadowColor = M.a; c.shadowBlur = 22; c.fillStyle = M.a; c.beginPath(); c.moveTo(0, 6); c.lineTo(16, 26); c.lineTo(0, 46); c.lineTo(-16, 26); c.closePath(); c.fill(); c.restore(); inkW(c, 2, k); c.beginPath(); c.moveTo(0, 6); c.lineTo(16, 26); c.lineTo(0, 46); c.lineTo(-16, 26); c.closePath(); c.stroke();
+    /* head */
+    blockP(-40, -124 + breathe, 80, 62, 14);
+    c.fillStyle = 'rgba(10,6,20,.8)'; E.rr(c, -30, -102 + breathe, 60, 18, 8); c.fill();
+    glowEyes(c, P, [[-14, -93 + breathe], [14, -93 + breathe]], 8, 5, t, 3);
+    arm(1, true);
+  });
+};
+
+/* shield knight: armour, a plume and a big round shield held in front. A shell shield in the grotto.
+   o.shield: 0..1 how cracked the shield is; -1 = shield broken (a small one hangs on its back). */
+K.knight = function (c, F, x, y, k, t, o = {}) {
+  const P = SH[F.el] || SH.blossom, M = EM[F.el] || EM.blossom, isle = F.isle || 0;
+  const armor = isle === 2 ? '#3A2E36' : '#4A5478', armorS = isle === 2 ? '#1E161C' : '#2E3452', armorH = isle === 2 ? '#6A5A60' : '#8A96C0';
+  const bob = Math.sin(t * 2) * 3, sh = o.shield == null ? 0 : o.shield;
+  foeFrame(c, x, y + bob * k, k, t, o, () => {
+    const ag = c.createRadialGradient(0, 0, 10, 0, 0, 140); ag.addColorStop(0, P.glow + '40'); ag.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = ag; c.beginPath(); c.arc(0, 0, 140, 0, TAU); c.fill();
+    const plate = (draw, col) => { c.beginPath(); draw(); c.fillStyle = col; c.fill(); inkW(c, 2.8, k); c.stroke(); };
+    /* cape */
+    plate(() => { c.moveTo(-40, -50); c.quadraticCurveTo(-90, 40 + Math.sin(t * 3) * 6, -70, 120); c.lineTo(20, 110); c.lineTo(20, -50); c.closePath(); }, P.core);
+    /* legs */
+    plate(() => { c.rect(-36, 60, 26, 74); }, armorS); plate(() => { c.rect(8, 60, 26, 74); }, armor);
+    plate(() => { E.rr(c, -42, 126, 36, 16, 6); }, armorS); plate(() => { E.rr(c, 4, 126, 36, 16, 6); }, armorS);
+    /* body */
+    plate(() => { c.moveTo(-46, -54); c.lineTo(46, -54); c.lineTo(40, 66); c.lineTo(-40, 66); c.closePath(); }, armor);
+    c.fillStyle = armorH; c.fillRect(-38, -48, 76, 7);
+    c.fillStyle = M.a; c.beginPath(); c.moveTo(0, -30); c.lineTo(12, -10); c.lineTo(0, 10); c.lineTo(-12, -10); c.closePath(); c.fill();
+    plate(() => { c.ellipse(-48, -48, 22, 16, 0, 0, TAU); }, armorH); plate(() => { c.ellipse(48, -48, 22, 16, 0, 0, TAU); }, armorH);
+    /* sword arm (back) */
+    c.save(); c.translate(-50, -30); c.rotate(o.atk ? -1 + Math.sin(t * 12) * .6 : .2);
+    plate(() => { c.rect(-10, 0, 20, 54); }, armor);
+    c.strokeStyle = LINE; c.lineWidth = 9; c.beginPath(); c.moveTo(0, 54); c.lineTo(0, 120); c.stroke(); c.strokeStyle = '#DDE6FF'; c.lineWidth = 5; c.stroke();
+    c.fillStyle = M.b; c.fillRect(-14, 50, 28, 8);
+    c.restore();
+    /* helmet */
+    plate(() => { c.moveTo(-34, -60); c.quadraticCurveTo(-36, -118, 0, -120); c.quadraticCurveTo(36, -118, 34, -60); c.closePath(); }, armor);
+    c.fillStyle = 'rgba(8,6,18,.9)'; E.rr(c, -26, -96, 52, 14, 6); c.fill();
+    glowEyes(c, P, [[-10, -89], [12, -89]], 7, 4, t, 5);
+    /* plume */
+    c.save(); c.shadowColor = M.a; c.shadowBlur = 10; c.fillStyle = M.a; c.beginPath(); c.moveTo(-4, -118); c.quadraticCurveTo(-50, -150 + Math.sin(t * 4) * 6, -70, -110); c.quadraticCurveTo(-40, -124, -10, -110); c.closePath(); c.fill(); c.restore(); inkW(c, 2, k); c.stroke();
+    /* shield */
+    if (sh >= 0) {
+      c.save(); c.translate(44, 14);
+      if (isle === 1 && F.el === 'tide') {
+        plate(() => { c.ellipse(0, 0, 54, 66, 0, 0, TAU); }, '#3F8F6A');
+        c.save(); c.beginPath(); c.ellipse(0, 0, 54, 66, 0, 0, TAU); c.clip(); c.strokeStyle = '#2A6A50'; c.lineWidth = 3; c.fillStyle = '#5AB088';
+        for (const [hx, hy, r] of [[0, -30, 20], [0, 18, 20], [-34, -6, 16], [34, -6, 16], [-30, 36, 14], [30, 36, 14]]) { c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + Math.PI / 6; c.lineTo(hx + Math.cos(a) * r, hy + Math.sin(a) * r); } c.closePath(); c.fill(); c.stroke(); }
+        c.restore(); inkW(c, 3, k); c.beginPath(); c.ellipse(0, 0, 54, 66, 0, 0, TAU); c.stroke();
+      } else {
+        plate(() => { c.arc(0, 0, 60, 0, TAU); }, armorH);
+        plate(() => { c.arc(0, 0, 48, 0, TAU); }, M.b);
+        c.save(); c.shadowColor = M.a; c.shadowBlur = 14; c.fillStyle = M.c; if (F.el === 'blossom') blossom(c, 0, 0, 26, M.a, '#FFE27A'); else if (F.el === 'ember') flameShape(c, 0, 22, .8, t, ['#FF6A2A', '#FFB347', '#FFF1C2']); else { c.beginPath(); c.arc(0, 0, 18, 0, TAU); c.fill(); } c.restore();
+      }
+      c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(160,240,255,.5)'; c.lineWidth = 3; c.beginPath(); c.arc(0, 0, 64 + Math.sin(t * 4) * 2, -1.2, .4); c.stroke(); c.restore();
+      /* cracks as the shield breaks */
+      if (sh > 0) { c.strokeStyle = '#FFFFFF'; c.lineWidth = 3; const n = Math.ceil(sh * 3); for (let i = 0; i < n; i++) { c.beginPath(); c.moveTo(0, 0); for (let j = 1; j < 5; j++) c.lineTo(Math.cos(i * 2.2 + j * .5) * 14 * j, Math.sin(i * 2.2 + j * .4) * 14 * j); c.stroke(); } }
+      c.restore();
+    } else { c.save(); c.translate(-30, -10); c.rotate(-.4); plate(() => { c.arc(0, 0, 26, 0, TAU); }, armorH); c.strokeStyle = '#FFFFFF'; c.lineWidth = 2; c.beginPath(); c.moveTo(-18, -8); c.lineTo(4, 2); c.lineTo(16, -12); c.stroke(); c.restore(); }
+  });
+};
+
+/* trickster: a masked fox whose fur takes the colour of its element, which keeps changing */
+K.trick = function (c, F, x, y, k, t, o = {}) {
+  const P = SH[F.el] || SH.blossom, M = EM[F.el] || EM.blossom, bob = Math.sin(t * 2.6) * 6;
+  foeFrame(c, x, y + bob * k, k, t, o, () => {
+    const ag = c.createRadialGradient(0, 10, 10, 0, 10, 140); ag.addColorStop(0, M.a + '66'); ag.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = ag; c.beginPath(); c.arc(0, 10, 140, 0, TAU); c.fill();
+    /* tails */
+    for (let i = 2; i >= 0; i--) {
+      c.save(); c.translate(-30, 60); c.rotate(-.6 - i * .45 + Math.sin(t * 3 + i) * .12);
+      c.beginPath(); c.moveTo(0, -12); c.bezierCurveTo(-40, -40, -90, -20, -110, -46); c.bezierCurveTo(-86, 4, -40, 20, 0, 12); c.closePath();
+      const g = c.createLinearGradient(0, 0, -110, -40); g.addColorStop(0, P.core); g.addColorStop(.6, M.b); g.addColorStop(1, M.a); c.fillStyle = g; c.fill(); inkW(c, 2.4, k); c.stroke();
+      c.restore();
+    }
+    /* body sitting */
+    const body = () => { c.beginPath(); c.moveTo(-40, 120); c.quadraticCurveTo(-56, 40, -24, 0); c.lineTo(24, 0); c.quadraticCurveTo(56, 40, 40, 120); c.closePath(); };
+    body(); const bg = c.createLinearGradient(0, 0, 0, 120); bg.addColorStop(0, M.b); bg.addColorStop(1, P.core); c.fillStyle = bg; c.fill(); inkW(c, 2.8, k); body(); c.stroke();
+    c.fillStyle = M.c; c.beginPath(); c.ellipse(0, 50, 18, 34, 0, 0, TAU); c.fill();
+    for (const f of [-1, 1]) { c.fillStyle = P.core; c.beginPath(); c.ellipse(f * 22, 126, 16, 10, 0, 0, TAU); c.fill(); inkW(c, 2.4, k); c.stroke(); }
+    /* head */
+    c.save(); c.translate(0, -34);
+    for (const f of [-1, 1]) { c.beginPath(); c.moveTo(f * 14, -26); c.lineTo(f * 42, -84); c.lineTo(f * 46, -20); c.closePath(); c.fillStyle = M.b; c.fill(); inkW(c, 2.4, k); c.stroke(); c.beginPath(); c.moveTo(f * 22, -28); c.lineTo(f * 40, -66); c.lineTo(f * 40, -26); c.closePath(); c.fillStyle = M.a; c.fill(); }
+    c.beginPath(); c.ellipse(0, 0, 48, 40, 0, 0, TAU); c.fillStyle = M.b; c.fill(); inkW(c, 2.8, k); c.stroke();
+    /* the white kitsune mask */
+    c.beginPath(); c.moveTo(-40, -14); c.quadraticCurveTo(0, -46, 40, -14); c.quadraticCurveTo(36, 22, 0, 40); c.quadraticCurveTo(-36, 22, -40, -14); c.closePath(); c.fillStyle = '#FFF8F2'; c.fill(); inkW(c, 2.4, k); c.stroke();
+    c.strokeStyle = '#E2462E'; c.lineWidth = 3.5; for (const f of [-1, 1]) { c.beginPath(); c.moveTo(f * 8, -26); c.quadraticCurveTo(f * 22, -32, f * 32, -22); c.stroke(); c.beginPath(); c.moveTo(f * 28, 6); c.lineTo(f * 18, 12); c.stroke(); }
+    c.fillStyle = '#E2462E'; c.beginPath(); c.arc(0, -18, 4, 0, TAU); c.fill();
+    c.save(); c.shadowColor = M.a; c.shadowBlur = 14; c.fillStyle = M.a;
+    for (const f of [-1, 1]) { c.beginPath(); c.moveTo(f * 8, -6); c.quadraticCurveTo(f * 20, -14, f * 30, -4); c.quadraticCurveTo(f * 20, 2, f * 8, -6); c.fill(); }
+    c.restore();
+    c.fillStyle = LINE; c.beginPath(); c.ellipse(0, 26, 5, 4, 0, 0, TAU); c.fill();
+    c.restore();
+    /* floating "?" sparks */
+    c.save(); c.fillStyle = M.a; c.font = '900 26px "Dela Gothic One", Lexend, sans-serif'; c.textAlign = 'center'; c.shadowColor = M.a; c.shadowBlur = 10;
+    for (let i = 0; i < 2; i++) { const a = t * 1.5 + i * Math.PI; c.globalAlpha = .7; c.fillText('?', Math.cos(a) * 90, -60 + Math.sin(a) * 20); }
+    c.restore();
+  });
+};
+K.foe = function (c, F, x, y, k, t, o = {}) {
+  if (F.type === 'imp') return K.imp(c, F, x, y, k, t, o);
+  if (F.type === 'golem') return K.golem(c, F, x, y, k, t, o);
+  if (F.type === 'knight') return K.knight(c, F, x, y, k, t, o);
+  if (F.type === 'trick') return K.trick(c, F, x, y, k, t, o);
+  K.shadow(c, F.el, x, y, k, t, Object.assign({big:F.big, look:F.look}, o));
+};
+/* a small picture of a foe, for the "new enemy" card */
+K.foeImg = (F, size = 140) => {
+  const key = 'foe' + F.type + F.el + (F.isle || 0) + size;
+  if (imgCache[key]) return imgCache[key];
+  try { const cv = document.createElement('canvas'); cv.width = cv.height = size; K.foe(cv.getContext('2d'), F, size / 2, size * .5 - (F.type === 'imp' ? 0 : size * .08), size / 330, 0, {face:-1, shield:F.type === 'knight' ? 0 : -1}); return (imgCache[key] = cv.toDataURL('image/png')); } catch (e) { return ''; }
+};
+
 /* ---------- battle backdrop ---------- */
 K.battleBg = function (c, W, H, t, o = {}) {
   const hz = H * .56, isle = o.isle || 0;
