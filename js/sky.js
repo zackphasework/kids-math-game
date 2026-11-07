@@ -19,6 +19,8 @@ S.weakTo = el => Object.keys(BEATS).find(k => BEATS[k] === el);
 S.mult = (att, def, mira) => att === 'storm' ? 1.3 : BEATS[att] === def ? (mira ? 2.3 : 2) : BEATS[def] === att ? .5 : 1;
 S.MOVES = {blossom:['Petal Slash', 'Blossom Bloom', 'Petal Arrow'], tide:['Tide Cut', 'Tide Wave', 'Tide Arrow'], ember:['Ember Strike', 'Ember Flare', 'Ember Arrow'], storm:['Storm Edge', 'Storm Call', 'Storm Arrow']};
 S.SPECIAL = ['SKY BLADE', 'STARFALL BLOOM', 'COMET ARROW'];
+/* the Sky shrine's special: every guardian you purified attacks with you, and you get a heart back */
+S.SPECIAL2 = 'GUARDIAN CALL';
 S.STYLE = ['Sword: every hit strikes twice', 'Staff: extra damage on weak spots', 'Bow: lucky critical hits'];
 S.HERO_NAMES = ['Kai', 'Mira', 'Juno'];
 /* Move strength: a harder question powers a stronger hit. d = how many math steps above the kid's level. */
@@ -55,7 +57,8 @@ S.stats = p => {
 /* ---------- spirits ---------- */
 S.stage = lv => lv >= 10 ? 3 : lv >= 5 ? 2 : 1;
 S.compName = (k, c) => (c && c.name) || K.SPIRITS[k].name[S.stage(c ? c.lv : 1) - 1];
-S.activeComp = p => { const k = p.sky.comps[p.sky.comp] ? p.sky.comp : Object.keys(p.sky.comps)[0]; const c = p.sky.comps[k] || {lv:1}; return {kind:k, lv:c.lv, stage:k === 'hanamori' ? 3 : S.stage(c.lv), el:K.SPIRITS[k].el, name:S.compName(k, c)}; };
+S.isGuardian = k => !!(K.SPIRITS[k] && K.SPIRITS[k].guardian);
+S.activeComp = p => { const k = p.sky.comps[p.sky.comp] ? p.sky.comp : Object.keys(p.sky.comps)[0] || 'petal'; const c = p.sky.comps[k] || {lv:1}; return {kind:k, lv:c.lv, stage:S.isGuardian(k) ? 3 : S.stage(c.lv), el:K.SPIRITS[k].el, name:S.compName(k, c)}; };
 
 /* ---------- Sky Village ---------- */
 S.BUILD = [
@@ -67,15 +70,46 @@ S.BUILD = [
   {k:'shrine', name:'Sky shrine', cost:0, guardians:2, what:'Unlocks your second special move. Purify 2 guardians to open it.'},
 ];
 
-/* ---------- quests: Blossom Isle ---------- */
+/* ---------- the three islands: five quests each, the fifth is the island's guardian ---------- */
+S.ISLANDS = [
+  {k:'blossom', name:'Blossom Isle', guardian:'hanamori', col:'#FF7FB5'},
+  {k:'tide', name:'Tide Grotto', guardian:'umikaze', col:'#46C8FF'},
+  {k:'ember', name:'Ember Peak', guardian:'homura', col:'#FF9A3D'},
+];
+S.isleOf = qi => clamp(Math.floor(qi / 5), 0, S.ISLANDS.length - 1);
+/* Guardians: boss battles in three phases. Each one joins your team and teaches a new move. */
+S.GUARDIANS = {
+  hanamori:{name:'Hanamori', title:'the Blossom Deer', el:'blossom', hp:240, isle:0, teach:'double', goal:'grove',
+    phases:[{name:'Tail Sweep', hits:[1.3]}, {name:'Petal Storm', hits:[1.2, 1.9]}, {name:'Antler Charge', hits:[.95]}]},
+  umikaze:{name:'Umikaze', title:'the Tide Dragon', el:'tide', hp:330, isle:1, teach:'dash', goal:'lair',
+    phases:[{name:'Tail Splash', hits:[1.2]}, {name:'Whirlpool', hits:[1.1, 1.8]}, {name:'Tidal Dive', hits:[.9, 1.5]}]},
+  homura:{name:'Homura', title:'the Flame Fox', el:'ember', hp:420, isle:2, teach:'glide', goal:'summit',
+    phases:[{name:'Fox Fire', hits:[1.1, 1.7]}, {name:'Ember Rain', hits:[1, 1.5, 2]}, {name:'Blazing Dash', hits:[.85, 1.4]}]},
+};
+S.MOVE_INFO = {double:{name:'Double jump', how:'Tap Jump again in the air'}, dash:{name:'Dash', how:'Tap Dash to zoom across long gaps'}, glide:{name:'Glide', how:'Hold Glide in the air to float down slowly'}};
+
+/* ---------- shadow foes ---------- */
 const FOES = {
   petal:{el:'blossom', name:'Petal Wisp', hp:70},
   puddle:{el:'tide', name:'Puddle Wisp', hp:70},
   cinder:{el:'ember', name:'Cinder Wisp', hp:74},
   thorn:{el:'blossom', name:'Thorn Shade', hp:110, big:true},
   surge:{el:'tide', name:'Surge Shade', hp:110, big:true},
+  /* Tide Grotto */
+  jelly:{el:'tide', name:'Jelly Wisp', hp:80, look:'jelly'},
+  coral:{el:'blossom', name:'Coral Wisp', hp:80, look:'coral'},
+  steam:{el:'ember', name:'Steam Wisp', hp:84, look:'steam'},
+  reef:{el:'blossom', name:'Reef Shade', hp:122, big:true, look:'coral'},
+  abyss:{el:'tide', name:'Abyss Shade', hp:128, big:true, look:'jelly'},
+  /* Ember Peak */
+  ash:{el:'ember', name:'Ash Wisp', hp:88, look:'ash'},
+  geyser:{el:'tide', name:'Geyser Wisp', hp:88, look:'steam'},
+  bramble:{el:'blossom', name:'Bramble Shade', hp:132, big:true, look:'thorn'},
+  magma:{el:'ember', name:'Magma Shade', hp:138, big:true, look:'magma'},
 };
 S.FOES = FOES;
+/* foes get tougher quest by quest */
+S.foeScale = qi => 1 + .15 * Math.min(qi, 4) + .08 * Math.max(0, qi - 4);
 S.QUESTS = [
   {name:'The Lost Cubs', rec:1, goal:'cage', story:'Shadow wisps have trapped the blossom cubs. Find them and set them free!', obj:'Free the cubs',
     foes:['petal'], route:[['flat', 360], ['foe', 'petal'], ['gap', 100], ['flat', 260], ['chest', 'snack'], ['up', 60], ['flat', 220], ['gap', 110], ['down', 60], ['flat', 260], ['foe', 'petal'], ['secret'], ['flat', 160], ['goal']]},
@@ -87,11 +121,39 @@ S.QUESTS = [
     foes:['puddle', 'cinder', 'surge'], route:[['flat', 300], ['foe', 'puddle'], ['gap', 110], ['flat', 160], ['hop', 2], ['foe', 'cinder'], ['chest', 'snack'], ['down', 60], ['gate'], ['flat', 200], ['up', 80], ['foe', 'surge'], ['secret'], ['goal']]},
   {name:'Hanamori', rec:5, goal:'grove', boss:true, story:'Hanamori, the Blossom Deer, has been taken over by shadow. Purify the guardian!', obj:'Reach the grove',
     foes:['hanamori'], route:[['flat', 380], ['chest', 'snack'], ['gap', 110], ['flat', 260], ['foe', 'petal'], ['flat', 120], ['goal']]},
+  /* ---- Tide Grotto: sea caves, tide pools and glowing jellyfish. 'secret' ledges need double jump;
+     a 'cliff' is a high ledge with a far-away secret island that needs dash or glide. ---- */
+  {name:'Pearl of the Grotto', rec:5, goal:'pearl', story:'Shadows hid the great pearl of the sea caves. Find the giant shell and wake the pearl!', obj:'Find the pearl',
+    foes:['jelly', 'coral'], route:[['flat', 340], ['foe', 'jelly'], ['gap', 120], ['flat', 240], ['chest', 'snack'], ['up', 70], ['flat', 200], ['hop', 2], ['foe', 'coral'], ['down', 70], ['flat', 220], ['gap', 130], ['flat', 160], ['secret'], ['foe', 'jelly'], ['flat', 200], ['goal']]},
+  {name:'Jelly Lights', rec:6, goal:'jellies', story:'The glowing jellyfish fell asleep. Wake all three so the dark tunnel shines again!', obj:'Wake the jellies',
+    foes:['steam', 'jelly', 'coral'], route:[['flat', 300], ['lantern'], ['hop', 3], ['foe', 'steam'], ['lantern'], ['gate'], ['up', 80], ['flat', 200], ['gap', 130], ['chest', 'snack'], ['down', 80], ['foe', 'coral'], ['flat', 180], ['lantern'], ['secret'], ['foe', 'jelly'], ['goal']]},
+  {name:'Coral Garden', rec:7, goal:'coral', story:'Shadow ink covered the coral garden. Chase it away so the coral can bloom!', obj:'Save the coral',
+    foes:['coral', 'steam', 'reef'], route:[['flat', 300], ['foe', 'coral'], ['gap', 130], ['flat', 200], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'dash'], ['foe', 'steam'], ['hop', 3], ['chest', 'snack'], ['gate'], ['flat', 200], ['foe', 'reef'], ['secret'], ['goal']]},
+  {name:'The Sleepy Turtle', rec:8, goal:'turtle', story:'A giant sea turtle is stuck in shadow vines. Free it so it can carry you to the dragon!', obj:'Free the turtle',
+    foes:['jelly', 'steam', 'abyss', 'reef'], route:[['flat', 300], ['foe', 'jelly'], ['hop', 3], ['flat', 160], ['up', 80], ['foe', 'steam'], ['gap', 140], ['chest', 'snack'], ['down', 80], ['gate'], ['flat', 200], ['foe', 'abyss'], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'glide'], ['hop', 2], ['foe', 'reef'], ['secret'], ['flat', 200], ['goal']]},
+  {name:'Umikaze', rec:9, goal:'lair', boss:true, story:'Umikaze, the Tide Dragon, has been taken over by shadow. Purify the guardian!', obj:'Reach the dragon\'s cave',
+    foes:['umikaze', 'jelly', 'coral'], route:[['flat', 360], ['chest', 'snack'], ['gap', 130], ['flat', 240], ['foe', 'jelly'], ['hop', 2], ['flat', 160], ['foe', 'coral'], ['flat', 140], ['goal']]},
+  /* ---- Ember Peak: volcano slopes, lava glow and torii on the cliffs. 'dash' gaps are too long to jump. ---- */
+  {name:'Ash Trail', rec:10, goal:'spring', story:'Grey ash covered the hot spring. Clear the trail so the warm water can bubble again!', obj:'Wake the hot spring',
+    foes:['ash', 'geyser'], route:[['flat', 320], ['foe', 'ash'], ['dash', 330], ['flat', 240], ['chest', 'snack'], ['up', 80], ['flat', 200], ['foe', 'geyser'], ['gap', 140], ['flat', 160], ['hop', 2], ['down', 80], ['flat', 200], ['secret'], ['foe', 'ash'], ['flat', 200], ['goal']]},
+  {name:'Fire Bowls', rec:11, goal:'bowls', story:'Light the three fire bowls on the cliff path so travellers can find the way up.', obj:'Light the fire bowls',
+    foes:['geyser', 'ash', 'bramble'], route:[['flat', 300], ['lantern'], ['up', 80], ['flat', 160], ['foe', 'geyser'], ['dash', 340], ['lantern'], ['gate'], ['hop', 3], ['foe', 'bramble'], ['up', 80], ['flat', 200], ['chest', 'snack'], ['dash', 340], ['down', 80], ['lantern'], ['foe', 'ash'], ['secret'], ['goal']]},
+  {name:'The Great Drum', rec:12, goal:'drum', story:'Climb the high cliffs and beat the great drum to wake the mountain up!', obj:'Beat the drum',
+    foes:['ash', 'geyser', 'magma'], route:[['flat', 300], ['foe', 'ash'], ['up', 90], ['up', 90], ['foe', 'geyser'], ['up', 90], ['up', 90], ['cliff', 'glide'], ['dash', 340], ['chest', 'snack'], ['foe', 'magma'], ['hop', 3], ['gate'], ['secret'], ['flat', 200], ['goal']]},
+  {name:'Lava River', rec:13, goal:'flame', story:'The sacred flame on the peak went dark. Cross the lava river and light it again!', obj:'Light the sacred flame',
+    foes:['cinder', 'bramble', 'magma', 'ash'], route:[['flat', 300], ['foe', 'cinder'], ['dash', 350], ['flat', 200], ['hop', 3], ['foe', 'bramble'], ['up', 80], ['flat', 160], ['dash', 350], ['chest', 'snack'], ['gate'], ['down', 80], ['foe', 'magma'], ['gap', 140], ['flat', 160], ['dash', 350], ['foe', 'ash'], ['secret'], ['flat', 200], ['goal']]},
+  {name:'Homura', rec:14, goal:'summit', boss:true, story:'Homura, the Flame Fox, has been taken over by shadow. Purify the last guardian!', obj:'Reach the summit',
+    foes:['homura', 'ash', 'magma'], route:[['flat', 360], ['chest', 'snack'], ['dash', 340], ['flat', 240], ['foe', 'ash'], ['up', 80], ['flat', 160], ['hop', 2], ['foe', 'magma'], ['flat', 160], ['goal']]},
 ];
+S.QUESTS.forEach((Q, i) => { Q.isle = S.isleOf(i); });
 S.ACTIVE = S.QUESTS.length;
-S.cleared = p => p.prog.anime.stars.slice(0, S.ACTIVE).filter(Boolean).length;
-S.heal = p => S.cleared(p) / S.ACTIVE;
-S.guardians = p => p.prog.anime.stars[4] ? 1 : 0;
+/* quests cleared: all of them, or on one island */
+S.cleared = (p, isle) => { const st = p.prog.anime.stars; return (isle == null ? st.slice(0, S.ACTIVE) : st.slice(isle * 5, isle * 5 + 5)).filter(Boolean).length; };
+/* how healed an island is, 0..1 (or the whole sky with no island given) */
+S.heal = (p, isle) => isle == null ? S.cleared(p) / S.ACTIVE : S.cleared(p, isle) / 5;
+S.guardians = p => S.ISLANDS.filter((I, k) => p.prog.anime.stars[k * 5 + 4]).length;
+S.isleOpen = (p, k) => k === 0 || p.prog.anime.unlocked >= k * 5;
+S.curIsle = p => S.isleOf(Math.min(p.prog.anime.unlocked, S.ACTIVE - 1));
 
 /* ---------- save data ---------- */
 const OLD_UPS = ['hearts', 'attack', 'energy', 'agility', 'shield'];
@@ -108,6 +170,8 @@ S.normalize = function (raw, p) {
 /* Called by store.normalize. Sky Quest replaced the old runner: progress starts fresh once and
    old hero upgrades turn into crystals. */
 S.migrate = function (p, rawUp) {
+  /* Saves from when Blossom Isle was the only island stop at quest 5: open the next quest after the last one cleared. */
+  const pa = p.prog.anime; while (pa.unlocked < S.ACTIVE - 1 && pa.stars[pa.unlocked]) pa.unlocked++;
   if (p.sky.v >= 1) return;
   const u = (rawUp && typeof rawUp === 'object') ? rawUp : {};
   let refund = 0;
@@ -129,6 +193,8 @@ A.sfx = k => {
     case 'chest': [784, 988, 1175, 1568].forEach((f, i) => A.tone(f, i * .07, .2, 'triangle', .06)); return;
     case 'purify': [1047, 1319, 1568, 2093].forEach((f, i) => A.tone(f, i * .09, .35, 'sine', .06)); return;
     case 'shatter': A.noise(.5, .2, 4000); A.tone(1800, 0, .3, 'square', .04, 400); return;
+    case 'dash': A.noise(.22, .12, 2600); A.tone(440, 0, .18, 'triangle', .05, 1100); return;
+    case 'glide': A.tone(660, 0, .35, 'sine', .035, 880); return;
   }
   sfx0(k);
 };
@@ -139,7 +205,8 @@ const av0 = PUM.avatarSVG;
 PUM.avatarSVG = p => p.theme === 'anime' ? K.portraitImg(p.sky ? K.lookOf(p) : K.look(p.hero, null, null, p.color)) : av0(p);
 
 /* ---------- island builder ---------- */
-function build(Q, opts) {
+/* opts.dash: the hero knows dash. Without it, a long 'dash' gap gets a spirit stepping stone. */
+function build(Q, opts = {}) {
   const W = {blocks:[], crystals:[], chests:[], gates:[], foes:[], lanterns:[], secrets:[], gaps:[], goal:null, len:0};
   let x = 0, h = 0;
   const ground = w => { W.blocks.push({x, w, top:h, ground:true}); };
@@ -154,7 +221,28 @@ function build(Q, opts) {
     else if (kind === 'gate') { ground(320); W.gates.push({x:x + 180, y:h, open:0, solved:false}); x += 320; }
     else if (kind === 'foe') { ground(440); W.foes.push({x:x + 280, y:h, kind:arg, done:false}); x += 440; }
     else if (kind === 'lantern') { ground(260); W.lanterns.push({x:x + 140, y:h, lit:false}); row(x + 40, 60, h - 46, 1); x += 260; }
-    else if (kind === 'secret') { ground(460); const top = h - 240; W.blocks.push({x:x + 150, w:170, top, plat:true, secret:true}); W.secrets.push({x:x + 235, y:top, h}); for (let i = 0; i < 3; i++) W.crystals.push({x:x + 185 + i * 50, y:top - 44, got:false, v:3, big:true}); W.chests.push({x:x + 235, y:top, open:false, gift:'secret'}); x += 460; }
+    else if (kind === 'secret') { ground(460); const top = h - 240; W.blocks.push({x:x + 150, w:170, top, plat:true, secret:true, need:'double'}); W.secrets.push({x:x + 235, y:top, h, need:'double', mx:x + 235, my:h - 150}); for (let i = 0; i < 3; i++) W.crystals.push({x:x + 185 + i * 50, y:top - 44, got:false, v:3, big:true}); W.chests.push({x:x + 235, y:top, open:false, gift:'secret'}); x += 460; }
+    else if (kind === 'dash') {
+      W.gaps.push({x, w:arg, h, dash:true});
+      for (let i = 0; i < 5; i++) W.crystals.push({x:x + arg * (i + 1) / 6, y:h - 150 - Math.sin((i + 1) / 6 * Math.PI) * 40, got:false, v:1});
+      if (!opts.dash) W.blocks.push({x:x + arg / 2 - 55, w:110, top:h - 30, plat:true, step:true});
+      x += arg;
+    }
+    else if (kind === 'cliff') {
+      /* a high ledge, then a big drop to the path below. Far out at ledge height floats a secret island:
+         too far for double jump, so it needs dash (or glide, which floats even farther). */
+      const need = arg === 'glide' ? 'glide' : 'dash', hi = h;
+      ground(240); x += 240;
+      const edge = x, D = need === 'glide' ? 600 : 390, IW = need === 'glide' ? 220 : 170, top = need === 'glide' ? hi + 50 : hi - 10;
+      h += 360; ground(D + 380);
+      W.blocks.push({x:edge + D, w:IW, top, plat:true, secret:true, need});
+      W.secrets.push({x:edge + D + IW / 2, y:top, h, need, mx:edge - 40, my:hi - 150});
+      for (let i = 1; i <= 6; i++) { const k = i / 7; W.crystals.push({x:edge + D * k, y:lerp(hi, top, k) - 120 + Math.sin(k * Math.PI) * -40, got:false, v:1}); }
+      for (let i = 0; i < 2; i++) W.crystals.push({x:edge + D + IW / 2 - 30 + i * 60, y:top - 44, got:false, v:3, big:true});
+      W.chests.push({x:edge + D + IW / 2, y:top, open:false, gift:'secret'});
+      row(edge + D + 240, 300, h - 46, 3);
+      x += D + 380;
+    }
     else if (kind === 'goal') { ground(640); W.goal = {x:x + 330, y:h, kind:Q.goal, done:false}; x += 640; }
   }
   W.len = x;
@@ -164,54 +252,75 @@ S.build = build;
 
 /* ---------- the quest game ---------- */
 PUM.games.sky = function (o) {
-  const p = o.player, assist = o.assist, qi = o.levelIndex, api = o.api, Q = S.QUESTS[qi];
+  const p = o.player, assist = o.assist, qi = o.levelIndex, api = o.api, Q = S.QUESTS[qi], isle = Q.isle || 0;
   const L = K.lookOf(p), st = S.stats(p), comp = S.activeComp(p), age = p.age, mira = p.hero === 1;
-  const W = build(Q);
+  const mv = p.sky.moves, double = mv.double, dash = mv.dash, glide = mv.glide, tower = p.sky.b.tower, shrine = p.sky.b.shrine;
+  const known = need => !need || !!mv[need];
+  const W = build(Q, {dash});
   const parts = E.Particles();
-  const hero = {x:90, y:0, vx:0, vy:0, ground:true, face:1, run:0, coyote:0, buf:0, used2:false, inv:0, safe:{x:90, y:0}};
+  const hero = {x:90, y:0, vx:0, vy:0, ground:true, face:1, run:0, coyote:0, buf:0, used2:false, inv:0, safe:{x:90, y:0}, dashT:0, dashQ:0, dashCd:0, usedDash:false, gliding:false};
   const g = {tier:1, mode:'explore', t:0, hearts:st.hearts, maxH:st.hearts, meter:0, revived:false, lost:0, right:0, asked:0, snacks:0, crystals:0, beaten:0,
-    shake:0, banner:null, nums:[], trans:0, heal:S.heal(p), healTo:S.heal(p), camX:0, camY:0, comp:{x:40, y:-110}, endT:0, lit:0, xp:0};
-  const ctl = {left:false, right:false};
+    shake:0, banner:null, nums:[], trans:0, heal:S.heal(p, isle), healTo:S.heal(p, isle), camX:0, camY:0, comp:{x:40, y:-110}, endT:0, lit:0, xp:0, dashes:0, glides:0};
+  const ctl = {left:false, right:false, glide:false};
   let Wd = 360, Hd = 640, s = 1, gy = 400, b = null, lock = null;
-  const double = p.sky.moves.double, tower = p.sky.b.tower;
   const SPEED = 250 * (1 + .06 * st.boots), JV = -880 * (1 + .025 * st.boots), JV2 = -700, GRAV = 2300, HW = 14;
+  const DASH_V = 680, DASH_T = .24, GLIDE_FALL = 140;
   const say = t => { if (p.speak) A.say(t); };
   const banner = (text, sub, dur = 1.6, col) => { g.banner = {text, sub, t:0, dur, col}; };
   const num = (x, y, text, col, big) => g.nums.push({x, y, text, col, big, t:0});
-  const exploreCtrl = () => `<span class="ctl-pair"><button class="ctl sq move" data-ctl="left" aria-label="Move left">${PUM.icon('back')}</button><button class="ctl sq move" data-ctl="right" aria-label="Move right">${PUM.icon('next')}</button></span><button class="ctl sq jump" data-ctl="jump" aria-label="Jump">${PUM.icon('up')}<span>Jump</span></button>`;
+  const moveCtrl = () => dash || glide ? `<span class="ctl-col sq-acts">${glide ? `<button class="ctl sq mini glide" data-ctl="glide" aria-label="Glide: hold in the air">${PUM.icon('down')}<span>Glide</span></button>` : ''}${dash ? `<button class="ctl sq mini dash" data-ctl="dash" aria-label="Dash">${PUM.icon('next')}<span>Dash</span></button>` : ''}</span>` : '';
+  const exploreCtrl = () => `<span class="ctl-pair"><button class="ctl sq move" data-ctl="left" aria-label="Move left">${PUM.icon('back')}</button><button class="ctl sq move" data-ctl="right" aria-label="Move right">${PUM.icon('next')}</button></span><span class="ctl-pair">${moveCtrl()}<button class="ctl sq jump" data-ctl="jump" aria-label="Jump">${PUM.icon('up')}<span>Jump</span></button></span>`;
   const guardCtrl = () => `<span></span><button class="ctl sq guard" data-ctl="guard" aria-label="Guard"><span>Guard</span></button><span></span>`;
-  const objText = () => Q.goal === 'lanterns' ? `${Q.obj} ${g.lit} / ${W.lanterns.length}` : Q.obj;
+  const LIT = {lanterns:1, jellies:1, bowls:1};
+  const objText = () => LIT[Q.goal] ? `${Q.obj} ${g.lit} / ${W.lanterns.length}` : Q.obj;
+  const litName = isle === 1 ? ['Jellyfish awake!', 'Wake every jellyfish first'] : isle === 2 ? ['Fire bowl lit!', 'Light every fire bowl first'] : ['Lantern lit!', 'Light every lantern first'];
+  const NEED_MSG = {double:'Too high! A guardian can teach you double jump.', dash:'Too far! A guardian can teach you dash.', glide:'Too far! A guardian can teach you glide.'};
 
   /* ---- explore ---- */
   function hurtFall() {
-    hero.x = hero.safe.x; hero.y = hero.safe.y; hero.vx = 0; hero.vy = 0; hero.inv = 1.2;
+    hero.x = hero.safe.x; hero.y = hero.safe.y; hero.vx = 0; hero.vy = 0; hero.inv = 1.2; hero.dashT = 0; hero.usedDash = false; hero.gliding = false;
     if (assist >= 2) { banner('Whoops!', 'Try that jump again', 1); A.sfx('hurt'); return; }
     g.hearts--; g.lost++; A.sfx('hurt'); g.shake = 8;
     banner('Ouch!', g.hearts > 0 ? 'You lost a heart' : '', 1);
     if (g.hearts <= 0) knockedOut();
   }
   function updateExplore(dt) {
-    const h = hero, dir = (ctl.right ? 1 : 0) - (ctl.left ? 1 : 0), target = dir * SPEED;
+    const h = hero, dir = (ctl.right ? 1 : 0) - (ctl.left ? 1 : 0);
+    /* glide: hold Glide while falling to float down slowly, drifting forward */
+    const wasGliding = h.gliding;
+    h.gliding = glide && ctl.glide && !h.ground && h.vy > -60 && h.dashT <= 0;
+    if (h.gliding && !wasGliding) { A.sfx('glide'); g.glides++; }
+    const target = dir * SPEED || (h.gliding ? h.face * SPEED * .3 : 0);
     h.vx += clamp(target - h.vx, -2000 * dt, 2000 * dt); if (dir) h.face = dir;
     if (h.buf > 0) {
       if (h.ground || h.coyote > 0) { h.vy = JV; h.ground = false; h.coyote = 0; h.buf = 0; A.sfx('jump'); }
-      else if (double && !h.used2) { h.vy = JV2; h.used2 = true; h.buf = 0; A.sfx('jump'); parts.burst(h.x, h.y, 10, {speed:140, life:.5, size:3, color:['#FFC6DD', '#7FF0FF'], g:200}); }
+      else if (double && !h.used2) { h.vy = JV2; h.used2 = true; h.buf = 0; h.dashT = 0; A.sfx('jump'); parts.burst(h.x, h.y, 10, {speed:140, life:.5, size:3, color:['#FFC6DD', '#7FF0FF'], g:200}); }
     }
-    h.buf -= dt; h.coyote -= dt; h.inv -= dt;
-    h.vy = Math.min(1400, h.vy + GRAV * dt);
+    /* dash: a quick burst forward that ignores gravity. Once per jump; a short wait on the ground. */
+    if (h.dashQ > 0 && dash && h.dashT <= 0 && h.dashCd <= 0 && !h.usedDash) {
+      h.dashT = DASH_T; h.dashQ = 0; h.dashCd = .45; if (!h.ground) h.usedDash = true; g.dashes++;
+      A.sfx('dash'); parts.burst(h.x - h.face * 10, h.y - 46, 14, {speed:200, angle:h.face > 0 ? Math.PI : 0, spread:1.2, life:.45, size:3.5, color:['#7FF0FF', '#FFFFFF', S.EL[comp.el].col], drag:3});
+    }
+    if (h.dashT > 0) {
+      h.dashT -= dt; h.vx = h.face * DASH_V; h.vy = 0;
+      if (Math.random() < .7) parts.add({x:h.x - h.face * 16, y:h.y - 30 - Math.random() * 40, vx:-h.face * 60, vy:0, life:.3, size:2.5 + Math.random() * 2, color:Math.random() < .5 ? '#BFF6FF' : S.EL[comp.el].col});
+    }
+    h.buf -= dt; h.coyote -= dt; h.inv -= dt; h.dashQ -= dt; h.dashCd -= dt;
+    if (h.dashT <= 0) h.vy = Math.min(1400, h.vy + GRAV * dt);
+    if (h.gliding) { h.vy = Math.min(h.vy, GLIDE_FALL); if (Math.random() < .25) parts.add({x:h.x + (Math.random() - .5) * 40, y:h.y - 90, vx:-h.face * 30, vy:40, life:.6, size:2.5, color:'#FFFFFF'}); }
     let nx = h.x + h.vx * dt;
     for (const bl of W.blocks) if (bl.ground && nx + HW > bl.x && nx - HW < bl.x + bl.w && h.y > bl.top + 3) { if (h.x <= bl.x) nx = bl.x - HW; else if (h.x >= bl.x + bl.w) nx = bl.x + bl.w + HW; h.vx = 0; }
     for (const gt of W.gates) if (!gt.solved && nx > gt.x - 46 && h.x <= gt.x - 45) { nx = gt.x - 46; h.vx = 0; if (!lock) openLock('gate', gt); }
     nx = clamp(nx, 20, W.len - 20);
     let ny = h.y + h.vy * dt, landed = null;
     if (h.vy >= 0) for (const bl of W.blocks) if (nx + HW * .7 > bl.x && nx - HW * .7 < bl.x + bl.w && h.y <= bl.top + .5 && ny >= bl.top) { if (!landed || bl.top < landed.top) landed = bl; }
-    if (landed) { ny = landed.top; h.vy = 0; h.ground = true; h.coyote = .1; h.used2 = false; if (landed.ground) h.safe = {x:clamp(nx, landed.x + 40, landed.x + landed.w - 40), y:landed.top}; }
+    if (landed) { ny = landed.top; h.vy = 0; h.ground = true; h.coyote = .1; h.used2 = false; h.usedDash = false; h.gliding = false; if (landed.ground) h.safe = {x:clamp(nx, landed.x + 40, landed.x + landed.w - 40), y:landed.top}; }
     else { if (h.ground) h.coyote = .1; h.ground = false; }
     h.x = nx; h.y = ny; h.run += Math.abs(h.vx) * dt * .045;
     if (h.y > 560) hurtFall();
     /* pickups and things */
     for (const c of W.crystals) if (!c.got && Math.hypot(c.x - h.x, c.y - (h.y - 46)) < (c.big ? 42 : 34)) { c.got = true; api.addMp(c.v); g.crystals += c.v; A.sfx('coin'); parts.burst(c.x, c.y, 8, {speed:120, life:.5, size:3, color:['#9BF6FF', '#FFFFFF'], shape:'star'}); }
-    for (const l of W.lanterns) if (!l.lit && Math.abs(l.x - h.x) < 40) { l.lit = true; g.lit++; A.sfx('purify'); parts.burst(l.x, l.y - 90, 18, {speed:160, life:.8, size:3, color:['#FFD27A', '#FFF1C2'], shape:'star'}); banner('Lantern lit!', `${g.lit} of ${W.lanterns.length}`, 1.1); }
+    for (const l of W.lanterns) if (!l.lit && Math.abs(l.x - h.x) < 40) { l.lit = true; g.lit++; A.sfx('purify'); parts.burst(l.x, l.y - 90, 18, {speed:160, life:.8, size:3, color:isle === 1 ? ['#FF8FD8', '#BFF6FF'] : isle === 2 ? ['#FF8A3D', '#FFE27A'] : ['#FFD27A', '#FFF1C2'], shape:'star'}); banner(litName[0], `${g.lit} of ${W.lanterns.length}`, 1.1); }
     for (const c of W.chests) if (!c.open && !lock && Math.abs(c.x - h.x) < 40 && Math.abs(c.y - h.y) < 40) openLock('chest', c);
     for (const f of W.foes) if (!f.done && Math.abs(f.x - h.x) < 92 && h.y > f.y - 170) { startBattle(f); break; }
     if (W.goal && !W.goal.done && h.x > W.goal.x - 60) reachGoal();
@@ -235,7 +344,7 @@ PUM.games.sky = function (o) {
   function openLock(kind, ref) {
     const {q, options} = PUM.gateQuestion(p, nOpts());
     lock = {kind, ref, q, options, answered:false};
-    hero.vx = 0; ctl.left = ctl.right = false;
+    hero.vx = 0; hero.dashT = 0; ctl.left = ctl.right = ctl.glide = false;
     api.ctrl('');
     const title = kind === 'chest' ? (ref.gift === 'secret' ? 'Secret chest! Answer to open the lock' : 'Treasure chest! Answer to open the lock') : 'Spirit gate! Answer to open the way';
     api.panel(qPanel(title, q, options, null, kind === 'chest' ? `<button class="sq-leave" data-gp="leave">Leave it</button>` : ''), 'sky-q');
@@ -264,28 +373,30 @@ PUM.games.sky = function (o) {
 
   /* ---- battles ---- */
   function startBattle(f) {
-    hero.vx = 0; ctl.left = ctl.right = false;
+    hero.vx = 0; hero.dashT = 0; hero.gliding = false; ctl.left = ctl.right = ctl.glide = false;
     g.mode = 'trans'; g.trans = 0; g.pending = f; api.ctrl('');
-    A.sfx(f.kind === 'hanamori' ? 'boss' : 'blast');
+    A.sfx(S.GUARDIANS[f.kind] ? 'boss' : 'blast');
   }
+  const easy = assist >= 2 ? .7 : assist ? .85 : 1;
   function newBattle(f) {
-    if (f.kind === 'hanamori') return {f, boss:true, el:'blossom', name:'Hanamori', hp:Math.round(240 * (assist >= 2 ? .7 : assist ? .85 : 1)), max:Math.round(240 * (assist >= 2 ? .7 : assist ? .85 : 1)), phase:0, shield:null, pure:0, x:0, state:'intro', tm:0};
-    const F = FOES[f.kind], sc = (1 + .15 * qi) * (assist >= 2 ? .7 : assist ? .85 : 1);
-    return {f, el:F.el, name:F.name, hp:Math.round(F.hp * sc), max:Math.round(F.hp * sc), big:F.big, state:'intro', tm:0, x:0, seed:Math.round(f.x)};
+    const GD = S.GUARDIANS[f.kind];
+    if (GD) { const hp = Math.round(GD.hp * easy); return {f, boss:true, guard:f.kind, el:GD.el, name:GD.name, hp, max:hp, phase:0, phases:GD.phases, shield:null, pure:0, x:0, state:'intro', tm:0}; }
+    const F = FOES[f.kind], hp = Math.round(F.hp * S.foeScale(qi) * easy);
+    return {f, el:F.el, name:F.name, hp, max:hp, big:F.big, look:F.look, state:'intro', tm:0, x:0, seed:Math.round(f.x)};
   }
-  const bossPhases = [{name:'Tail Sweep', hits:[1.3]}, {name:'Petal Storm', hits:[1.2, 1.9]}, {name:'Antler Charge', hits:[.95]}];
   function setState(s2) { b.state = s2; b.tm = 0; }
   function moveName(el) { return S.MOVES[el][p.hero] || S.MOVES[el][0]; }
+  const specBtns = sub => `<button class="sq-move special" data-gp="move" data-v="special"><b>${S.SPECIAL[p.hero]}</b><small>${sub}</small></button>${shrine ? `<button class="sq-move special two" data-gp="move" data-v="special2"><b>${S.SPECIAL2}</b><small>Your guardians attack, and you get a heart back</small></button>` : ''}`;
   function moveBtns() {
     const els = ['blossom', 'tide', 'ember'].concat(st.storm ? ['storm'] : []);
-    const spec = g.meter >= 1 ? `<button class="sq-move special" data-gp="move" data-v="special"><b>${S.SPECIAL[p.hero]}</b><small>Special move ready!</small></button>` : '';
+    const spec = g.meter >= 1 ? specBtns('Special move ready!') : '';
     const tiers = `<div class="sq-tiers" role="group" aria-label="Move strength">${S.TIERS.map((T, i) => `<button class="sq-tier ${g.tier === i ? 'on' : ''}" data-gp="tier" data-v="${i}" aria-pressed="${g.tier === i}"><b>${T.name} ${'&#9733;'.repeat(T.stars)}</b><small>${T.what}</small></button>`).join('')}</div>`;
     return `<div class="sq-card moves"><div class="sq-title">${g.meter >= 1 ? 'Your Spirit meter is full!' : 'Pick how strong, then a move'}</div>${spec}${tiers}<div class="sq-moves n${els.length}">${els.map((el, i) => `<button class="sq-move el-${el}" data-gp="move" data-v="${el}"><small>${S.EL[el].name}</small><b>${moveName(el)}</b><i>${i + 1}</i></button>`).join('')}</div></div>`;
   }
   function toPick() {
     if (b.boss && b.shield) { toAsk('shield'); return; }
     if (assist >= 2) {
-      if (g.meter >= 1) { api.panel(`<div class="sq-card moves"><div class="sq-title">Your Spirit meter is full!</div><button class="sq-move special" data-gp="move" data-v="special"><b>${S.SPECIAL[p.hero]}</b><small>Tap for your special move!</small></button></div>`, 'sky-q'); setState('pick'); say('Special move ready! Tap it!'); return; }
+      if (g.meter >= 1) { api.panel(`<div class="sq-card moves"><div class="sq-title">Your Spirit meter is full!</div>${specBtns('Tap for your special move!')}</div>`, 'sky-q'); setState('pick'); say('Special move ready! Tap it!'); return; }
       toAsk(S.weakTo(b.el)); return;
     }
     api.panel(moveBtns(), 'sky-q'); setState('pick');
@@ -318,7 +429,7 @@ PUM.games.sky = function (o) {
   }
   function hitFoe(dmg, col, big) {
     const fx = Wd * .66, fy = Hd * .3;
-    if (b.boss && !b.finale && b.hp - dmg <= 0 && b.move !== 'special') { dmg = b.hp - 1; }
+    if (b.boss && !b.finale && b.hp - dmg <= 0 && !/^special/.test(b.move)) { dmg = b.hp - 1; }
     b.hp = Math.max(0, b.hp - dmg); b.flash = 1; b.x = 18;
     num(fx + (Math.random() - .5) * 60, fy - 40, String(dmg), col, big);
     parts.burst(fx, fy, big ? 46 : 22, {speed:big ? 420 : 260, life:.7, size:big ? 5 : 3.5, color:[col, '#FFFFFF'], shape:'star', drag:2});
@@ -329,18 +440,18 @@ PUM.games.sky = function (o) {
     if (b.boss) {
       const th = b.phase === 0 ? .66 : b.phase === 1 ? .33 : -1;
       if (b.hp / b.max <= th) { b.hp = Math.ceil(th * b.max); b.shield = {got:0}; setState('shieldUp'); A.sfx('boss'); banner('Shadow shield!', '3 right answers in a row break it', 2); say('Shadow shield! Answer 3 in a row to break it!'); return; }
-      if (b.phase === 2 && b.hp <= 1 && !b.finale) { b.finale = true; g.meter = 1; banner('Hanamori is weak!', 'Use your special move!', 1.8); say('Use your special move!'); }
+      if (b.phase === 2 && b.hp <= 1 && !b.finale) { b.finale = true; g.meter = 1; banner(`${b.name} is weak!`, 'Use your special move!', 1.8); say('Use your special move!'); }
     }
     enemyTurn();
   }
   function enemyTurn() {
-    const base = b.boss ? bossPhases[b.phase].hits.slice() : [1.4];
+    const base = b.boss ? b.phases[b.phase].hits.slice() : [1.4];
     const slow = assist >= 2 ? 1.6 : assist ? 1.2 : 1;
     b.hits = base.map(t0 => ({t:t0 * slow + .3, done:false, blocked:false, tried:false}));
     b.windDur = b.hits[b.hits.length - 1].t + .7;
     api.panel(null); api.ctrl(guardCtrl());
     setState('wind');
-    if (b.boss) banner(bossPhases[b.phase].name, '', .9, '#FF6FD8');
+    if (b.boss) banner(b.phases[b.phase].name, '', .9, '#FF6FD8');
   }
   function guardTap() {
     if (!b || b.state !== 'wind') return;
@@ -377,7 +488,7 @@ PUM.games.sky = function (o) {
       if (b.move === 'shield') {
         b.shield.got++; A.sfx('shatter'); parts.burst(Wd * .66, Hd * .3, 30, {speed:300, life:.6, size:4, color:['#B04CFF', '#FFFFFF'], shape:'rect'}); g.shake = 8;
         g.meter = Math.min(1, g.meter + st.meter * .5);
-        if (b.shield.got >= 3) { b.shield = null; b.phase++; setState('shieldBreak'); banner('Shield broken!', `Phase ${b.phase + 1}: ${bossPhases[b.phase].name}`, 1.8); g.shake = 18; }
+        if (b.shield.got >= 3) { b.shield = null; b.phase++; setState('shieldBreak'); banner('Shield broken!', `Phase ${b.phase + 1}: ${b.phases[b.phase].name}`, 1.8); g.shake = 18; }
         else setState('crack');
         return;
       }
@@ -401,7 +512,14 @@ PUM.games.sky = function (o) {
     }
     else if (b.state === 'cutin' && b.tm > 1.8) { setState('specAtk'); }
     else if (b.state === 'specAtk') {
-      if (!b.specHit && b.tm > .35) { b.specHit = true; b.move = 'special'; hitFoe(Math.round(st.atk * 3.2), '#E9FDFF', true); g.shake = 26; }
+      if (!b.specHit && b.tm > .35) {
+        b.specHit = true; b.move = b.spec || 'special';
+        if (b.move === 'special2') {
+          hitFoe(Math.round(st.atk * (2.2 + .8 * S.guardians(p))), '#FFE27A', true);
+          if (g.hearts < g.maxH) { g.hearts++; num(Wd * .26 + 40, Hd * .45 - 70, '+1', '#FF6FB0', true); }
+        } else hitFoe(Math.round(st.atk * 3.2), '#E9FDFF', true);
+        g.shake = 26;
+      }
       if (b.tm > 1.4) { b.specHit = false; afterHeroTurn(); }
     }
     else if (b.state === 'wind') {
@@ -410,27 +528,34 @@ PUM.games.sky = function (o) {
       if (b.tm > b.windDur) { api.ctrl(''); toPick(); }
     }
     else if (b.state === 'win') {
-      if (b.boss) { b.pure = Math.min(1, b.tm / 2.4); if (b.tm > 1 && !b.joined) { b.joined = true; banner('Hanamori is free!', 'The Blossom Deer joins your team!', 2.4, '#FFC6DD'); } if (b.tm > 3.6) { finishQuest(); } }
+      if (b.boss) { b.pure = Math.min(1, b.tm / 2.4); if (b.tm > 1 && !b.joined) { const GD = S.GUARDIANS[b.guard]; b.joined = true; banner(`${b.name} is free!`, `${GD.title.replace(/^the/, 'The')} joins your team!`, 2.4, '#FFC6DD'); } if (b.tm > 3.6) { finishQuest(); } }
       else if (b.tm > 1.8) { b.f.done = true; b = null; g.mode = 'trans2'; g.trans = 0; }
     }
   }
   function uiMove(v) {
     if (!b || b.state !== 'pick') return;
-    if (v === 'special') { g.meter = 0; api.panel(null); setState('cutin'); A.sfx('special'); say(S.SPECIAL[p.hero]); return; }
+    if (v === 'special' || (v === 'special2' && shrine)) { g.meter = 0; b.spec = v; api.panel(null); setState('cutin'); A.sfx('special'); say(v === 'special2' ? S.SPECIAL2 : S.SPECIAL[p.hero]); return; }
     toAsk(v);
   }
 
   /* ---- goal and ending ---- */
+  const bossOf = goal => Object.keys(S.GUARDIANS).find(k => S.GUARDIANS[k].goal === goal);
   function reachGoal() {
-    if (Q.goal === 'grove') { W.goal.done = true; startBattle({kind:'hanamori', x:W.goal.x, y:W.goal.y}); return; }
-    if (Q.goal === 'lanterns' && g.lit < W.lanterns.length) { if (!g.warned) { g.warned = true; banner('Not yet!', 'Light every lantern first', 1.4); } hero.x = W.goal.x - 61; return; }
+    const gk = bossOf(Q.goal);
+    if (gk) { W.goal.done = true; startBattle({kind:gk, x:W.goal.x, y:W.goal.y}); return; }
+    if (LIT[Q.goal] && g.lit < W.lanterns.length) { if (!g.warned) { g.warned = true; banner('Not yet!', litName[1], 1.4); } hero.x = W.goal.x - 61; hero.vx = 0; hero.dashT = 0; return; }
     W.goal.done = true; finishQuest();
   }
+  const GOAL_MSG = {
+    cage:['The cubs are free!', 'Blossom Isle blooms again'], lanterns:['The lanterns glow!', 'The spirits found their way home'], bell:['The bell rings out!', 'The island is waking up'], falls:['The falls flow again!', 'Colour returns to the river'], grove:['Blossom Isle is saved!', 'You learned DOUBLE JUMP!'],
+    pearl:['The pearl shines again!', 'Light fills the sea caves'], jellies:['The jellies glow!', 'The dark tunnel is bright now'], coral:['The coral blooms!', 'The fish swim home'], turtle:['The turtle is free!', 'It will carry you to the dragon'], lair:['Tide Grotto is saved!', 'You learned DASH!'],
+    spring:['The hot spring bubbles!', 'Warm steam rises over the peak'], bowls:['The fire bowls blaze!', 'The path up the mountain is lit'], drum:['BOOM! The drum wakes the peak!', 'The mountain is listening'], flame:['The sacred flame burns!', 'Ember Peak glows gold again'], summit:['Ember Peak is saved!', 'You learned GLIDE!'],
+  };
   function finishQuest() {
-    g.mode = 'end'; g.endT = 0; api.panel(null); api.ctrl(''); hero.vx = 0;
-    g.healTo = Math.max(g.heal, Math.min(1, (S.cleared(p) + (p.prog.anime.stars[qi] ? 0 : 1)) / S.ACTIVE));
+    g.mode = 'end'; g.endT = 0; api.panel(null); api.ctrl(''); hero.vx = 0; hero.dashT = 0;
+    g.healTo = Math.max(g.heal, Math.min(1, (S.cleared(p, isle) + (p.prog.anime.stars[qi] ? 0 : 1)) / 5));
     A.sfx('fanfare');
-    const msg = {cage:['The cubs are free!', 'Blossom Isle blooms again'], lanterns:['The lanterns glow!', 'The spirits found their way home'], bell:['The bell rings out!', 'The island is waking up'], falls:['The falls flow again!', 'Colour returns to the river'], grove:['Blossom Isle is saved!', 'You learned DOUBLE JUMP!']}[Q.goal];
+    const msg = GOAL_MSG[Q.goal] || ['Quest complete!', ''];
     banner(msg[0], msg[1], 3.4, '#FFE27A');
   }
   function result(ok) {
@@ -460,44 +585,64 @@ PUM.games.sky = function (o) {
     void k;
   }
   function drawNums(c) { for (const n of g.nums) { const a = 1 - n.t / 1.1; if (a <= 0) continue; c.save(); c.globalAlpha = Math.min(1, a * 2); const sz = n.big ? 34 : 24; c.font = `${sz}px "Dela Gothic One", Lexend, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round'; c.lineWidth = 6; c.strokeStyle = '#120A20'; const yy = n.y - n.t * 50; c.strokeText(n.text, n.x, yy); c.shadowColor = n.col; c.shadowBlur = 12; c.fillStyle = n.col; c.fillText(n.text, n.x, yy); c.restore(); } }
+  /* jump hints for little kids, dash hints for long gaps, and "?" over secret ledges a guardian's move will reach.
+     pj maps world units to where they are drawn (the world itself in 2D, the screen over the 3D island). */
+  function drawHints(c, t, pj, near) {
+    for (const gp of W.gaps) {
+      if (!near(gp.x, 200) || gp.x < hero.x - 40) continue;
+      if (gp.dash && !dash) continue;
+      const showArc = assist >= 1, showDash = gp.dash && gp.x - hero.x < 420;
+      if (!showArc && !showDash) continue;
+      const a = .6 + .4 * Math.sin(t * 6), top = gp.dash ? gp.h - 260 : gp.h - 200;
+      c.save(); c.globalAlpha = a; c.shadowColor = gp.dash ? '#7FF0FF' : '#FFE27A'; c.shadowBlur = 12; c.strokeStyle = gp.dash ? '#7FF0FF' : '#FFE27A'; c.lineWidth = 4;
+      if (showArc) { c.setLineDash([10, 10]); c.beginPath(); for (let i = 0; i <= 16; i++) { const k = i / 16, x = (1 - k) * (1 - k) * (gp.x - 30) + 2 * (1 - k) * k * (gp.x + gp.w / 2) + k * k * (gp.x + gp.w + 30), y = (1 - k) * (1 - k) * (gp.h - 10) + 2 * (1 - k) * k * top + k * k * (gp.h - 10); const [sx, sy] = pj(x, y); i ? c.lineTo(sx, sy) : c.moveTo(sx, sy); } c.stroke(); c.setLineDash([]); }
+      const [lx, ly] = gp.dash ? pj(gp.x + gp.w / 2, gp.h - 120) : pj(gp.x - 10, gp.h - 70); label(c, gp.dash ? 'JUMP, then DASH!' : 'JUMP!', lx, ly, 18, gp.dash ? '#BFF6FF' : '#FFE27A', 'center', 'D');
+      c.restore();
+    }
+    for (const sc of W.secrets) {
+      if (!near(sc.x, 600)) continue;
+      const ch = W.chests.find(o => o.x === sc.x && o.y === sc.y);
+      if (!known(sc.need)) {
+        const [qx, qy] = pj(sc.x, sc.y - 70); label(c, '?', qx, qy + Math.sin(t * 3) * 4, 30, '#FFE27A', 'center', 'D');
+        if (Math.abs(hero.x - sc.mx) < 220) { const [mx, my] = pj(sc.mx, sc.my); label(c, NEED_MSG[sc.need], mx, my, 13, '#FFFFFF'); }
+      } else if (sc.need !== 'double' && ch && !ch.open && Math.abs(hero.x - sc.mx) < 220 && hero.y < sc.h - 100) {
+        const [mx, my] = pj(sc.mx + 40, sc.my); label(c, sc.need === 'glide' ? 'Secret island! Jump, then hold GLIDE' : 'Secret island! Jump, then DASH', mx, my, 14, '#BFF6FF', 'center');
+      }
+    }
+  }
   function drawExplore(c, t) {
     const cx = g.camX, sy0 = gy - g.camY * s;
-    K.islandBg(c, Wd, Hd, cx, sy0, s, t);
+    K.islandBg(c, Wd, Hd, cx, sy0, s, t, {isle});
     c.save(); c.translate(-cx * s, sy0); c.scale(s, s);
     const vx0 = cx - 60, vx1 = cx + Wd / s + 60;
-    /* glowing path for little kids, and jump hints */
-    for (const gp of W.gaps) if (gp.x > vx0 - 200 && gp.x < vx1) {
-      if (assist >= 1 && gp.x > hero.x - 40) { const a = .6 + .4 * Math.sin(t * 6); c.save(); c.globalAlpha = a; c.shadowColor = '#FFE27A'; c.shadowBlur = 12; c.strokeStyle = '#FFE27A'; c.lineWidth = 4; c.setLineDash([10, 10]); c.beginPath(); c.moveTo(gp.x - 30, gp.h - 10); c.quadraticCurveTo(gp.x + gp.w / 2, gp.h - 200, gp.x + gp.w + 30, gp.h - 10); c.stroke(); c.setLineDash([]); label(c, 'JUMP!', gp.x - 10, gp.h - 70, 18, '#FFE27A', 'center', 'D'); c.restore(); }
-    }
     for (const bl of W.blocks) if (bl.x + bl.w > vx0 && bl.x < vx1) {
-      if (bl.secret && !double) { c.save(); c.globalAlpha = tower ? .9 : .45; K.ground(c, bl.x, bl.top, bl.w, 26, 1, 'plat'); c.restore(); if (tower) { c.save(); c.shadowColor = '#FFE27A'; c.shadowBlur = 20; c.strokeStyle = 'rgba(255,226,122,.8)'; c.lineWidth = 3; E.rr(c, bl.x - 6, bl.top - 10, bl.w + 12, 40, 10); c.stroke(); c.restore(); } continue; }
-      K.ground(c, bl.x, bl.top, bl.w, bl.plat ? 26 : 520, 1, bl.plat ? 'plat' : 'ground');
+      if (bl.secret && !known(bl.need)) { c.save(); c.globalAlpha = tower ? .9 : .45; K.ground(c, bl.x, bl.top, bl.w, 26, 1, 'plat', isle); c.restore(); if (tower) { c.save(); c.shadowColor = '#FFE27A'; c.shadowBlur = 20; c.strokeStyle = 'rgba(255,226,122,.8)'; c.lineWidth = 3; E.rr(c, bl.x - 6, bl.top - 10, bl.w + 12, 40, 10); c.stroke(); c.restore(); } continue; }
+      if (bl.step) { K.stepStone(c, bl.x, bl.top, bl.w, t); continue; }
+      K.ground(c, bl.x, bl.top, bl.w, bl.plat ? 26 : 520, 1, bl.plat ? 'plat' : 'ground', isle);
     }
-    for (const sc of W.secrets) if (sc.x > vx0 && sc.x < vx1 && !double) { label(c, '?', sc.x, sc.y - 70 + Math.sin(t * 3) * 4, 30, '#FFE27A', 'center', 'D'); if (Math.abs(hero.x - sc.x) < 200) label(c, 'Too high! A guardian can teach you double jump.', sc.x, sc.h - 150, 13, '#FFFFFF'); }
-    for (const l of W.lanterns) if (l.x > vx0 && l.x < vx1) K.lantern(c, l.x, l.y, 1, l.lit, t);
-    for (const gt of W.gates) if (gt.x > vx0 - 80 && gt.x < vx1 + 80) { gt.open = gt.solved ? Math.min(1, gt.open + .03) : 0; K.gate(c, gt.x, gt.y, 1, t, gt.open, ''); }
+    drawHints(c, t, (x, y) => [x, y], (x, m) => x > vx0 - m && x < vx1 + m);
+    for (const l of W.lanterns) if (l.x > vx0 && l.x < vx1) K.litProp(c, isle, l.x, l.y, 1, l.lit, t);
+    for (const gt of W.gates) if (gt.x > vx0 - 80 && gt.x < vx1 + 80) { gt.open = gt.solved ? Math.min(1, gt.open + .03) : 0; K.gate(c, gt.x, gt.y, 1, t, gt.open, '', isle); }
     for (const ch of W.chests) if (ch.x > vx0 && ch.x < vx1) K.chest(c, ch.x, ch.y, 1, ch.open, t);
-    if (W.goal) { const gl = W.goal, done = g.mode === 'end';
-      if (gl.kind === 'cage') K.cage(c, gl.x, gl.y, 1, t, done);
-      else if (gl.kind === 'lanterns') { c.save(); c.translate(gl.x, gl.y); K.lantern(c, -60, 0, 1.2, done || g.lit >= W.lanterns.length, t); K.lantern(c, 60, 0, 1.2, done || g.lit >= W.lanterns.length, t); c.restore(); c.save(); c.translate(gl.x, gl.y); c.scale(.9, .9); c.translate(-gl.x, -gl.y); c.restore(); K.gate(c, gl.x, gl.y, 1.1, t, 1, ''); }
-      else if (gl.kind === 'bell') K.bell(c, gl.x, gl.y, 1, t, done);
-      else if (gl.kind === 'falls') K.falls(c, gl.x + 60, gl.y, 1, t, done ? Math.min(1, g.endT / 1.5) : 0);
-      else if (gl.kind === 'grove') { c.save(); c.globalAlpha = .9; K.gate(c, gl.x, gl.y, 1.3, t, 1, ''); c.restore(); }
-    }
+    if (W.goal && W.goal.x > vx0 - 200 && W.goal.x < vx1 + 200) K.goal(c, W.goal.kind, W.goal.x, W.goal.y, 1, t, goalState());
     for (const cr of W.crystals) if (!cr.got && cr.x > vx0 && cr.x < vx1) K.crystal(c, cr.x, cr.y, cr.big ? 13 : 9, t);
     for (const f of W.foes) if (!f.done && f.x > vx0 - 100 && f.x < vx1 + 100) {
+      const F = FOES[f.kind] || {el:'blossom'};
       c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(f.x, f.y, 44, 9, 0, 0, TAU); c.fill();
-      K.shadow(c, FOES[f.kind] ? FOES[f.kind].el : 'blossom', f.x, f.y - 80, FOES[f.kind] && FOES[f.kind].big ? .55 : .42, t + f.x, {face:-1, big:FOES[f.kind] && FOES[f.kind].big, seed:Math.round(f.x)});
+      K.shadow(c, F.el, f.x, f.y - 80, F.big ? .55 : .42, t + f.x, {face:-1, big:F.big, seed:Math.round(f.x), look:F.look});
     }
     K.spirit(c, comp.kind, comp.stage, g.comp.x, g.comp.y, .42, t, {face:hero.face});
     c.fillStyle = 'rgba(0,0,0,.28)'; c.beginPath(); c.ellipse(hero.x, hero.ground ? hero.y : hero.y + 4, 22, 5, 0, 0, TAU); c.fill();
-    if (!(hero.inv > 0 && Math.floor(t * 16) % 2)) K.sprite(c, L, hero.x, hero.y, .92, {face:hero.face, run:hero.run, speed:Math.min(1, Math.abs(hero.vx) / SPEED), air:hero.ground ? null : Math.sign(hero.vy), t});
+    if (hero.gliding) K.glider(c, hero.x, hero.y - 100, 1, t, S.EL[comp.el].col);
+    if (!(hero.inv > 0 && Math.floor(t * 16) % 2)) K.sprite(c, L, hero.x, hero.y, .92, heroPose(t));
     parts.draw(c);
     c.restore();
-    K.petals(c, Wd, Hd, t, 18);
+    K.drift(c, Wd, Hd, t, 18, isle);
     const heal = g.heal; if (heal < 1) { c.save(); c.globalCompositeOperation = 'saturation'; c.fillStyle = `rgba(128,128,128,${(1 - heal) * .55})`; c.fillRect(0, 0, Wd, Hd); c.restore(); }
     hudExplore(c);
   }
+  const heroPose = t => ({face:hero.face, run:hero.run, speed:Math.min(1, Math.abs(hero.vx) / SPEED), air:hero.ground ? null : hero.gliding ? 1 : Math.sign(hero.vy), t});
+  const goalState = () => ({done:g.mode === 'end', k:g.mode === 'end' ? Math.min(1, g.endT / 1.5) : 0, lit:g.mode === 'end' || g.lit >= W.lanterns.length, isle});
   function hudExplore(c) {
     glass(c, 64, 10, Math.min(Wd - 150, 210), 50);
     drawHearts(c, 82, 28);
@@ -509,24 +654,18 @@ PUM.games.sky = function (o) {
     const dt = Math.max(0, Math.min(.05, t - lastDraw)); lastDraw = t;
     c.clearRect(0, 0, Wd, Hd);
     R3.render(t, dt);
-    if (assist >= 1) for (const gp of W.gaps) {
-      if (gp.x < hero.x - 40 || gp.x - hero.x > 700) continue;
-      const a = .6 + .4 * Math.sin(t * 6); c.save(); c.globalAlpha = a; c.shadowColor = '#FFE27A'; c.shadowBlur = 12; c.strokeStyle = '#FFE27A'; c.lineWidth = 4; c.setLineDash([10, 10]); c.beginPath();
-      for (let i = 0; i <= 16; i++) { const k = i / 16, x = (1 - k) * (1 - k) * (gp.x - 30) + 2 * (1 - k) * k * (gp.x + gp.w / 2) + k * k * (gp.x + gp.w + 30), y = (1 - k) * (1 - k) * (gp.h - 10) + 2 * (1 - k) * k * (gp.h - 200) + k * k * (gp.h - 10); const [sx, sy] = R3.project(x, y); i ? c.lineTo(sx, sy) : c.moveTo(sx, sy); }
-      c.stroke(); c.setLineDash([]); const [lx, ly] = R3.project(gp.x - 10, gp.h - 70); label(c, 'JUMP!', lx, ly, 18, '#FFE27A', 'center', 'D'); c.restore();
-    }
-    if (!double) for (const sc of W.secrets) { if (Math.abs(sc.x - hero.x) > 500) continue; const [qx, qy] = R3.project(sc.x, sc.y - 70); label(c, '?', qx, qy + Math.sin(t * 3) * 4, 30, '#FFE27A', 'center', 'D'); if (Math.abs(hero.x - sc.x) < 200) { const [mx, my] = R3.project(sc.x, sc.h - 150); label(c, 'Too high! A guardian can teach you double jump.', mx, my, 13, '#FFFFFF'); } }
+    drawHints(c, t, R3.project, (x, m) => Math.abs(x - hero.x) < 500 + m);
     const k = R3.ppu(), [ox, oy] = R3.project(hero.x, hero.y);
-    c.save(); c.translate(ox - hero.x * k, oy - hero.y * k); c.scale(k, k); parts.draw(c); c.restore();
+    c.save(); c.translate(ox - hero.x * k, oy - hero.y * k); c.scale(k, k); if (hero.gliding) K.glider(c, hero.x, hero.y - 100, 1, t, S.EL[comp.el].col); parts.draw(c); c.restore();
     hudExplore(c);
   }
   const drawWorld = (c, t) => R3 ? drawExplore3D(c, t) : drawExplore(c, t);
   function drawBattle(c, t) {
-    K.battleBg(c, Wd, Hd, t, {boss:b.boss});
+    K.battleBg(c, Wd, Hd, t, {boss:b.boss, isle});
     const fx = Wd * .66 + b.x - (b.lunge || 0) * Wd * .2, fy = Hd * .3 + (b.lunge || 0) * Hd * .08, fk = Math.min(Wd / 420, Hd / 760);
     const winA = b.state === 'win' && !b.boss ? Math.max(0, 1 - b.tm / 1.2) : 1;
-    if (b.boss) K.deer(c, fx + 20 * fk, Hd * .47, fk * .62, t, b.pure, {flash:b.flash, hit:b.flash > .5, charge:b.state === 'wind' && b.phase === 2});
-    else K.shadow(c, b.el, fx, fy, fk * (b.big ? .95 : .8), t, {face:-1, big:b.big, flash:b.flash, alpha:winA, seed:b.seed});
+    if (b.boss) K.guardian(c, b.guard, fx + 20 * fk, Hd * .47, fk * .62, t, b.pure, {flash:b.flash, hit:b.flash > .5, charge:b.state === 'wind' && b.phase === 2});
+    else K.shadow(c, b.el, fx, fy, fk * (b.big ? .95 : .8), t, {face:-1, big:b.big, flash:b.flash, alpha:winA, seed:b.seed, look:b.look});
     if (b.boss && b.shield) { c.save(); c.translate(Wd * .66, Hd * .3); const r = 150 * fk; c.shadowColor = '#B04CFF'; c.shadowBlur = 24; c.strokeStyle = 'rgba(200,120,255,.9)'; c.fillStyle = 'rgba(120,40,200,.18)'; c.lineWidth = 3; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + t * .3; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.fill(); c.stroke();
       c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 2; for (let i = 0; i < b.shield.got; i++) { c.beginPath(); c.moveTo(0, 0); for (let j = 1; j < 5; j++) c.lineTo(Math.cos(i * 2.1 + j * .4) * r * j / 4, Math.sin(i * 2.1 + j * .3) * r * j / 4); c.stroke(); } c.restore(); }
     /* slash effects */
@@ -567,7 +706,7 @@ PUM.games.sky = function (o) {
     glass(c, 10, sy - 18, Math.min(Wd - 20, 360), 40);
     drawHearts(c, 28, sy + 2);
     drawMeter(c, Math.min(Wd - 20, 360) - 150, sy, 140);
-    if (b.state === 'cutin') K.cutin(c, Wd, Hd, b.tm / 1.8, L, S.SPECIAL[p.hero], S.EL[comp.el].col, t);
+    if (b.state === 'cutin') K.cutin(c, Wd, Hd, b.tm / 1.8, L, b.spec === 'special2' ? S.SPECIAL2 : S.SPECIAL[p.hero], b.spec === 'special2' ? '#FFB347' : S.EL[comp.el].col, t);
     if (b.state === 'specAtk' && b.tm < .8) { c.save(); c.globalAlpha = Math.max(0, .9 - b.tm * 1.4); c.fillStyle = '#FFFFFF'; c.fillRect(0, 0, Wd, Hd); c.restore(); K.speedLines(c, Wd, Hd, Wd * .66, Hd * .3, t, 'rgba(255,255,255,.6)', 80); }
     if (b.state === 'intro') { const a = Math.min(1, b.tm * 3) * Math.min(1, (1.5 - b.tm) * 3); c.save(); c.globalAlpha = a; label(c, b.boss ? 'GUARDIAN BATTLE' : 'A shadow appears!', Wd / 2, Hd * .5, Math.min(28, Wd / 13), '#FFFFFF', 'center', 'D'); c.restore(); }
   }
@@ -581,8 +720,8 @@ PUM.games.sky = function (o) {
 
   return {
     onStart() {
-      if (PUM.SKY3D && PUM.SKY3D.ready()) { try { R3 = PUM.SKY3D.create({world:W, hero, g, look:L, comp, double, tower}); const gc = document.getElementById('gc'); gc.parentNode.insertBefore(R3.canvas, gc); R3.resize(Wd, Hd); } catch (e) { console.error(e); if (R3) R3.dispose(); R3 = null; } }
-      api.ctrl(exploreCtrl()); banner(Q.name, Q.story.length < 60 ? Q.story : Q.obj, 2.2, '#FFC6DD'); say(Q.story); },
+      if (PUM.SKY3D && PUM.SKY3D.ready()) { try { R3 = PUM.SKY3D.create({world:W, hero, g, look:L, comp, double, tower, isle, known}); const gc = document.getElementById('gc'); gc.parentNode.insertBefore(R3.canvas, gc); R3.resize(Wd, Hd); } catch (e) { console.error(e); if (R3) R3.dispose(); R3 = null; } }
+      api.ctrl(exploreCtrl()); banner(Q.name, Q.story.length < 60 ? Q.story : Q.obj, 2.2, ['#FFC6DD', '#9BF6FF', '#FFC27A'][isle]); say(Q.story); },
     resize(w, h) { Wd = w; Hd = h; s = Math.min(h / 700, w / 380); gy = h * .64; if (R3) R3.resize(w, h); },
     update(dt) {
       g.t += dt; parts.update(dt);
@@ -590,7 +729,7 @@ PUM.games.sky = function (o) {
       for (const n of g.nums) n.t += dt; g.nums = g.nums.filter(n => n.t < 1.1);
       g.shake *= Math.exp(-dt * 8);
       if (g.mode === 'explore') updateExplore(dt);
-      else if (g.mode === 'trans') { g.trans += dt; if (g.trans > .75) { g.mode = 'battle'; b = newBattle(g.pending); api.ctrl(''); if (b.boss) say('Guardian battle! Purify Hanamori!'); else say(`${b.name}! It is weak to ${S.EL[S.weakTo(b.el)].name}.`); } }
+      else if (g.mode === 'trans') { g.trans += dt; if (g.trans > .75) { g.mode = 'battle'; b = newBattle(g.pending); api.ctrl(''); if (b.boss) say(`Guardian battle! Purify ${b.name}!`); else say(`${b.name}! It is weak to ${S.EL[S.weakTo(b.el)].name}.`); } }
       else if (g.mode === 'battle' && b && !g.koWait) updateBattle(dt);
       else if (g.mode === 'trans2') { g.trans += dt; if (g.trans > .6) { g.mode = 'explore'; api.ctrl(exploreCtrl()); } }
       else if (g.mode === 'end') { g.endT += dt; g.heal = lerp(g.heal, g.healTo, 1 - Math.exp(-dt * 1.5)); if (g.endT > .5 && Math.random() < .3) parts.burst(hero.x + (Math.random() - .5) * 400, hero.y - 200 - Math.random() * 200, 4, {speed:80, life:1.2, size:3, color:['#FFC6DD', '#FFE27A', '#9BF6FF'], shape:'star', g:60}); if (g.endT > 3.6) { g.mode = 'done'; result(true); } }
@@ -612,7 +751,8 @@ PUM.games.sky = function (o) {
     },
     pointer() {},
     setControl(k, down) {
-      if (k === 'left' || k === 'right') { ctl[k] = down && g.mode === 'explore'; return; }
+      if (k === 'left' || k === 'right' || k === 'glide') { ctl[k] = down && g.mode === 'explore'; return; }
+      if (k === 'dash') { if (down && g.mode === 'explore') hero.dashQ = .15; return; }
       if (k === 'jump') { if (down) { if (g.mode === 'explore') hero.buf = .14; else if (b && b.state === 'wind') guardTap(); } return; }
       if (k === 'guard') { if (down) guardTap(); return; }
       if (/^k[1-4]$/.test(k) && down) { const els = document.querySelectorAll('#choose [data-gp]:not(.sq-leave):not(.sq-tier)'); const el = els[Number(k[1]) - 1] || (els.length === 1 ? els[0] : null); if (el && !el.disabled) el.click(); }
@@ -636,7 +776,7 @@ PUM.games.sky = function (o) {
     onStop() { if (R3) { R3.dispose(); R3 = null; } },
     is3d: () => !!R3,
     xpEarned: () => g.xp,
-    _debug: () => ({g, hero, W, get b() { return b; }, get lock() { return lock; }}),
+    _debug: () => ({g, hero, W, get b() { return b; }, get lock() { return lock; }, get R3() { return R3; }}),
   };
 };
 })();

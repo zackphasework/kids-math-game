@@ -227,7 +227,7 @@ function gameTile(p, g) {
   let art, what, prog;
   if (g === 'trucks') { art = PUM.truckSVG('excavator', p.color); what = 'Build the town with the truck crew'; prog = `${R.builtCount(p)} of ${R.ACTIVE} built`; }
   else if (g === 'soccer') { const pr = p.prog.soccer, st = pr.stars.reduce((a, b) => a + b, 0); art = PUM.jerseySVG(p.color, init); what = 'Score goals and win the cup'; prog = `Level ${Math.min(pr.unlocked + 1, CP.count)} &middot; ${st} ${icon('star', 'fill')}`; }
-  else { const s = p.sky; art = KA.portraitImg(s.made ? KA.lookOf(p) : KA.look(0, null, null, p.color)); what = 'Heal Blossom Isle with your spirit'; prog = s.made ? `Lv ${SK.level(s.xp)} &middot; ${SK.cleared(p)} of ${SK.ACTIVE} quests` : 'Make your hero to start'; }
+  else { const s = p.sky; art = KA.portraitImg(s.made ? KA.lookOf(p) : KA.look(0, null, null, p.color)); what = SK.cleared(p) >= SK.ACTIVE ? 'You saved all three sky islands!' : `Heal ${SK.ISLANDS[SK.curIsle(p)].name} with your spirit`; prog = s.made ? `Lv ${SK.level(s.xp)} &middot; ${SK.cleared(p)} of ${SK.ACTIVE} quests` : 'Make your hero to start'; }
   const last = p.theme === g && p.mpTotal > 0;
   return `<button class="game-t g-${g} ${last ? 'last' : ''}" data-act="pick-game" data-g="${g}">
     <span class="game-art">${art}</span>
@@ -440,47 +440,65 @@ function rigCrane() {
 
 /* ---------- Sky Quest: village, sky map, hero setup, spirit garden, forge, results ---------- */
 const SK = PUM.SKY, KA = PUM.SKYART;
-let skySel = null, questSel = null, setup = null, skyResult = null, evo = null;
-const SKYKEYS = {ArrowLeft:'left', ArrowRight:'right', ArrowUp:'jump', ' ':'jump', g:'guard', '1':'k1', '2':'k2', '3':'k3', '4':'k4', s:'k0'};
+let skySel = null, questSel = null, skyIsle = null, setup = null, skyResult = null, evo = null;
+const SKYKEYS = {ArrowLeft:'left', ArrowRight:'right', ArrowUp:'jump', ' ':'jump', g:'guard', '1':'k1', '2':'k2', '3':'k3', '4':'k4', s:'k0', d:'dash', Shift:'dash', f:'glide', ArrowDown:'glide'};
 const spiritImg = (k, stage) => `<img class="sq-spirit" src="${KA.spiritImg(k, stage)}" alt="" draggable="false">`;
-function compList(p) { return Object.keys(p.sky.comps).map(k => ({k, kind:k, c:p.sky.comps[k], stage:k === 'hanamori' ? 3 : SK.stage(p.sky.comps[k].lv), name:SK.compName(k, p.sky.comps[k])})); }
+function compList(p) { return Object.keys(p.sky.comps).map(k => ({k, kind:k, c:p.sky.comps[k], stage:SK.isGuardian(k) ? 3 : SK.stage(p.sky.comps[k].lv), name:SK.compName(k, p.sky.comps[k])})); }
+/* what the sky map and village need to know about each island */
+function isleInfo(p) {
+  const pr = p.prog.anime;
+  return SK.ISLANDS.map((I, k) => ({name:I.name, open:SK.isleOpen(p, k), heal:SK.heal(p, k), cleared:SK.cleared(p, k),
+    quests:[0, 1, 2, 3, 4].map(j => { const i = k * 5 + j; return {i, boss:!!SK.QUESTS[i].boss, locked:i > pr.unlocked, cur:i === pr.unlocked && !pr.stars[i], stars:pr.stars[i]}; })}));
+}
+const lockedIsleMsg = k => `Purify ${SK.GUARDIANS[SK.ISLANDS[k - 1].guardian].name} on ${SK.ISLANDS[k - 1].name} to open ${SK.ISLANDS[k].name}`;
 function heroCard(p) {
   const s = p.sky, lv = SK.level(s.xp), c = SK.activeComp(p);
-  return `<div class="sq-hero">${KA.portraitImg(KA.lookOf(p), 'sq-port')}<div class="sq-hero-t"><b>${SK.HERO_NAMES[p.hero]} &middot; Lv ${lv}</b><span>${SK.title(lv)}</span><span class="xpbar" aria-label="Experience to next level"><i style="width:${(SK.xpFrac(s.xp) * 100).toFixed(0)}%"></i></span><small>${spiritImg(c.kind, c.stage)} ${esc(c.name)} is with you</small></div></div>`;
+  return `<div class="sq-hero">${KA.portraitImg(KA.lookOf(p), 'sq-port')}<div class="sq-hero-t"><b>${SK.HERO_NAMES[p.hero]} &middot; Lv ${lv}</b><span>${SK.title(lv)}</span><span class="xpbar" aria-label="Experience to next level"><i style="width:${(SK.xpFrac(s.xp) * 100).toFixed(0)}%"></i></span><small>${spiritImg(c.kind, c.stage)} ${esc(c.name)} is with you</small>${['double', 'dash', 'glide'].some(m => s.moves[m]) ? `<span class="sq-movechips">${['double', 'dash', 'glide'].filter(m => s.moves[m]).map(m => `<i>${SK.MOVE_INFO[m].name}</i>`).join('')}</span>` : ''}</div></div>`;
 }
 function buildCard(p, B) {
   const s = p.sky, built = B.k === 'dojo' || s.b[B.k];
   let act;
-  if (B.k === 'shrine') act = `<span class="lock-note">Purify ${B.guardians} guardians to open (${SK.guardians(p)} of ${B.guardians})</span>`;
+  if (B.k === 'shrine' && built) act = `<span class="upg-max">Open! Use ${SK.SPECIAL2} when your Spirit meter is full</span>`;
+  else if (B.k === 'shrine' && SK.guardians(p) >= B.guardians) act = `<button class="btn small go" data-act="sky-build" data-k="shrine">${icon('star', 'fill')} Open the shrine</button>`;
+  else if (B.k === 'shrine') act = `<span class="lock-note">Purify ${B.guardians} guardians to open (${SK.guardians(p)} of ${B.guardians})</span>`;
   else if (built) act = ['dojo', 'garden', 'forge'].includes(B.k) ? `<button class="btn small go" data-act="sky-open" data-k="${B.k}">${B.k === 'dojo' ? 'Train' : 'Open'}</button>` : '<span class="upg-max">Built</span>';
   else { const can = p.mp >= B.cost; act = `<button class="btn small ${can ? 'go' : ''}" data-act="sky-build" data-k="${B.k}" ${can ? '' : 'aria-disabled="true"'}>${icon('gem', 'gem')} ${can ? `Rebuild · ${B.cost}` : `Need ${B.cost}`}</button>`; }
   return `<div class="upg sq-build ${built ? 'built' : 'broken'} ${skySel === B.k ? 'sel' : ''}" id="b-${B.k}"><div class="upg-head"><b>${B.name}</b>${built ? icon('check') : ''}</div><p>${B.what}</p>${act}</div>`;
 }
 function renderVillage() {
-  const p = P(), s = p.sky, nq = Math.min(p.prog.anime.unlocked, SK.ACTIVE - 1), Q = SK.QUESTS[nq], lv = SK.level(s.xp), all = SK.cleared(p) >= SK.ACTIVE;
+  const p = P(), s = p.sky, nq = Math.min(p.prog.anime.unlocked, SK.ACTIVE - 1), Q = SK.QUESTS[nq], lv = SK.level(s.xp), all = SK.cleared(p) >= SK.ACTIVE, isleName = SK.ISLANDS[Q.isle].name;
   return `
   <header class="top">${backBtn('games', 'Back to games')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">Sky Quest &middot; Lv ${lv} ${SK.title(lv)}</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
   <div class="town-bar">${mpChip(p)}<span class="mp-chip snack">${spiritImg('petal', 1)} <b>${s.snacks}</b> snacks</span><button class="btn small" data-act="sky-setup">${icon('pencil')} Hero</button></div>
   <div class="town-wrap sq-wrap"><canvas id="village" aria-label="Sky Village. Tap a building to see it."></canvas></div>
   <section class="sq-next">${heroCard(p)}
-    <div class="sq-quest"><span class="kicker">${all ? 'Blossom Isle saved!' : `Next quest &middot; Blossom Isle`}</span><h3>${all ? 'Replay for more stars' : esc(Q.name)}</h3><p>${all ? 'Tide Grotto and Ember Peak are coming soon. Replay quests for stars, crystals and snacks.' : esc(Q.story)}</p>
+    <div class="sq-quest"><span class="kicker">${all ? 'All three islands saved!' : `Next quest &middot; ${isleName}`}</span><h3>${all ? 'Replay for more stars' : esc(Q.name)}</h3><p>${all ? 'You purified Hanamori, Umikaze and Homura. Replay quests for stars, crystals and snacks, and glide to the secret islands!' : esc(Q.story)}</p>
     <button class="btn go big wide" data-act="sky-quest-card" data-i="${nq}">${icon('play')} Sky map</button></div></section>
   <section class="block"><h2>Sky Village</h2><p class="hint-text" style="margin:-6px 0 12px">Spend crystals to rebuild the village. Every building helps you.</p><div class="upgs sq-builds">${SK.BUILD.map(B => buildCard(p, B)).join('')}</div></section>
   ${renderSettings(p)}`;
 }
+function foeLine(k) {
+  const G = SK.GUARDIANS[k], F = G || SK.FOES[k], wk = SK.weakTo(F.el);
+  return `${G ? `<b>${G.name}</b>` : F.name} (weak to <b class="el-${wk}">${SK.EL[wk].name}</b>)`;
+}
 function renderSkyMap() {
   const p = P(), pr = p.prog.anime, lv = SK.level(p.sky.xp);
+  if (questSel != null) skyIsle = SK.isleOf(questSel);
+  if (skyIsle == null || !SK.isleOpen(p, skyIsle)) skyIsle = SK.curIsle(p);
+  const k0 = skyIsle, I0 = SK.ISLANDS[k0];
   let sheet = '';
   if (questSel != null) {
     const i = questSel, Q = SK.QUESTS[i], weak = lv < Q.rec, best = pr.stars[i];
-    const foes = Q.foes.map(k => k === 'hanamori' ? 'Hanamori (weak to <b class="el-ember">Ember</b>)' : `${SK.FOES[k].name} (weak to <b class="el-${SK.weakTo(SK.FOES[k].el)}">${SK.EL[SK.weakTo(SK.FOES[k].el)].name}</b>)`).join(', ');
+    const foes = Q.foes.map(foeLine).join(', ');
     const comps = compList(p).map(x => `<button class="sq-pick ${p.sky.comp === x.k ? 'on' : ''}" data-act="sky-comp" data-k="${x.k}" aria-pressed="${p.sky.comp === x.k}">${spiritImg(x.k, x.stage)}<span>${esc(x.name)}</span><small class="el-${KA.SPIRITS[x.k].el}">${SK.EL[KA.SPIRITS[x.k].el].name}</small></button>`).join('');
-    sheet = `<div class="sheet sq-sheet" id="sheet" role="dialog" aria-label="${esc(Q.name)}">
+    const needs = Q.route.some(r => r[0] === 'dash') ? '<p class="hint-text">Long gaps here! Jump, then tap <b>Dash</b> in the air.</p>' : '';
+    sheet = `<div class="sheet sq-sheet isle-${I0.k}" id="sheet" role="dialog" aria-label="${esc(Q.name)}">
       <button class="icon-btn sheet-x" data-act="close-qsheet" aria-label="Close">${icon('x')}</button>
-      <span class="kicker">Quest ${i + 1} of ${SK.ACTIVE} &middot; Blossom Isle${Q.boss ? ' &middot; GUARDIAN' : ''}</span>
+      <span class="kicker">${I0.name} &middot; Quest ${i % 5 + 1} of 5${Q.boss ? ' &middot; GUARDIAN' : ''}</span>
       <h3>${esc(Q.name)} ${best ? starsRow(best) : ''}</h3>
       <p class="act-sub">${esc(Q.story)}</p>
       <p class="hint-text">Shadows here: ${foes}</p>
+      ${needs}
       <div class="lab">Bring a spirit</div><div class="sq-picks">${comps}</div>
       <p class="hint-text">Your spirit attacks after every right answer, and hits twice as hard when the shadow is weak to its element.</p>
       <div class="power-row ${weak ? 'weak' : ''}"><span>Your level <b>${lv}</b></span><span>Recommended <b>${Q.rec}</b></span></div>
@@ -489,9 +507,12 @@ function renderSkyMap() {
       <p class="stars-help">Stars: 1 for finishing, 1 for losing at most one heart, 1 for getting most of the math right.</p>
     </div>`;
   }
+  const tabs = SK.ISLANDS.map((I, k) => { const open = SK.isleOpen(p, k); return `<button class="sq-isle isle-${I.k} ${k === k0 ? 'on' : ''} ${open ? '' : 'locked'}" data-act="sky-isle" data-k="${k}" aria-pressed="${k === k0}" ${open ? '' : 'aria-disabled="true"'}><b>${I.name}</b><small>${open ? `${SK.cleared(p, k)} of 5 ${SK.cleared(p, k) === 5 ? '&middot; saved!' : ''}` : 'Locked'}</small></button>`; }).join('');
+  const rows = SK.QUESTS.map((Q, i) => ({Q, i})).filter(o => o.Q.isle === k0).map(({Q, i}) => `<button class="sq-qrow ${i > pr.unlocked ? 'locked' : ''} ${questSel === i ? 'on' : ''}" data-act="sel-quest" data-i="${i}" ${i > pr.unlocked ? 'aria-disabled="true"' : ''}><span class="sq-qn isle-${I0.k}">${Q.boss ? icon('star', 'fill') : i % 5 + 1}</span><span class="sq-qt"><b>${esc(Q.name)}</b><small>${i > pr.unlocked ? 'Locked' : Q.boss ? `Guardian &middot; Recommended level ${Q.rec}` : `Recommended level ${Q.rec}`}</small></span>${pr.stars[i] ? starsRow(pr.stars[i], 'tiny') : ''}</button>`).join('');
   return `<header class="top">${backBtn('base', 'Back to Sky Village')}<h2 class="title">Sky map</h2>${mpChip(p)}</header>
-    <div class="town-wrap sq-wrap"><canvas id="skymap" aria-label="The sky map. Tap a quest on Blossom Isle."></canvas></div>
-    <div class="sq-qlist">${SK.QUESTS.map((Q, i) => `<button class="sq-qrow ${i > pr.unlocked ? 'locked' : ''} ${questSel === i ? 'on' : ''}" data-act="sel-quest" data-i="${i}" ${i > pr.unlocked ? 'aria-disabled="true"' : ''}><span class="sq-qn">${Q.boss ? icon('star', 'fill') : i + 1}</span><span class="sq-qt"><b>${esc(Q.name)}</b><small>${i > pr.unlocked ? 'Locked' : `Recommended level ${Q.rec}`}</small></span>${pr.stars[i] ? starsRow(pr.stars[i], 'tiny') : ''}</button>`).join('')}</div>
+    <div class="town-wrap sq-wrap"><canvas id="skymap" aria-label="The sky map. Tap a quest on ${I0.name}, or tap another island to fly there."></canvas></div>
+    <div class="sq-isles" role="group" aria-label="Islands">${tabs}</div>
+    <div class="sq-qlist">${rows}</div>
     ${sheet}`;
 }
 function initSetup(p) { const s = p.sky, d = KA.heroDefaults(p.hero); return {hero:p.hero, hair:s.hair || d.hair, outfit:s.outfit || d.outfit, comp:s.comp || 'petal', name:''}; }
@@ -516,9 +537,9 @@ function renderSkySetup() {
 function renderGarden() {
   const p = P(), s = p.sky;
   const cards = compList(p).map(x => {
-    const guard = x.k === 'hanamori', lv = x.c.lv, next = lv < 5 ? 5 : lv < 10 ? 10 : null;
+    const guard = SK.isGuardian(x.k), lv = x.c.lv, next = lv < 5 ? 5 : lv < 10 ? 10 : null;
     return `<div class="upg sq-comp ${s.comp === x.k ? 'sel' : ''}">${spiritImg(x.k, x.stage)}<div class="upg-head"><b>${esc(x.name)}</b><span class="pmeta">Lv ${lv}</span></div>
-      <p>${guard ? 'Guardian of Blossom Isle. Already fully grown.' : next ? `${next - lv} more snack${next - lv > 1 ? 's' : ''} until it evolves into ${KA.SPIRITS[x.k].name[x.stage]}.` : 'Fully evolved!'}</p>
+      <p>${guard ? `Guardian of ${SK.ISLANDS[KA.SPIRITS[x.k].isle].name}. Already fully grown.` : next ? `${next - lv} more snack${next - lv > 1 ? 's' : ''} until it evolves into ${KA.SPIRITS[x.k].name[x.stage]}.` : 'Fully evolved!'}</p>
       <div class="sq-row">${guard || lv >= 15 ? '' : `<button class="btn small ${s.snacks ? 'go' : ''}" data-act="sky-feed" data-k="${x.k}" ${s.snacks ? '' : 'aria-disabled="true"'}>Feed a snack</button>`}${s.comp === x.k ? '<span class="upg-max">On quests with you</span>' : `<button class="btn small" data-act="sky-comp" data-k="${x.k}">Bring on quests</button>`}</div>
       ${guard ? '' : `<input class="field small" data-rename="${x.k}" maxlength="14" placeholder="Rename ${esc(KA.SPIRITS[x.k].name[x.stage - 1])}" value="${esc(x.c.name || '')}" aria-label="Rename">`}
     </div>`;
@@ -535,9 +556,9 @@ function renderForge() {
 }
 function renderSkyDone() {
   const p = P(), r = skyResult, Q = SK.QUESTS[r.qi];
-  const lvUp = r.lv1 > r.lv0;
+  const lvUp = r.lv1 > r.lv0, G = Q.boss ? SK.GUARDIANS[SK.ISLANDS[Q.isle].guardian] : null;
   return `<div class="results sq-results">
-    <h2 class="rtitle">${r.ok ? (Q.boss ? 'Hanamori purified!' : 'Quest complete!') : 'So close!'}</h2>
+    <h2 class="rtitle">${r.ok ? (G ? `${G.name} purified!` : 'Quest complete!') : 'So close!'}</h2>
     ${r.ok ? `<div class="rstars">${[0, 1, 2].map(i => `<span class="rs ${i < r.stars ? 'on' : ''}" style="--i:${i}">${icon('star', 'fill')}</span>`).join('')}</div>` : ''}
     <div class="site-card sq-wrap"><canvas id="skydone" aria-label="${esc(Q.name)}"></canvas></div>
     ${r.ok ? '' : `<p class="rmsg">You were knocked out. Train at the dojo, upgrade at the forge, or bring a spirit the shadows are weak to.</p>`}
@@ -563,13 +584,14 @@ function skyAfterRender(p) {
   if (PUM.SKY3D) PUM.SKY3D.ensure();
   if (view === 'base') {
     let hits = [];
-    skyCanvas('village', {draw(ctx, W, H, t) { hits = KA.village(ctx, W, H, t, {buildings:p.sky.b, comps:compList(p)}, skySel); },
+    const isles = isleInfo(p);
+    skyCanvas('village', {draw(ctx, W, H, t) { hits = KA.village(ctx, W, H, t, {buildings:p.sky.b, comps:compList(p), isles}, skySel); },
       tap(x, y) { const h = hits.find(o => Math.hypot(o.x - x, o.y - y) < o.r); if (!h) return; A.ac(); A.sfx('tap'); skySel = h.k; render(); const el = document.getElementById('b-' + h.k); if (el) el.scrollIntoView({block:'center', behavior:'smooth'}); }}, w => Math.min(460, w * .92));
   }
   if (view === 'map') {
-    let nodes = []; const pr = p.prog.anime;
-    skyCanvas('skymap', {draw(ctx, W, H, t) { nodes = KA.skyMap(ctx, W, H, t, {heal:SK.heal(p), sel:questSel, quests:SK.QUESTS.map((Q, i) => ({boss:!!Q.boss, locked:i > pr.unlocked, cur:i === pr.unlocked && !pr.stars[i], stars:pr.stars[i]}))}); },
-      tap(x, y) { const n = nodes.find(o => Math.hypot(o.x - x, o.y - y) < o.r); if (n) { A.ac(); selQuest(n.i); } }}, w => Math.min(520, w * 1.1));
+    let nodes = []; const isles = isleInfo(p);
+    skyCanvas('skymap', {draw(ctx, W, H, t) { nodes = KA.skyMap(ctx, W, H, t, {isle:skyIsle || 0, sel:questSel, isles}); },
+      tap(x, y) { const n = nodes.find(o => Math.hypot(o.x - x, o.y - y) < o.r); if (!n) return; A.ac(); if (n.isle != null) pickIsle(n.isle); else selQuest(n.i); }}, w => Math.min(540, w * 1.14));
   }
   if (view === 'skyGarden') {
     let t0 = null;
@@ -588,26 +610,31 @@ function skyAfterRender(p) {
           ctx.font = `${Math.min(22, W / 16)}px "Dela Gothic One", Lexend, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#FFFFFF'; ctx.lineWidth = 5; ctx.strokeStyle = '#150E1C'; const msg = `${KA.SPIRITS[evo.kind].name[evo.to - 1]}!`; ctx.strokeText(msg, x, H * .12); ctx.fillText(msg, x, H * .12);
         }
         if (k > 1.6) { evo = null; t0 = null; }
-      } else list.forEach((x, i) => { const n = list.length, px = W * (i + 1) / (n + 1), py = H * .55 + Math.sin(t * 2 + i) * 6; if (x.k === 'hanamori') KA.deer(ctx, px, H * .9, .26 * u, t, 1, {}); else KA.spirit(ctx, x.k, x.stage, px, py, .58 * u, t + i, {face:Math.sin(t * .5 + i) > 0 ? 1 : -1}); });
+      } else list.forEach((x, i) => { const n = list.length, px = W * (i + 1) / (n + 1), py = H * .55 + Math.sin(t * 2 + i) * 6; if (SK.isGuardian(x.k)) KA.guardian(ctx, x.k, px, H * .9, .26 * u, t, 1, {}); else KA.spirit(ctx, x.k, x.stage, px, py, .58 * u, t + i, {face:Math.sin(t * .5 + i) > 0 ? 1 : -1}); });
       KA.petals(ctx, W, H, t, 10);
     }}, w => Math.min(300, w * .7));
   }
   if (view === 'skyDone') {
-    const r = skyResult, Q = SK.QUESTS[r.qi], L = KA.lookOf(p), c = SK.activeComp(p);
+    const r = skyResult, Q = SK.QUESTS[r.qi], L = KA.lookOf(p), c = SK.activeComp(p), gk = SK.ISLANDS[Q.isle].guardian;
     skyCanvas('skydone', {draw(ctx, W, H, t) {
-      KA.battleBg(ctx, W, H, t, {});
+      KA.battleBg(ctx, W, H, t, {isle:Q.isle});
       const bs = Math.min(W * .7 / 360, H * .95 / 440), boss = Q.boss && r.ok;
-      if (boss) KA.deer(ctx, W * .74, H * .96, Math.min(W / 900, H / 480), t, 1, {});
+      if (boss) KA.guardian(ctx, gk, W * .74, H * .96, Math.min(W / 900, H / 480), t, 1, {});
       ctx.save(); ctx.translate(W * (boss ? .3 : .4) - 180 * bs, H - 440 * bs); ctx.scale(bs, bs); KA.bust(ctx, L, {mouth:r.ok ? 'grin' : 'smile', blink:Math.sin(t * 1.7) > .985 ? .1 : 1}); ctx.restore();
       if (!boss) KA.spirit(ctx, c.kind, c.stage, W * .78, H * .5, Math.min(W / 420, H / 260) * .7, t);
-      if (r.ok) KA.petals(ctx, W, H, t, 26); else { ctx.fillStyle = 'rgba(10,10,40,.25)'; ctx.fillRect(0, 0, W, H); }
+      if (r.ok) KA.drift(ctx, W, H, t, 26, Q.isle); else { ctx.fillStyle = 'rgba(10,10,40,.25)'; ctx.fillRect(0, 0, W, H); }
     }}, w => Math.min(300, w * .66));
   }
 }
 function selQuest(i) {
   const p = P();
-  if (i > p.prog.anime.unlocked) { PUM.fx.toast('Finish the quest before this one to unlock it'); A.sfx('no'); return; }
+  if (i > p.prog.anime.unlocked) { PUM.fx.toast(SK.isleOpen(p, SK.isleOf(i)) ? 'Finish the quest before this one to unlock it' : lockedIsleMsg(SK.isleOf(i))); A.sfx('no'); return; }
   questSel = i; A.sfx('tap'); render();
+}
+function pickIsle(k) {
+  const p = P();
+  if (!SK.isleOpen(p, k)) { PUM.fx.toast(lockedIsleMsg(k)); A.sfx('no'); return; }
+  skyIsle = k; questSel = null; A.sfx('tap'); render();
 }
 function startQuest(i) {
   const p = P(); if (!p || i > p.prog.anime.unlocked) return;
@@ -631,7 +658,14 @@ function skyFinish(r) {
     pr.stars[qi] = Math.max(pr.stars[qi], stars);
     if (pr.unlocked === qi && qi < SK.ACTIVE - 1) pr.unlocked = qi + 1;
     bonus = stars * 2 + (Q.boss ? 5 : 0);
-    if (Q.boss && first) { s.comps.hanamori = s.comps.hanamori || {lv:8, name:''}; s.moves.double = true; snacks += 2; unlocks.push('Hanamori joined your team!', 'You learned double jump. Go back and reach the secret ledges!', 'Blossom badge earned'); }
+    if (Q.boss && first) {
+      const I = SK.ISLANDS[Q.isle], gk = I.guardian, G = SK.GUARDIANS[gk];
+      s.comps[gk] = s.comps[gk] || {lv:8, name:''}; s.moves[G.teach] = true; snacks += 2;
+      unlocks.push(`${G.name} joined your team!`, {double:'You learned double jump. Go back and reach the secret ledges!', dash:'You learned dash! Jump, then tap Dash to zoom across long gaps.', glide:'You learned glide! Jump, then hold Glide to float down. Fly to the secret islands!'}[G.teach], `${I.name.split(' ')[0]} badge earned`);
+      if (SK.ISLANDS[Q.isle + 1]) unlocks.push(`${SK.ISLANDS[Q.isle + 1].name} is open! Find it on the sky map.`);
+      else unlocks.push('You saved all three sky islands!');
+      if (SK.guardians(p) === 2 && !s.b.shrine) unlocks.push('The Sky shrine can open now. Visit Sky Village!');
+    }
   }
   s.snacks = Math.min(99, s.snacks + snacks);
   p.mp += bonus; p.mpTotal += bonus;
@@ -652,18 +686,20 @@ function skyEvent(a, el) {
     }
     case 'sky-build': {
       const B = SK.BUILD.find(x => x.k === el.dataset.k); if (!B || s.b[B.k]) return true;
+      if (B.guardians && SK.guardians(p) < B.guardians) { PUM.fx.toast(`Purify ${B.guardians} guardians to open the ${B.name.toLowerCase()}`); A.sfx('no'); return true; }
       if (p.mp < B.cost) { PUM.fx.toast(`Need ${B.cost - p.mp} more crystals. Go on a quest or train at the dojo!`); A.sfx('no'); return true; }
-      p.mp -= B.cost; s.b[B.k] = true; skySel = B.k; store.savePlayer(p); A.sfx('up'); PUM.fx.toast(`${icon('up')} ${B.name} rebuilt!`); render();
+      p.mp -= B.cost; s.b[B.k] = true; skySel = B.k; store.savePlayer(p); A.sfx('up'); PUM.fx.toast(B.k === 'shrine' ? `${icon('star', 'fill')} The Sky shrine is open! New special: ${SK.SPECIAL2}` : `${icon('up')} ${B.name} rebuilt!`); render();
       PUM.fx.burst(document.getElementById('b-' + B.k)); return true;
     }
     case 'sky-open': { const k = el.dataset.k; A.sfx('tap'); if (k === 'dojo') startTrain(); else go(k === 'garden' ? 'skyGarden' : 'skyForge'); return true; }
-    case 'sky-quest-card': questSel = Number(el.dataset.i); A.sfx('tap'); go('map'); return true;
+    case 'sky-quest-card': questSel = Number(el.dataset.i); skyIsle = SK.isleOf(questSel); A.sfx('tap'); go('map'); return true;
     case 'sel-quest': selQuest(Number(el.dataset.i)); return true;
+    case 'sky-isle': pickIsle(Number(el.dataset.k)); return true;
     case 'close-qsheet': questSel = null; A.sfx('tap'); render(); return true;
     case 'sky-comp': { const k = el.dataset.k; if (!s.comps[k]) return true; s.comp = k; store.savePlayer(p); A.sfx('tap'); render(); return true; }
     case 'sky-quest': A.sfx('tap'); startQuest(Number(el.dataset.i)); return true;
     case 'sky-feed': {
-      const k = el.dataset.k, c = s.comps[k]; if (!c || k === 'hanamori') return true;
+      const k = el.dataset.k, c = s.comps[k]; if (!c || SK.isGuardian(k)) return true;
       if (s.snacks < 1) { PUM.fx.toast('No snacks yet. Find them in treasure chests!'); A.sfx('no'); return true; }
       const st0 = SK.stage(c.lv); s.snacks--; c.lv = Math.min(15, c.lv + 1); const st1 = SK.stage(c.lv);
       store.savePlayer(p); A.sfx(st1 > st0 ? 'fanfare' : 'up');
