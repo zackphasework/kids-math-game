@@ -572,3 +572,10 @@ html.skyui .kicker{color:#9FD9FF}
 #game.sky .refuel-head p{color:#B9C8FF}
 @media (pointer:coarse){ .sq-opt small, .sq-move i{display:none} }
 .sq-wrap canvas{display:block; width:100%; cursor:pointer}
+
+/* Sky Quest: move strength */
+.sq-tiers{display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; width:100%}
+.sq-tier{display:flex; flex-direction:column; align-items:center; gap:1px; padding:6px 4px; border:1.5px solid rgba(255,255,255,.3); border-radius:12px; background:rgba(255,255,255,.08); color:#F3F6FF; cursor:pointer; touch-action:manipulation}
+.sq-tier b{font:900 14px "Zen Kaku Gothic New", Lexend, sans-serif; color:#FFE27A; white-space:nowrap}
+.sq-tier small{font:600 11px Lexend, sans-serif; color:#B9C8FF; text-align:center; line-height:1.2}
+.sq-tier.on{border-color:#7FF0FF; background:rgba(127,240,255,.22); box-shadow:0 0 14px rgba(127,240,255,.45)}

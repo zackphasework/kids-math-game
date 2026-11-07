@@ -21,6 +21,26 @@ S.MOVES = {blossom:['Petal Slash', 'Blossom Bloom', 'Petal Arrow'], tide:['Tide 
 S.SPECIAL = ['SKY BLADE', 'STARFALL BLOOM', 'COMET ARROW'];
 S.STYLE = ['Sword: every hit strikes twice', 'Staff: extra damage on weak spots', 'Bow: lucky critical hits'];
 S.HERO_NAMES = ['Kai', 'Mira', 'Juno'];
+/* Move strength: a harder question powers a stronger hit. d = how many math steps above the kid's level. */
+S.TIERS = [
+  {k:'light', name:'Light', stars:1, d:-1, mult:.65, xp:6, what:'Easier question, small hit'},
+  {k:'strong', name:'Strong', stars:2, d:0, mult:1, xp:10, what:'Your level, solid hit'},
+  {k:'mega', name:'Mega', stars:3, d:1, mult:1.9, xp:16, what:'Harder question, huge hit'},
+];
+/* A question d steps from the kid's level; past the top of their math world it borrows the next world's first steps. */
+S.question = function (p, d, n) {
+  const LV = PUM.LEVELS, sh = PUM.util.shuffle;
+  let world = p.world, tier = ((p.levels[world] || {tier:0}).tier) + d;
+  const max = PUM.maxTier(world);
+  if (tier > max) { const i = LV.findIndex(l => l.id === world); if (i >= 0 && i < LV.length - 1) { world = LV[i + 1].id; tier = Math.min(PUM.maxTier(world), tier - max - 1); } else tier = max; }
+  tier = Math.max(0, tier);
+  let q, g = 0;
+  do { q = PUM.gen(world, tier, p.theme); } while (q.kind === 'group' && g++ < 10);
+  if (q.kind === 'group') return PUM.gateQuestion(p, n);
+  const opts = [q.ans, ...sh(q.choices.filter(c => c !== q.ans))].slice(0, n);
+  while (opts.length < n) { const c = q.ans + opts.length + 1; if (!opts.includes(c)) opts.push(c); }
+  return {q, options:sh(opts)};
+};
 
 /* ---------- hero level ---------- */
 const LV_XP = [0, 40, 100, 180, 280, 400, 540, 700, 880, 1080, 1300, 1550, 1820, 2100, 2400, 2750];
@@ -149,7 +169,7 @@ PUM.games.sky = function (o) {
   const W = build(Q);
   const parts = E.Particles();
   const hero = {x:90, y:0, vx:0, vy:0, ground:true, face:1, run:0, coyote:0, buf:0, used2:false, inv:0, safe:{x:90, y:0}};
-  const g = {mode:'explore', t:0, hearts:st.hearts, maxH:st.hearts, meter:0, revived:false, lost:0, right:0, asked:0, snacks:0, crystals:0, beaten:0,
+  const g = {tier:1, mode:'explore', t:0, hearts:st.hearts, maxH:st.hearts, meter:0, revived:false, lost:0, right:0, asked:0, snacks:0, crystals:0, beaten:0,
     shake:0, banner:null, nums:[], trans:0, heal:S.heal(p), healTo:S.heal(p), camX:0, camY:0, comp:{x:40, y:-110}, endT:0, lit:0, xp:0};
   const ctl = {left:false, right:false};
   let Wd = 360, Hd = 640, s = 1, gy = 400, b = null, lock = null;
@@ -259,7 +279,8 @@ PUM.games.sky = function (o) {
   function moveBtns() {
     const els = ['blossom', 'tide', 'ember'].concat(st.storm ? ['storm'] : []);
     const spec = g.meter >= 1 ? `<button class="sq-move special" data-gp="move" data-v="special"><b>${S.SPECIAL[p.hero]}</b><small>Special move ready!</small></button>` : '';
-    return `<div class="sq-card moves"><div class="sq-title">${g.meter >= 1 ? 'Your Spirit meter is full!' : 'Pick a move'}</div>${spec}<div class="sq-moves n${els.length}">${els.map((el, i) => `<button class="sq-move el-${el}" data-gp="move" data-v="${el}"><small>${S.EL[el].name}</small><b>${moveName(el)}</b><i>${i + 1}</i></button>`).join('')}</div></div>`;
+    const tiers = `<div class="sq-tiers" role="group" aria-label="Move strength">${S.TIERS.map((T, i) => `<button class="sq-tier ${g.tier === i ? 'on' : ''}" data-gp="tier" data-v="${i}" aria-pressed="${g.tier === i}"><b>${T.name} ${'&#9733;'.repeat(T.stars)}</b><small>${T.what}</small></button>`).join('')}</div>`;
+    return `<div class="sq-card moves"><div class="sq-title">${g.meter >= 1 ? 'Your Spirit meter is full!' : 'Pick how strong, then a move'}</div>${spec}${tiers}<div class="sq-moves n${els.length}">${els.map((el, i) => `<button class="sq-move el-${el}" data-gp="move" data-v="${el}"><small>${S.EL[el].name}</small><b>${moveName(el)}</b><i>${i + 1}</i></button>`).join('')}</div></div>`;
   }
   function toPick() {
     if (b.boss && b.shield) { toAsk('shield'); return; }
@@ -271,10 +292,11 @@ PUM.games.sky = function (o) {
   }
   function toAsk(move) {
     b.move = move;
-    const {q, options} = PUM.gateQuestion(p, nOpts());
+    const T = move === 'shield' || assist >= 2 ? S.TIERS[1] : S.TIERS[g.tier]; b.tierUsed = T;
+    const {q, options} = move === 'shield' ? PUM.gateQuestion(p, nOpts()) : S.question(p, T.d, nOpts());
     b.q = q; b.opts = options; b.answered = false; b.askT = 0;
-    b.crit = age >= 10 ? 5 : age >= 8 ? 7 : 0;
-    const title = move === 'shield' ? `Break the shadow shield! ${b.shield.got} of 3` : `${move === 'special' ? '' : moveName(move) + ': '}answer to power it up`;
+    b.crit = age >= 10 ? 5 : age >= 8 ? 7 : 0; if (b.crit && T.k === 'mega') b.crit += 3;
+    const title = move === 'shield' ? `Break the shadow shield! ${b.shield.got} of 3` : `${assist >= 2 ? '' : T.name + ' '}${moveName(move)}: answer to power it up`;
     const bar = b.crit && move !== 'shield' ? `<div class="sq-crit"><i style="animation-duration:${b.crit}s"></i><span>Quick answer = critical hit!</span></div>` : '';
     api.panel(qPanel(title, q, options, null, bar), 'sky-q'); say(q.spoken);
     setState('ask');
@@ -284,7 +306,7 @@ PUM.games.sky = function (o) {
     const ok = v === b.q.ans; b.answered = true;
     g.asked++; api.answer(ok, b.q);
     const crit = ok && b.crit && b.askT <= b.crit && b.move !== 'shield';
-    if (ok) { g.right++; g.xp += crit ? 15 : 10; }
+    if (ok) { g.right++; g.xp += (b.tierUsed ? b.tierUsed.xp : 10) + (crit ? 5 : 0); }
     api.panel(qPanel(ok ? (crit ? 'CRITICAL!' : b.move === 'shield' ? 'Crack!' : 'Yes!') : `Not quite. It's ${b.q.ans}.`, b.q, b.opts, {picked:v}), 'sky-q');
     b.ok = ok; b.isCrit = crit;
     setState(ok ? 'resolve' : 'miss');
@@ -373,7 +395,7 @@ PUM.games.sky = function (o) {
     else if (b.state === 'dodge' && b.tm > .8) enemyTurn();
     else if (b.state === 'atk') {
       const col = S.EL[b.move].col;
-      if (b.hitsLeft > 0 && b.tm > (p.hero === 0 ? (b.hitsLeft === 2 ? .3 : .55) : .35)) { b.hitsLeft--; hitFoe(damage(b.move, (p.hero === 0 ? .55 : 1) * (b.isCrit ? 1.35 : 1)), col, b.isCrit); }
+      if (b.hitsLeft > 0 && b.tm > (p.hero === 0 ? (b.hitsLeft === 2 ? .3 : .55) : .35)) { b.hitsLeft--; hitFoe(damage(b.move, (p.hero === 0 ? .55 : 1) * (b.isCrit ? 1.35 : 1) * (b.tierUsed ? b.tierUsed.mult : 1)), col, b.isCrit || (b.tierUsed && b.tierUsed.k === 'mega')); }
       if (!b.compDone && b.tm > .95) { b.compDone = true; b.compFx = 1; hitFoe(Math.max(1, Math.round(st.atk * (.25 + .04 * comp.lv) * S.mult(comp.el, b.el))), S.EL[comp.el].col, false); }
       if (b.tm > 1.5) { b.compDone = false; afterHeroTurn(); }
     }
@@ -572,12 +594,13 @@ PUM.games.sky = function (o) {
       if (k === 'left' || k === 'right') { ctl[k] = down && g.mode === 'explore'; return; }
       if (k === 'jump') { if (down) { if (g.mode === 'explore') hero.buf = .14; else if (b && b.state === 'wind') guardTap(); } return; }
       if (k === 'guard') { if (down) guardTap(); return; }
-      if (/^k[1-4]$/.test(k) && down) { const els = document.querySelectorAll('#choose [data-gp]:not(.sq-leave)'); const el = els[Number(k[1]) - 1] || (els.length === 1 ? els[0] : null); if (el && !el.disabled) el.click(); }
+      if (/^k[1-4]$/.test(k) && down) { const els = document.querySelectorAll('#choose [data-gp]:not(.sq-leave):not(.sq-tier)'); const el = els[Number(k[1]) - 1] || (els.length === 1 ? els[0] : null); if (el && !el.disabled) el.click(); }
       if (k === 'k0' && down) { const el = document.querySelector('#choose .special'); if (el) el.click(); }
     },
     ui(act, v) {
       if (act === 'ans') { const n = Number(v); if (g.mode === 'lock') answerLock(n); else if (b) answerBattle(n); }
       if (act === 'move') uiMove(v);
+      if (act === 'tier' && b && b.state === 'pick') { g.tier = Number(v) || 0; A.sfx('tap'); api.panel(moveBtns(), 'sky-q'); }
       if (act === 'leave' && lock) { const ch = lock.ref; lock = null; api.panel(null); api.ctrl(exploreCtrl()); g.mode = 'explore'; hero.x = ch.x - 60; }
     },
     /* the knock-out revive (shared refill overlay): each right answer gives a heart back */
