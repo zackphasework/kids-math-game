@@ -114,7 +114,7 @@ S.migrate = function (p, rawUp) {
   for (const k of OLD_UPS) { const l = clamp(Number(u[k]) || 0, 0, 5); for (let i = 0; i < l; i++) refund += PUM.CAMPAIGN.cost[i]; }
   const pr = p.prog.anime; for (let i = 0; i < pr.stars.length; i++) refund += pr.stars[i] ? 2 : 0;
   p.prog.anime = {unlocked:0, stars:pr.stars.map(() => 0), plays:pr.plays};
-  if (p.theme === 'anime' || refund) p.mp += refund;
+  p.coins.anime += refund;
   p.sky.v = 1;
 };
 

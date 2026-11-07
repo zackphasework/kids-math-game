@@ -55,7 +55,7 @@ function syncChip() {
   return `<div class="sync" id="sync"><button class="sync-b" data-s="${s}" data-act="sync-info" aria-expanded="${showSync}"><span class="dot"></span>${store.SYNC_TEXT[s]}${!fam ? ' · Join family' : ''}</button>${panel}</div>`;
 }
 store.sync.onChange = () => { const el = document.getElementById('sync'); if (el) el.outerHTML = syncChip(); };
-store.sync.onPulled = () => { if (pid && !P()) { pid = null; if (view !== 'form') view = 'home'; } if (view === 'home' || view === 'base' || view === 'map' || view === 'garage' || view === 'skyGarden' || view === 'skyForge') render(); };
+store.sync.onPulled = () => { if (pid && !P()) { pid = null; if (view !== 'form') view = 'home'; } if (view === 'home' || view === 'games' || view === 'base' || view === 'map' || view === 'garage' || view === 'skyGarden' || view === 'skyForge') render(); };
 
 /* ---------- screens ---------- */
 function renderHome() {
@@ -64,25 +64,21 @@ function renderHome() {
   <header class="top"><div><h1>Power-Up Math</h1><p class="sub">Solve math to power up your trucks, your soccer team or your hero.</p></div>${muteBtn()}</header>
   <div class="hero-strip" aria-hidden="true">${PUM.truckSVG('excavator', 'marigold')}${PUM.jerseySVG('sea', '9')}${PUM.heroSVG(0, 'berry')}</div>
   <section class="block"><h2>Who's playing?</h2>
-    <div class="players">${ps.map(p => { const pr = p.prog[p.theme]; return `<button class="player" data-act="open" data-id="${p.id}">${avatar(p, 'av')}<span class="pname">${esc(p.name)}</span><span class="pmeta">${PUM.THEMES[p.theme].name} &middot; ${isRig(p) ? `${R.builtCount(p)} built` : `level ${pr.unlocked + 1}`}</span></button>`; }).join('')}
+    <div class="players">${ps.map(p => `<button class="player" data-act="open" data-id="${p.id}">${avatar(p, 'av')}<span class="pname">${esc(p.name)}</span><span class="pmeta">Last: ${PUM.THEMES[p.theme].game}</span></button>`).join('')}
       <button class="player add" data-act="add-player">${icon('plus')}<span>Add player</span></button></div>
-    ${ps.length ? '' : `<p class="empty-note">Add each kid once with their name, age and favourite theme. They'll start at the right math level.</p>`}
+    ${ps.length ? '' : `<p class="empty-note">Add each kid once with their name, age and colour. They'll start at the right math level and can play every game.</p>`}
     ${syncChip()}
   </section>`;
 }
 function renderForm() {
   const d = draft, editing = !!d.id;
-  const art = {trucks:PUM.truckSVG('dump', d.color), soccer:PUM.jerseySVG(d.color, (d.name || '?').trim().charAt(0).toUpperCase() || '?'), anime:PUM.heroSVG(d.hero, d.color)};
   const [l, t] = PUM.AGE_START[d.age];
   return `
-  <header class="top">${backBtn(editing ? 'base' : 'home')}<h2 class="title">${editing ? 'Edit player' : 'New player'}</h2><span style="width:52px"></span></header>
+  <header class="top">${backBtn(editing ? 'games' : 'home')}<h2 class="title">${editing ? 'Edit player' : 'New player'}</h2><span style="width:52px"></span></header>
   <div class="form">
     <div class="preview">${avatar(d, 'av-big')}<span id="pv-name">${esc(d.name || 'Name')}</span></div>
     <label class="lab" for="pname">Name</label>
     <input id="pname" class="field" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Type a name" value="${esc(d.name)}">
-    <div class="lab">Pick a theme</div>
-    <div class="themes">${PUM.THEME_IDS.map(th => `<button class="theme-b ${d.theme === th ? 'on' : ''}" data-act="pick" data-k="theme" data-v="${th}" aria-pressed="${d.theme === th}">${art[th]}<span>${PUM.THEMES[th].name}</span></button>`).join('')}</div>
-    ${d.theme === 'anime' ? `<div class="lab">Pick a hero</div><div class="themes">${PUM.HEROES.map((h, i) => `<button class="theme-b ${d.hero === i ? 'on' : ''}" data-act="pick" data-k="hero" data-v="${i}" aria-pressed="${d.hero === i}">${PUM.heroSVG(i, d.color)}<span>${h.name}</span></button>`).join('')}</div>` : ''}
     <div class="lab">Colour</div>
     <div class="swatches">${PUM.COLORS.map(c => `<button class="sw ${d.color === c ? 'on' : ''}" data-act="pick" data-k="color" data-v="${c}" style="--c:var(--${c})" aria-label="${c}" aria-pressed="${d.color === c}"></button>`).join('')}</div>
     <div class="lab">Age</div>
@@ -108,7 +104,7 @@ function renderBase() {
   const weak = pw < nl.power;
   const wd = camp(p).worlds[nl.world];
   return `
-  <header class="top">${backBtn('home', 'Back to players')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">${th.base}</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
+  <header class="top">${backBtn('games', 'Back to games')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">${th.game}</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
   <section class="mission">
     <div class="mission-head"><span class="kicker">${th.game} &middot; ${esc(wd.name)}</span>${mpChip(p)}</div>
     <h3>Level ${nl.i + 1}: ${esc(nl.name)}</h3>
@@ -210,9 +206,9 @@ function render() {
   app.hidden = view === 'game';
   stopBg();
   if (view === 'game') return;
-  const rig = isRig(P()), sky = isSky(P()) && view !== 'home' && view !== 'form';
+  const rig = isRig(P()), sky = isSky(P()) && view !== 'home' && view !== 'form' && view !== 'games';
   document.documentElement.classList.toggle('skyui', sky);
-  app.innerHTML = view === 'form' ? renderForm() : view === 'base' ? (rig ? renderTown() : sky ? renderVillage() : renderBase()) : view === 'garage' ? renderGarage() : view === 'job' ? renderJob() : view === 'jobDone' ? renderJobDone()
+  app.innerHTML = view === 'form' ? renderForm() : view === 'games' ? renderGames() : view === 'base' ? (rig ? renderTown() : sky ? renderVillage() : renderBase()) : view === 'garage' ? renderGarage() : view === 'job' ? renderJob() : view === 'jobDone' ? renderJobDone()
     : view === 'map' ? (sky ? renderSkyMap() : renderMap()) : view === 'skySetup' ? renderSkySetup() : view === 'skyGarden' ? renderGarden() : view === 'skyForge' ? renderForge() : view === 'skyDone' ? renderSkyDone()
     : view === 'train' ? renderTrain() : view === 'trainDone' ? renderTrainDone() : view === 'result' ? renderResult() : renderHome();
   afterRender();
@@ -220,6 +216,31 @@ function render() {
   if (view === 'train') { quiz = PUM.Quiz(document.getElementById('quiz-mount'), {player:P, onAnswer:onTrainAnswer, onAdvance:advanceTrain}); quiz.next(); }
 }
 function go(v) { if (quiz && v !== 'train') { quiz.destroy(); quiz = null; } view = v; render(); try { window.scrollTo(0, 0); } catch (e) {} }
+
+/* ---------- game picker: one player plays all three games ---------- */
+const GAME_ORDER = ['trucks', 'soccer', 'anime'];
+const coinIcon = g => g === 'trucks' ? icon('coin', 'coin') : g === 'anime' ? icon('gem', 'gem') : icon('bolt');
+const coinName = g => g === 'trucks' ? 'coins' : g === 'anime' ? 'crystals' : 'math points';
+function gameTile(p, g) {
+  const init = (p.name || '?').trim().charAt(0).toUpperCase() || '?';
+  let art, what, prog;
+  if (g === 'trucks') { art = PUM.truckSVG('excavator', p.color); what = 'Build the town with the truck crew'; prog = `${R.builtCount(p)} of ${R.ACTIVE} built`; }
+  else if (g === 'soccer') { const pr = p.prog.soccer, st = pr.stars.reduce((a, b) => a + b, 0); art = PUM.jerseySVG(p.color, init); what = 'Score goals and win the cup'; prog = `Level ${Math.min(pr.unlocked + 1, CP.count)} &middot; ${st} ${icon('star', 'fill')}`; }
+  else { const s = p.sky; art = KA.portraitImg(s.made ? KA.lookOf(p) : KA.look(0, null, null, p.color)); what = 'Heal Blossom Isle with your spirit'; prog = s.made ? `Lv ${SK.level(s.xp)} &middot; ${SK.cleared(p)} of ${SK.ACTIVE} quests` : 'Make your hero to start'; }
+  const last = p.theme === g && p.mpTotal > 0;
+  return `<button class="game-t g-${g} ${last ? 'last' : ''}" data-act="pick-game" data-g="${g}">
+    <span class="game-art">${art}</span>
+    <span class="game-txt"><b>${PUM.THEMES[g].game}</b><small>${what}</small><span class="game-prog">${prog}</span><span class="game-coins">${coinIcon(g)} <b>${p.coins[g]}</b> ${coinName(g)}</span></span>
+    ${last ? '<span class="game-last">Last played</span>' : ''}
+  </button>`;
+}
+function renderGames() {
+  const p = P();
+  return `
+  <header class="top">${backBtn('home', 'Back to players')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">Pick a game</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
+  <div class="games">${GAME_ORDER.map(g => gameTile(p, g)).join('')}</div>
+  <p class="hint-text">Your math level comes with you to every game. Each game keeps its own coins.</p>`;
+}
 
 /* ---------- Big Rig Builders: town, garage, job site ---------- */
 function stopBg() { if (bg) { bg.stop(); bg = null; } }
@@ -235,7 +256,7 @@ function drawTruckCanvases() {
   });
 }
 function afterRender() {
-  const p = P(); if (!p) return;
+  const p = P(); if (!p || view === 'games') return;
   if (isSky(p)) { skyAfterRender(p); return; }
   if (view === 'base' && isRig(p)) {
     const c = document.getElementById('town'); if (!c) return;
@@ -298,7 +319,7 @@ function renderTown() {
     </div>`;
   }
   return `
-  <header class="top">${backBtn('home', 'Back to players')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">Big Rig Builders &middot; ${R.builtCount(p)} of ${R.ACTIVE} built</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
+  <header class="top">${backBtn('games', 'Back to games')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">Big Rig Builders &middot; ${R.builtCount(p)} of ${R.ACTIVE} built</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
   ${nextJobBtn(p)}
   <div class="town-bar">${mpChip(p)}<button class="btn small" data-act="garage">${icon('wrench')} Garage</button><button class="btn small primary" data-act="train">${icon('brain')} Practice yard</button></div>
   <div class="town-wrap"><canvas id="town" aria-label="Main Street. Tap a building lot to see the job."></canvas></div>
@@ -437,7 +458,7 @@ function buildCard(p, B) {
 function renderVillage() {
   const p = P(), s = p.sky, nq = Math.min(p.prog.anime.unlocked, SK.ACTIVE - 1), Q = SK.QUESTS[nq], lv = SK.level(s.xp), all = SK.cleared(p) >= SK.ACTIVE;
   return `
-  <header class="top">${backBtn('home', 'Back to players')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">Sky Quest &middot; Lv ${lv} ${SK.title(lv)}</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
+  <header class="top">${backBtn('games', 'Back to games')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">Sky Quest &middot; Lv ${lv} ${SK.title(lv)}</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
   <div class="town-bar">${mpChip(p)}<span class="mp-chip snack">${spiritImg('petal', 1)} <b>${s.snacks}</b> snacks</span><button class="btn small" data-act="sky-setup">${icon('pencil')} Hero</button></div>
   <div class="town-wrap sq-wrap"><canvas id="village" aria-label="Sky Village. Tap a building to see it."></canvas></div>
   <section class="sq-next">${heroCard(p)}
@@ -476,7 +497,7 @@ function initSetup(p) { const s = p.sky, d = KA.heroDefaults(p.hero); return {he
 function renderSkySetup() {
   const p = P(), d = setup, made = p.sky.made, L = KA.look(d.hero, d.hair, d.outfit, p.color);
   const sw = (k, map) => Object.keys(map).map(c => `<button class="sw ${d[k] === c ? 'on' : ''}" data-act="sky-pick" data-k="${k}" data-v="${c}" style="--c:${map[c]}" aria-label="${c}" aria-pressed="${d[k] === c}"></button>`).join('');
-  return `<header class="top">${made ? backBtn('base', 'Back to Sky Village') : backBtn('home', 'Back to players')}<h2 class="title">${made ? 'Your hero' : 'Make your hero'}</h2><span style="width:52px"></span></header>
+  return `<header class="top">${made ? backBtn('base', 'Back to Sky Village') : backBtn('games', 'Back to games')}<h2 class="title">${made ? 'Your hero' : 'Make your hero'}</h2><span style="width:52px"></span></header>
   <div class="form sq-setup">
     <div class="sq-preview">${KA.portraitImg(L, 'sq-big')}${made ? '' : spiritImg(d.comp, 1)}</div>
     <div class="lab">Hero</div>
@@ -839,7 +860,8 @@ app.addEventListener('click', e => {
   if (a.startsWith('sky-') || a === 'sel-quest' || a === 'close-qsheet') { if (skyEvent(a, el)) return; }
   switch (a) {
     case 'add-player': draft = {name:'', color:pick(PUM.COLORS), theme:'trucks', hero:0, age:5}; confirmDel = false; A.sfx('tap'); go('form'); break;
-    case 'open': { pid = el.dataset.id; showWorlds = false; skySel = null; questSel = null; setup = null; A.sfx('tap'); const p = P(); townSel = null; townScroll = isRig(p); go('base'); break; }
+    case 'open': { pid = el.dataset.id; A.sfx('tap'); go('games'); if (PUM.SKY3D) PUM.SKY3D.ensure(); break; }
+    case 'pick-game': { const p = P(), g = el.dataset.g; if (!p || !PUM.THEMES[g]) break; p.theme = g; store.savePlayer(p); showWorlds = false; skySel = null; questSel = null; setup = null; townSel = null; townScroll = isRig(p); A.sfx('tap'); go('base'); break; }
     case 'edit': { const p = P(); if (!p) break; draft = {id:p.id, name:p.name, color:p.color, theme:p.theme, hero:p.hero, age:p.age}; confirmDel = false; A.sfx('tap'); go('form'); break; }
     case 'pick': { const k = el.dataset.k; draft[k] = (k === 'age' || k === 'hero') ? Number(el.dataset.v) : el.dataset.v; confirmDel = false; A.sfx('tap'); render(); break; }
     case 'save-player': saveForm(); break;
@@ -848,7 +870,7 @@ app.addEventListener('click', e => {
       const id = draft.id; S.players = S.players.filter(p => p.id !== id); store.saveLocal(); store.deleteRemote(id);
       pid = null; draft = null; go('home'); break;
     }
-    case 'back': { const to = el.dataset.to; if ((to === 'base' || to === 'map') && !P()) go('home'); else { go(to); if (to === 'home') store.pull(); } break; }
+    case 'back': { const to = el.dataset.to; if ((to === 'base' || to === 'map' || to === 'games') && !P()) go('home'); else { go(to); if (to === 'home') store.pull(); } break; }
     case 'end-train': if (quiz) quiz.destroy(); quiz = null; train && train.earned ? go('trainDone') : go('base'); break;
     case 'train': A.sfx('tap'); startTrain(); break;
     case 'map': { const p = P(); sel = p.prog[p.theme].unlocked; if (isSky(p)) questSel = Math.min(sel, SK.ACTIVE - 1); A.sfx('tap'); go('map'); break; }
@@ -949,7 +971,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') { store.pull(); if (play && !play.refuelQuiz && play.runner.paused) play.runner.resume(); }
   else if (play && !play.refuelQuiz) { play.runner.pause(); A.engineSet(0, 0); }
 });
-setInterval(() => { if (document.visibilityState === 'visible' && (view === 'home' || view === 'base')) store.pull(); }, 45000);
+setInterval(() => { if (document.visibilityState === 'visible' && (view === 'home' || view === 'games' || view === 'base')) store.pull(); }, 45000);
 
 function saveForm() {
   const d = draft, name = d.name.trim().slice(0, 16);
@@ -962,11 +984,11 @@ function saveForm() {
     if (ageChanged) { p.start = start; p.world = start; if (!p.levels[start]) store.lv(p, start).tier = tier; }
     store.savePlayer(p); pid = p.id;
   } else {
-    const p = store.normalize({id:PUM.util.uid(), name, color:d.color, theme:d.theme, hero:d.hero, age:d.age, start, world:start, speak:d.age <= 6, created:Date.now(), mp:6});
+    const p = store.normalize({id:PUM.util.uid(), name, color:d.color, theme:d.theme, hero:d.hero, age:d.age, start, world:start, speak:d.age <= 6, created:Date.now(), coins:{trucks:6, soccer:6, anime:6}});
     store.lv(p, start).tier = tier;
     S.players.push(p); store.savePlayer(p); pid = p.id;
   }
-  draft = null; A.sfx('tap'); go('base');
+  draft = null; A.sfx('tap'); go('games');
 }
 
 PUM.app = {go, P, get play() { return play; }, startGame, startQuest, rigLoad, rigDrive, rigCrane, rigUnload, get view() { return view; }};

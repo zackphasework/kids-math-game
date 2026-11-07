@@ -4,7 +4,7 @@ A math game for Zack's kids, nieces and nephews (ages 3 to 12), built for phones
 
 Live: https://power-up-math.netlify.app/
 
-Each kid picks a theme. Every theme has 3 worlds of 5 levels, and level 5 of each world is a boss. Each level has a clear goal, obstacles get harder as you go, and later levels need upgrades. Math does three jobs:
+Each kid is added once. In the lobby they tap their name, then pick any of the three games. The math level follows the kid into every game, and each game keeps its own progress and its own coins (truck coins, soccer math points, Sky Quest crystals). Every game has 3 worlds of 5 levels, and level 5 of each world is a boss. Each level has a clear goal, obstacles get harder as you go, and later levels need upgrades. Math does three jobs:
 
 1. Training at the base earns math points, which buy upgrades (5 per theme).
 2. Math is built into the gameplay: math gates on the road, passing to the right shirt number, and breaking enemy shields.

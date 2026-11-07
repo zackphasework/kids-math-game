@@ -587,3 +587,27 @@ html.skyui .kicker{color:#9FD9FF}
 .next-job b{font:400 26px "Patrick Hand", var(--display); line-height:1.1}
 .next-job .nj-go{display:inline-flex; align-items:center; gap:6px; flex:none; padding:10px 16px; border-radius:16px; background:var(--leaf); color:var(--on-leaf); font:800 20px var(--display); border:3px solid var(--line)}
 .next-job .nj-go .ic{width:20px; height:20px}
+
+/* Game picker: one player, every game */
+.games{display:grid; gap:14px}
+@media (min-width:760px){ .games{grid-template-columns:repeat(3, 1fr)} }
+.game-t{position:relative; display:flex; align-items:center; gap:14px; padding:14px; border:3px solid var(--line); border-radius:var(--r); background:var(--card); color:var(--ink); box-shadow:0 5px 0 var(--line); cursor:pointer; text-align:left; font:inherit; touch-action:manipulation}
+@media (min-width:760px){ .game-t{flex-direction:column; text-align:center} }
+.game-t:active{transform:translateY(4px); box-shadow:0 1px 0 var(--line)}
+.game-art{width:104px; height:92px; flex:none; display:grid; place-items:center}
+.game-art svg, .game-art img{width:100%; height:100%}
+.game-art .portrait{width:92px; height:92px; border-radius:50%; object-fit:cover; background:radial-gradient(circle at 50% 30%, #4A3A9A, #1A1A4A)}
+.game-txt{display:flex; flex-direction:column; gap:3px; min-width:0}
+@media (min-width:760px){ .game-txt{align-items:center} }
+.game-txt > b{font:800 22px var(--display); line-height:1.1}
+.game-txt small{color:var(--ink-soft); font-size:14px}
+.game-prog, .game-coins{display:inline-flex; align-items:center; gap:4px; font-size:15px; font-weight:700; font-variant-numeric:tabular-nums}
+.game-prog .ic, .game-coins .ic{width:18px; height:18px}
+.g-trucks{background:#F6E6C8}
+.g-soccer{background:#DDF3D6}
+.g-anime{background:linear-gradient(160deg, #1A2160, #4A3290 70%, #8A4C94); color:#F3F6FF}
+.g-anime .game-txt small{color:#C9D4FF}
+.game-t.last{outline:4px solid var(--star); outline-offset:3px}
+.game-last{position:absolute; top:-12px; right:14px; padding:2px 10px; border-radius:999px; border:2px solid var(--line); background:var(--star); color:#3A2A00; font-size:12px; font-weight:800}
+.g-trucks, .g-soccer{color:#2E241C}
+.g-trucks .game-txt small, .g-soccer .game-txt small{color:#5E4C3E}
