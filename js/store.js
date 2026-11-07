@@ -153,6 +153,21 @@ store.join = async function (code) {
     return false;
   }
 };
+/* Start a brand-new family: the server makes a random code and keeps only its hash.
+   Any kids already on this device move into the new family on the first pull. */
+store.create = async function () {
+  try {
+    const c = String(await rpc('kmg_create_family', {}) || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    if (c.length < 6) throw new Error('no code');
+    family = c; sync.joinErr = '';
+    try { localStorage.setItem(FAMILY_KEY, c); } catch (e) {}
+    setSync('syncing'); await store.pull();
+    return true;
+  } catch (e) {
+    sync.joinErr = e.code === '54000' ? 'Lots of new families were started today. Please try again tomorrow.' : "Couldn't reach the family save. Check the internet connection.";
+    return false;
+  }
+};
 store.prettyCode = c => c.replace(/(.{4})(?=.)/g, '$1-');
 store.familyLink = () => `${location.origin}${location.pathname}#join=${store.prettyCode(family)}`;
 })();
