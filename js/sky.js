@@ -23,7 +23,7 @@ S.SPECIAL = ['SKY BLADE', 'STARFALL BLOOM', 'COMET ARROW', 'MOON SCYTHE', 'SHADO
 /* the Sky shrine's special: every guardian you defeated attacks with you, and you get a heart back */
 S.SPECIAL2 = 'GUARDIAN CALL';
 S.STYLE = ['Sword: every hit strikes twice', 'Staff: extra damage on weak spots', 'Bow: lucky critical hits', 'Scythe: big hits, huge on Mega moves', 'Daggers: two quick cuts, sometimes three'];
-S.LOOKS = ['Sky Swordfighter', 'Blossom Mage', 'Comet Archer', 'Shadow Knight', 'Night Ninja'];
+S.LOOKS = ['Kai the Sky Swordfighter', 'Mira the Blossom Mage', 'Jax the Comet Archer', 'Rook the Shadow Knight', 'Kage the Night Ninja'];
 S.HEROES = S.STYLE.length;
 /* The hero is called whatever the kid types; blank means the kid's own name. */
 S.heroName = p => ((p.sky && p.sky.name) || '').trim() || p.name;

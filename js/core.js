@@ -60,7 +60,7 @@ PUM.UP_MAX = 5;
 PUM.HEROES = [
   {name:'Kai', skin:'skin1', hair:'hair1', iris:'marigold'},
   {name:'Mira', skin:'skin2', hair:'hair2', iris:'berry'},
-  {name:'Juno', skin:'skin3', hair:'hair3', iris:'sea'},
+  {name:'Jax', skin:'skin3', hair:'hair3', iris:'sea'},
   {name:'Rook', skin:'skin1', hair:'hair1', iris:'star'},
   {name:'Kage', skin:'skin2', hair:'hair1', iris:'mint'},
 ];
