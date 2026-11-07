@@ -61,8 +61,8 @@ store.sync.onPulled = () => { if (pid && !P()) { pid = null; if (view !== 'form'
 function renderHome() {
   const ps = [...S.players].sort((a, b) => a.created - b.created);
   return `
-  <header class="top"><div><h1>Power-Up Math</h1><p class="sub">Solve math to power up your trucks, your soccer team or your hero.</p></div>${muteBtn()}</header>
-  <div class="hero-strip" aria-hidden="true">${PUM.truckSVG('excavator', 'marigold')}${PUM.jerseySVG('sea', '9')}${PUM.heroSVG(0, 'berry')}</div>
+  <header class="top"><div><h1>Power-Up Math</h1><p class="sub">Solve math to build with the truck crew or save Blossom Isle.</p></div>${muteBtn()}</header>
+  <div class="hero-strip" aria-hidden="true">${PUM.truckSVG('excavator', 'marigold')}${PUM.SKYART.portraitImg(PUM.SKYART.look(0, null, null, 'berry'))}</div>
   <section class="block"><h2>Who's playing?</h2>
     <div class="players">${ps.map(p => `<button class="player" data-act="open" data-id="${p.id}">${avatar(p, 'av')}<span class="pname">${esc(p.name)}</span><span class="pmeta">Last: ${PUM.THEMES[p.theme].game}</span></button>`).join('')}
       <button class="player add" data-act="add-player">${icon('plus')}<span>Add player</span></button></div>
@@ -218,7 +218,8 @@ function render() {
 function go(v) { if (quiz && v !== 'train') { quiz.destroy(); quiz = null; } view = v; render(); try { window.scrollTo(0, 0); } catch (e) {} }
 
 /* ---------- game picker: one player plays all three games ---------- */
-const GAME_ORDER = ['trucks', 'soccer', 'anime'];
+/* Striker Rush (soccer) is parked until it's ready: its code stays in js/soccer.js but isn't loaded. */
+const GAME_ORDER = ['trucks', 'anime'];
 const coinIcon = g => g === 'trucks' ? icon('coin', 'coin') : g === 'anime' ? icon('gem', 'gem') : icon('bolt');
 const coinName = g => g === 'trucks' ? 'coins' : g === 'anime' ? 'crystals' : 'math points';
 function gameTile(p, g) {

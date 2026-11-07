@@ -5,7 +5,8 @@ const {num, clamp} = PUM.util;
 const SB_URL = 'https://fvixamvkxrzzhjbidhyy.supabase.co';
 const SB_KEY = 'sb_publishable_tuG4SkViIQPPvhN-RTbw3g_bfWeG1_G';
 const FAMILY_KEY = 'pum-family-code';
-const LOCAL_KEY = 'pum-save-v3';
+const LOCAL_KEY = 'pum-save-v4';
+try { localStorage.removeItem('pum-save-v3'); } catch (e) {}
 const store = PUM.store = {};
 
 function normUp(x) {
@@ -52,7 +53,7 @@ store.normalize = function (d) {
   if (!/^[A-Za-z0-9]{4,40}$/.test(id)) return null;
   const LV = PUM.LV;
   const p = {id, name:String(d.name || 'Player').slice(0, 16), color:PUM.COLORS.includes(d.color) ? d.color : 'sea',
-    theme:PUM.THEME_IDS.includes(d.theme) ? d.theme : 'trucks', hero:clamp(num(d.hero), 0, PUM.HEROES.length - 1),
+    theme:PUM.THEME_IDS.includes(d.theme) && d.theme !== 'soccer' ? d.theme : 'trucks', hero:clamp(num(d.hero), 0, PUM.HEROES.length - 1),
     age:PUM.AGES.includes(d.age) ? d.age : 5, stars:num(d.stars), coins:null, mpTotal:num(d.mpTotal),
     created:num(d.created), updatedAt:num(d.updatedAt), mode:d.mode === 'keypad' ? 'keypad' : 'choices', speak:!!d.speak,
     start:LV[d.start] ? d.start : 'count', world:LV[d.world] ? d.world : (LV[d.start] ? d.start : 'count'),

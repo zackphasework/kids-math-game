@@ -590,7 +590,7 @@ html.skyui .kicker{color:#9FD9FF}
 
 /* Game picker: one player, every game */
 .games{display:grid; gap:14px}
-@media (min-width:760px){ .games{grid-template-columns:repeat(3, 1fr)} }
+@media (min-width:760px){ .games{grid-template-columns:repeat(2, 1fr)} }
 .game-t{position:relative; display:flex; align-items:center; gap:14px; padding:14px; border:3px solid var(--line); border-radius:var(--r); background:var(--card); color:var(--ink); box-shadow:0 5px 0 var(--line); cursor:pointer; text-align:left; font:inherit; touch-action:manipulation}
 @media (min-width:760px){ .game-t{flex-direction:column; text-align:center} }
 .game-t:active{transform:translateY(4px); box-shadow:0 1px 0 var(--line)}
