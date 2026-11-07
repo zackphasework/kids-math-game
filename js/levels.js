@@ -7,10 +7,10 @@ const L = PUM.CAMPAIGN = {};
 L.upgrades = {
   trucks: [
     {k:'engine', name:'Engine', what:'Higher top speed, so you beat the clock.'},
-    {k:'armor', name:'Armor', what:'Take more bumps before breaking down.'},
-    {k:'tires', name:'Tires', what:'Sharper steering. Grip on curves and ice.'},
+    {k:'tires', name:'Tires', what:'Sharper steering. Grip on curves and wet roads.'},
+    {k:'bed', name:'Bigger bed', what:'Carry extra, so every delivery pays more coins.'},
+    {k:'suspension', name:'Suspension', what:'Less cargo falls off when you crash or hit a pothole.'},
     {k:'tank', name:'Fuel tank', what:'Drive farther before you need a refill.'},
-    {k:'turbo', name:'Turbo', what:'Stronger, longer boosts from math gates.'},
   ],
   soccer: [
     {k:'speed', name:'Speed', what:'Run faster past defenders.'},
@@ -20,11 +20,9 @@ L.upgrades = {
     {k:'pass', name:'Passing', what:'Power shots charge faster from math passes.'},
   ],
   anime: [
-    {k:'hearts', name:'Hearts', what:'One more heart per level.'},
-    {k:'attack', name:'Attack', what:'Hit bosses harder.'},
-    {k:'energy', name:'Energy', what:'Run longer before you need a refill.'},
-    {k:'agility', name:'Agility', what:'Jump higher. Level 1 unlocks double jump.'},
-    {k:'shield', name:'Shield', what:'Longer safety after a hit, and blocks some hits.'},
+    {k:'weapon', name:'Weapon', what:'Every attack hits harder.'},
+    {k:'charm', name:'Spirit charm', what:'Your Spirit meter fills faster, so special moves come sooner.'},
+    {k:'boots', name:'Sky boots', what:'Run faster and jump higher on the islands.'},
   ],
 };
 L.cost = [6, 12, 20, 32, 50];
@@ -35,26 +33,27 @@ const POWER = [0, 1, 2, 3, 4, 5, 6, 8, 9, 11, 12, 14, 16, 18, 20];
 
 L.trucks = {
   worlds:[
-    {name:'Countryside', color:'leaf', sky:['#69C2F0', '#D6F0FF'], grass:['#7CC765', '#6DB857'], boss:'Crusher'},
-    {name:'Red Canyon', color:'marigold', sky:['#F59A5B', '#FFE1B8'], grass:['#D9A066', '#CC9059'], boss:'Mud Monster'},
-    {name:'Snowy Peaks', color:'sea', sky:['#7FA8E8', '#E6F0FF'], grass:['#EEF4FA', '#DCE6F0'], boss:'Ice King'},
+    {name:'Main Street', color:'leaf', sky:['#A7CBD3', '#F2D9A8'], grass:['#A5B97C', '#99AE72'], boss:'River Bridge'},
+    {name:'The Hills', color:'marigold', sky:['#E9A877', '#FBE0B8'], grass:['#D8B07A', '#CDA26C'], boss:'Mountain Tunnel', racer:'Rusty'},
+    {name:'Big City', color:'sea', sky:['#93AECB', '#E4E7E6'], grass:['#B4B6B0', '#A8ABA6'], boss:'Skyscraper', racer:'Turbo Tess'},
   ],
+  /* Each level is one building job. Road settings are for each trip of the job. */
   levels:[
-    {name:'First delivery', cargo:'bricks', len:650, curve:.3, hills:.2, obs:{cone:.5}, gates:2, nw:'Steer around the cones!'},
-    {name:'Rocky road', cargo:'pipes', len:750, curve:.4, hills:.3, obs:{cone:.4, rock:.4}, gates:3, nw:'New: rocks. Hitting one damages your truck.'},
-    {name:'Pothole lane', cargo:'windows', len:850, curve:.5, hills:.4, obs:{cone:.3, rock:.3, hole:.5}, gates:3, nw:'New: potholes slow you right down.'},
-    {name:'Big hill run', cargo:'beams', len:950, curve:.6, hills:.8, obs:{cone:.4, rock:.5, hole:.5}, gates:4, nw:'Hills and sharp curves. Brake before the corners!'},
-    {name:'Race Crusher', cargo:'bricks', len:900, curve:.5, hills:.5, obs:{cone:.3, rock:.3}, gates:4, boss:true, nw:'BOSS: Crusher throws barrels. Dodge them and pass him!'},
-    {name:'Canyon farms', cargo:'hay', len:900, curve:.5, hills:.5, obs:{rock:.4, tractor:.5}, gates:3, nw:'New: slow tractors. Pass them on the side.'},
-    {name:'Two-way traffic', cargo:'pipes', len:1000, curve:.6, hills:.5, obs:{rock:.3, tractor:.4, car:.5}, gates:4, nw:'New: cars coming the other way!'},
-    {name:'Falling rocks', cargo:'steel', len:1050, curve:.6, hills:.6, obs:{tractor:.3, car:.4, boulder:.5}, gates:4, nw:'New: boulders fall from the cliffs. Watch for shadows.'},
-    {name:'Canyon rush', cargo:'beams', len:1150, curve:.8, hills:.7, obs:{rock:.4, hole:.4, tractor:.4, car:.5, boulder:.4}, gates:5, nw:'Everything at once. Upgrade first!'},
-    {name:'Race Mud Monster', cargo:'bricks', len:1050, curve:.7, hills:.6, obs:{rock:.3, car:.3, hole:.4}, gates:5, boss:true, nw:'BOSS: Mud Monster throws mud and barrels.'},
-    {name:'Icy road', cargo:'logs', len:1050, curve:.7, hills:.6, obs:{rock:.3, ice:.6}, gates:4, nw:'New: ice. Your steering slides, so go easy.'},
-    {name:'Narrow bridges', cargo:'steel', len:1150, curve:.7, hills:.7, obs:{car:.4, ice:.4, bridge:.6}, gates:5, nw:'New: narrow bridges. Stay on the road!'},
-    {name:'Blizzard pass', cargo:'beams', len:1250, curve:.8, hills:.8, obs:{rock:.4, car:.4, ice:.5, bridge:.4, boulder:.3}, gates:5, nw:'A long, twisty pass.'},
-    {name:'Mountain madness', cargo:'windows', len:1350, curve:.9, hills:.9, obs:{cone:.3, rock:.4, hole:.4, tractor:.3, car:.5, ice:.4, bridge:.4, boulder:.4}, gates:6, nw:'The hardest road yet.'},
-    {name:'Race the Ice King', cargo:'bricks', len:1250, curve:.9, hills:.8, obs:{rock:.3, car:.3, ice:.5, bridge:.3}, gates:6, boss:true, nw:'FINAL BOSS: the Ice King’s snowplow.'},
+    {name:'House', len:480, curve:.3, hills:.2, obs:{cone:.5}, gates:2, nw:'Steer around the cones!'},
+    {name:'Gas station', len:540, curve:.4, hills:.3, obs:{cone:.4, rock:.45}, gates:2, nw:'New: rocks. Crash into one and cargo falls off.'},
+    {name:'Mechanic', len:600, curve:.5, hills:.4, obs:{cone:.3, rock:.35, hole:.5}, gates:3, nw:'New: potholes, and the cement mixer. Concrete sets, so be quick!'},
+    {name:'School', len:640, curve:.65, hills:.8, obs:{cone:.35, rock:.5, hole:.5}, gates:3, nw:'Hills and sharp curves. Brake before the corners!'},
+    {name:'River Bridge', len:560, curve:.5, hills:.4, obs:{cone:.3, rock:.35, hole:.35, ice:.6, bridge:.45}, gates:3, boss:true, storm:true, nw:'BOSS: a storm is coming! Wet roads are slippery and the river is rising.'},
+    {name:'Quarry', len:600, curve:.5, hills:.6, obs:{rock:.4, hole:.3, tractor:.5}, gates:3, nw:'Welcome to the Hills! New: slow tractors. Steer around them.'},
+    {name:'Soccer field', len:640, curve:.55, hills:.6, obs:{rock:.3, tractor:.4, car:.45}, gates:3, nw:'New: cars coming toward you. Stay out of their lane!'},
+    {name:'Hospital', len:680, curve:.6, hills:.7, obs:{rock:.3, tractor:.3, car:.4, boulder:.5}, gates:4, nw:'New: boulders roll down the hills. Watch for the shadow on the road!'},
+    {name:'Fire station', len:700, curve:.8, hills:.7, obs:{rock:.35, hole:.35, tractor:.3, car:.4, boulder:.4}, gates:4, nw:'Twisty mountain roads. Brake before the sharp curves!'},
+    {name:'Mountain Tunnel', len:680, curve:.65, hills:.6, obs:{rock:.3, car:.3, hole:.35}, gates:4, boss:true, rival:true, nw:'BOSS: on the last delivery, race Rusty to the tunnel! Right answers give turbo to pass him. Dodge his barrels.'},
+    {name:'Train station', len:700, curve:.6, hills:.5, obs:{rock:.3, car:.35, ice:.6}, gates:4, nw:'Welcome to Big City! New: icy roads. Steer gently on the ice.'},
+    {name:'Apartment tower', len:720, curve:.65, hills:.6, obs:{hole:.35, car:.4, ice:.4, bridge:.6}, gates:4, nw:'New: narrow canal bridges. Stay in the middle lane or splash!'},
+    {name:'Shopping mall', len:760, curve:.75, hills:.7, obs:{rock:.3, car:.45, ice:.4, bridge:.4, boulder:.3}, gates:5, nw:'Busy city traffic with ice and bridges. Take it slow!'},
+    {name:'Stadium', len:800, curve:.85, hills:.8, obs:{cone:.3, rock:.35, hole:.35, tractor:.3, car:.45, ice:.4, bridge:.4, boulder:.35}, gates:5, nw:'Game day! Everything at once. Upgrade your trucks first.'},
+    {name:'Skyscraper', len:760, curve:.75, hills:.7, obs:{rock:.25, car:.3, ice:.4, bridge:.3}, gates:5, boss:true, rival:true, nw:'FINAL BOSS: on the last delivery, race Turbo Tess across Big City! Every right answer is a turbo.'},
   ],
 };
 L.soccer = {
@@ -83,9 +82,9 @@ L.soccer = {
 };
 L.anime = {
   worlds:[
-    {name:'Misty Forest', color:'leaf', sky:['#9FD9C9', '#E6F7EE'], hills:'#5FA889', ground:'#4E8A5F', boss:'Gloom Blob'},
-    {name:'Crystal Caves', color:'sea', sky:['#6E86D8', '#C9D8FF'], hills:'#4A5FAE', ground:'#5A5F8E', boss:'Crystal Snapper'},
-    {name:'Volcano Peak', color:'rose', sky:['#E86A5A', '#FFD0A8'], hills:'#9A4A42', ground:'#6E3A36', boss:'Magma King'},
+    {name:'Blossom Isle', color:'rose', boss:'Hanamori'},
+    {name:'Tide Grotto', color:'sea', boss:'Umikaze'},
+    {name:'Ember Peak', color:'marigold', boss:'Homura'},
   ],
   levels:[
     {name:'Into the forest', len:3600, obs:{gap:.4, rock:.5}, foes:1, nw:'Jump over rocks and gaps. Reach the portal!'},
@@ -106,6 +105,8 @@ L.anime = {
   ],
 };
 for (const t of ['trucks', 'soccer', 'anime']) L[t].levels.forEach((lv, i) => { lv.i = i; lv.world = Math.floor(i / 5); lv.power = POWER[i]; });
+/* Big Rig Builders ramps more gently: each job is several trips, so coins for upgrades come slower. */
+L.trucks.levels.forEach((lv, i) => { lv.power = i; });
 L.count = 15;
 L.level = (theme, i) => L[theme].levels[Math.max(0, Math.min(L.count - 1, i))];
 })();

@@ -5,11 +5,15 @@ const {num, clamp} = PUM.util;
 const SB_URL = 'https://fvixamvkxrzzhjbidhyy.supabase.co';
 const SB_KEY = 'sb_publishable_tuG4SkViIQPPvhN-RTbw3g_bfWeG1_G';
 const FAMILY_KEY = 'pum-family-code';
-const LOCAL_KEY = 'pum-save-v3';
+const LOCAL_KEY = 'pum-save-v4';
+try { localStorage.removeItem('pum-save-v3'); } catch (e) {}
 const store = PUM.store = {};
 
 function normUp(x) {
-  x = (x && typeof x === 'object') ? x : {};
+  x = (x && typeof x === 'object') ? Object.assign({}, x) : {};
+  /* Old truck upgrades carry over: armor becomes suspension, turbo becomes the bigger bed. */
+  if (x.suspension == null && x.armor != null) x.suspension = x.armor;
+  if (x.bed == null && x.turbo != null) x.bed = x.turbo;
   const o = {};
   for (const t of Object.keys(PUM.CAMPAIGN.upgrades)) for (const u of PUM.CAMPAIGN.upgrades[t]) o[u.k] = clamp(num(x[u.k]), 0, PUM.CAMPAIGN.maxUp);
   return o;
@@ -24,17 +28,42 @@ function normProg(x) {
   }
   return o;
 }
+/* Each game keeps its own coins. Old saves had one wallet: it stays with the game the kid was playing. */
+function normCoins(d, theme) {
+  const c = (d.coins && typeof d.coins === 'object') ? d.coins : null, o = {};
+  for (const t of PUM.THEME_IDS) o[t] = c ? num(c[t]) : 0;
+  if (!c) o[theme] = num(d.mp);
+  return o;
+}
+const RIG_TRUCKS = ['dump', 'flatbed', 'mixer', 'crane'];
+function normRig(x) {
+  x = (x && typeof x === 'object') ? x : {};
+  const pt = (x.paint && typeof x.paint === 'object') ? x.paint : {}, paint = {};
+  for (const k of RIG_TRUCKS) paint[k] = PUM.COLORS.includes(pt[k]) ? pt[k] : null;
+  let job = null;
+  const j = x.job;
+  if (j && typeof j === 'object') job = {i:clamp(num(j.i), 0, PUM.CAMPAIGN.count - 1), stage:clamp(num(j.stage), 0, 12),
+    cargo:(Array.isArray(j.cargo) ? j.cargo : []).slice(0, 12).map(v => clamp(Number(v) || 0, 0, 1)),
+    ok:num(j.ok), n:num(j.n), coins:num(j.coins), crane:clamp(num(j.crane), 0, 3), msg:String(j.msg || '').slice(0, 120)};
+  return {v:num(x.v), paint, job};
+}
 store.normalize = function (d) {
   if (!d || typeof d !== 'object') return null;
   const id = String(d.id || '');
   if (!/^[A-Za-z0-9]{4,40}$/.test(id)) return null;
   const LV = PUM.LV;
   const p = {id, name:String(d.name || 'Player').slice(0, 16), color:PUM.COLORS.includes(d.color) ? d.color : 'sea',
-    theme:PUM.THEME_IDS.includes(d.theme) ? d.theme : 'trucks', hero:clamp(num(d.hero), 0, PUM.HEROES.length - 1),
-    age:PUM.AGES.includes(d.age) ? d.age : 5, stars:num(d.stars), mp:num(d.mp), mpTotal:num(d.mpTotal),
+    theme:PUM.THEME_IDS.includes(d.theme) && d.theme !== 'soccer' ? d.theme : 'trucks', hero:clamp(num(d.hero), 0, PUM.HEROES.length - 1),
+    age:PUM.AGES.includes(d.age) ? d.age : 5, stars:num(d.stars), coins:null, mpTotal:num(d.mpTotal),
     created:num(d.created), updatedAt:num(d.updatedAt), mode:d.mode === 'keypad' ? 'keypad' : 'choices', speak:!!d.speak,
     start:LV[d.start] ? d.start : 'count', world:LV[d.world] ? d.world : (LV[d.start] ? d.start : 'count'),
-    levels:{}, up:normUp(d.up), prog:normProg(d.prog)};
+    levels:{}, up:normUp(d.up), prog:normProg(d.prog), rig:normRig(d.rig), sky:PUM.SKY.normalize(d.sky)};
+  p.coins = normCoins(d, p.theme);
+  /* p.theme is the game being played right now, and p.mp is that game's coins. */
+  Object.defineProperty(p, 'mp', {get() { return this.coins[this.theme] || 0; }, set(v) { this.coins[this.theme] = num(v); }, enumerable:false, configurable:true});
+  /* Big Rig Builders replaced the old truck race: truck progress starts fresh once. */
+  if (p.rig.v < 1) { p.prog.trucks = normProg({}).trucks; p.rig.v = 1; p.rig.job = null; }
+  PUM.SKY.migrate(p, d.up);
   if (d.levels && typeof d.levels === 'object') for (const l of PUM.LEVELS) {
     const x = d.levels[l.id];
     if (x && typeof x === 'object') p.levels[l.id] = {tier:clamp(num(x.tier), 0, l.steps.length - 1), streak:clamp(num(x.streak), 0, 999), misses:clamp(num(x.misses), 0, 99), stars:num(x.stars)};

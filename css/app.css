@@ -391,3 +391,272 @@ svg{display:block}
 @media (max-width:380px){ .badge{min-width:56px; height:46px; font-size:16px} .world{gap:10px; padding:12px 10px} .icon-btn{width:46px; height:46px} }
 
 html.in-game #toast{top:auto; bottom:calc(env(safe-area-inset-bottom, 0px) + 150px); font-size:16px}
+
+/* ---------- Big Rig Builders ---------- */
+.ic.coin{fill:#FFE07A; stroke:#1D2540; stroke-width:2}
+.mp-chip .ic.coin, .hud-mp .ic.coin{fill:#FFE07A; stroke:#1D2540; stroke-width:2}
+.town-bar{display:flex; flex-wrap:wrap; align-items:center; gap:8px}
+.town-bar .btn .ic{width:20px; height:20px}
+.town-wrap{border:4px solid var(--line); border-radius:var(--r); overflow:hidden; box-shadow:0 5px 0 var(--line); background:#7CC765}
+#town{display:block; width:100%; cursor:pointer}
+.sheet{position:fixed; z-index:15; left:0; right:0; bottom:0; margin:0 auto; width:min(100%, 560px); max-height:72vh; overflow:auto; display:flex; flex-direction:column; gap:10px; padding:18px 16px calc(env(safe-area-inset-bottom, 0px) + 16px); border:4px solid var(--line); border-bottom:none; border-radius:26px 26px 0 0; background:var(--card); box-shadow:0 -6px 0 rgba(0,0,0,.08), 0 -10px 30px rgba(0,0,0,.18); animation:sheet-up .25s ease}
+@keyframes sheet-up{from{transform:translateY(40px); opacity:0}to{transform:none; opacity:1}}
+.sheet h3{font-size:clamp(26px, 7vw, 32px); display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding-right:48px}
+.sheet-x{position:absolute; top:10px; right:10px}
+.steps{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
+.steps li{display:flex; align-items:center; gap:10px; padding:8px 12px; border:3px solid var(--line-soft); border-radius:14px; font-weight:600; color:var(--ink-soft); background:var(--card)}
+.steps li.done{color:var(--ink); border-color:var(--leaf); background:var(--leaf-soft)}
+.steps li.now{color:var(--ink); border-color:var(--line); box-shadow:0 3px 0 var(--line); font-weight:700}
+.snum{display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; flex:none; border-radius:50%; border:2.5px solid currentColor; font:800 15px var(--display)}
+.steps li.done .snum{background:var(--leaf); border-color:var(--leaf); color:#FFFFFF}
+.snum .ic{width:18px; height:18px; stroke-width:3.4}
+.steps.mini{flex-direction:row; flex-wrap:wrap}
+.steps.mini li{padding:5px 10px; font-size:14px}
+.steps.mini .snum{width:22px; height:22px; font-size:12px}
+.site-card{border:4px solid var(--line); border-radius:var(--r); overflow:hidden; box-shadow:0 5px 0 var(--line); background:#69C2F0}
+.site-card canvas{display:block; width:100%; height:clamp(200px, 48vw, 300px)}
+.results .site-card{width:100%; max-width:520px}
+.trip-msg{margin:0; padding:10px 14px; border:3px solid var(--line); border-radius:14px; background:#FBE1E7; color:#1D2540; font-weight:700}
+.job-act{display:flex; flex-direction:column; gap:10px}
+.next-load{font-size:clamp(24px, 6.5vw, 30px)}
+.truck-pick{display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px}
+.pick-truck{display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 8px; border:3px solid var(--line); border-radius:18px; background:var(--card); color:var(--ink); box-shadow:0 5px 0 var(--line); font:800 17px var(--display); cursor:pointer; touch-action:manipulation}
+.pick-truck:active{transform:translateY(4px); box-shadow:0 1px 0 var(--line)}
+.pick-truck canvas{width:100%; height:86px}
+.pick-truck.nope{animation:nope .4s ease; background:#FBE1E7}
+@keyframes nope{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.truck-cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px}
+.truck-card{display:flex; flex-direction:column; gap:6px; padding:12px; border:3px solid var(--line); border-radius:18px; background:var(--card)}
+.truck-card canvas{width:100%; height:84px}
+.truck-card b{font:800 18px var(--display)}
+.truck-card small{color:var(--ink-soft); font-size:14px}
+.truck-card.locked canvas{filter:grayscale(1); opacity:.45}
+.lock-note{font-weight:700; color:var(--ink-soft)}
+.swatches.small{gap:6px}
+.swatches.small .sw{width:28px; height:28px; border-width:2.5px}
+.swatches.small .sw.on{box-shadow:0 0 0 3px var(--card), 0 0 0 5px var(--line)}
+.unlock{margin:0; display:flex; align-items:center; gap:6px; font:800 20px var(--display)}
+.hud2 .cbar{display:inline-block; width:64px; height:9px; margin-left:4px; border-radius:5px; background:rgba(255,255,255,.25); overflow:hidden}
+.hud2 .cbar i{display:block; height:100%; background:#22A06B}
+.hud2 .cbar i.low{background:#FF8A3D}
+.controls.loader{justify-content:center}
+.load-ctl{pointer-events:auto; display:flex; gap:10px; align-items:flex-end; justify-content:center; flex-wrap:wrap; width:100%}
+.load-ctl .ctl{width:clamp(64px, 18vw, 92px); height:clamp(64px, 18vw, 92px); font:800 clamp(20px, 5.5vw, 28px) var(--display)}
+.ctl.add{background:#FFC233}
+.ctl.add.big{background:#FF8A3D; color:#FFFFFF}
+.ctl.less{background:#D9DEE8; width:clamp(54px, 15vw, 72px) !important; height:clamp(54px, 15vw, 72px) !important; font-size:20px !important}
+.ctl.done{background:#22A06B; color:#FFFFFF; font-size:16px !important}
+.ctl.done .ic{width:30px; height:30px}
+.ctl.drop{background:#22A06B; color:#FFFFFF; width:clamp(110px, 32vw, 150px); height:clamp(110px, 32vw, 150px)}
+
+.hud-mp b, .mp-chip b{font-family:Lexend, sans-serif; font-weight:800}
+
+/* ---------- Sky Quest: "Crystal Glow" look for the hero's menus and the quest screen ---------- */
+.ic.gem{fill:#9BF6FF; stroke:#22374B; stroke-width:1.6}
+.avatar .portrait, .art.portrait{width:100%; height:100%; object-fit:cover; border-radius:50%; display:block}
+.theme-b .portrait{width:72px; height:72px; border-radius:50%; background:radial-gradient(circle at 50% 30%, #4A3A9A, #1A1A4A)}
+html.skyui{--sky:#141B4E; --speck:transparent; --card:rgba(28,32,92,.72); --card-2:rgba(44,50,120,.7); --ink:#F3F6FF; --ink-soft:#B9C8FF; --line:rgba(143,230,255,.55); --line-soft:rgba(143,230,255,.28);
+  --leaf:#2BC7B4; --leaf-soft:rgba(43,199,180,.25); --on-leaf:#06242A; --marigold:#FF7FB5; --on-warm:#2A0E2A; --star:#FFE27A; --wrong-soft:rgba(255,95,150,.22); --soft-note:rgba(255,226,122,.18);
+  --display:"Zen Kaku Gothic New", Lexend, system-ui, sans-serif; color-scheme:dark}
+html.skyui body{background:linear-gradient(180deg, #0D1446 0%, #2C2478 45%, #6A3E8E 80%, #A35A92 100%) fixed; color:var(--ink)}
+html.skyui #app h2, html.skyui #app h3, html.skyui .rtitle{font-family:"Dela Gothic One", Lexend, sans-serif; font-weight:400; letter-spacing:.01em}
+html.skyui .btn{border-width:1.5px; border-color:rgba(255,255,255,.35); box-shadow:0 4px 0 rgba(8,10,40,.55), 0 0 18px rgba(127,240,255,.12); background:linear-gradient(180deg, rgba(70,80,170,.9), rgba(44,48,120,.9)); color:#F3F6FF; font-weight:900}
+html.skyui .btn.go{background:linear-gradient(180deg, #3BE0C6, #1F9BD8); color:#06202A}
+html.skyui .btn.primary{background:linear-gradient(180deg, #FF9AC8, #C45AE0); color:#2A0E2A}
+html.skyui .btn[aria-disabled="true"]{opacity:.6}
+html.skyui .icon-btn{border-width:1.5px; box-shadow:0 0 14px rgba(127,240,255,.2); background:rgba(28,32,92,.72); color:#F3F6FF}
+html.skyui .mp-chip{border:1.5px solid var(--line); background:rgba(20,24,70,.7); color:#F3F6FF; box-shadow:0 0 12px rgba(127,240,255,.25)}
+html.skyui .mp-chip .sq-spirit{width:22px; height:22px; margin:-4px 0}
+html.skyui .town-wrap, html.skyui .site-card{border:1.5px solid var(--line); box-shadow:0 0 24px rgba(127,240,255,.18); background:#141B4E}
+html.skyui .block, html.skyui .upg, html.skyui .sheet{border:1.5px solid var(--line); background:rgba(26,30,84,.78); box-shadow:0 0 20px rgba(127,240,255,.1); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px)}
+html.skyui .sheet{background:rgba(22,26,74,.96)}
+html.skyui .field{border-width:1.5px; background:rgba(10,14,50,.6); color:#F3F6FF}
+html.skyui .field.small{font-size:15px; padding:7px 10px}
+html.skyui .sw{border:2px solid rgba(255,255,255,.5)}
+html.skyui .sw.on{outline:3px solid #7FF0FF; outline-offset:3px}
+html.skyui .theme-b{border:1.5px solid var(--line-soft); background:rgba(26,30,84,.7); color:#F3F6FF}
+html.skyui .theme-b.on{border-color:#7FF0FF; background:rgba(60,70,170,.75); box-shadow:0 0 18px rgba(127,240,255,.4)}
+html.skyui .theme-b small{font-size:11.5px; font-weight:600; color:var(--ink-soft); text-align:center; line-height:1.25}
+html.skyui .rnote{background:rgba(20,24,70,.75); color:#F3F6FF; border:1.5px solid var(--line)}
+html.skyui .rnote .ic{fill:#9BF6FF}
+html.skyui .unlock{color:#FFE27A}
+html.skyui .power-row{background:rgba(40,46,120,.7)}
+html.skyui .kicker{color:#9FD9FF}
+.el-blossom{color:#FF9AC8} .el-tide{color:#6ED6FF} .el-ember{color:#FFAE5A} .el-storm{color:#FFE24A}
+.sq-spirit{width:56px; height:56px; object-fit:contain}
+.sq-next{display:grid; gap:12px}
+@media (min-width:560px){ .sq-next{grid-template-columns:1fr 1.3fr} }
+.sq-hero, .sq-quest{border:1.5px solid var(--line); border-radius:var(--r); padding:14px; background:rgba(26,30,84,.78); box-shadow:0 0 20px rgba(127,240,255,.12)}
+.sq-hero{display:flex; gap:12px; align-items:center}
+.sq-port{width:92px; height:92px; border-radius:50%; flex:none; background:radial-gradient(circle at 50% 30%, #4A3A9A, #1A1A4A); border:1.5px solid var(--line)}
+.sq-hero-t{display:flex; flex-direction:column; gap:3px; min-width:0}
+.sq-hero-t b{font:900 18px "Zen Kaku Gothic New", Lexend, sans-serif}
+.sq-hero-t span{color:var(--ink-soft); font-size:14px}
+.sq-hero-t small{display:flex; align-items:center; gap:4px; color:var(--ink-soft)}
+.sq-hero-t small .sq-spirit{width:30px; height:30px}
+.xpbar{display:block; height:9px; border-radius:6px; background:rgba(0,0,0,.4); overflow:hidden; border:1px solid var(--line)}
+.xpbar i{display:block; height:100%; background:linear-gradient(90deg, #7FF0FF, #FF9AC8); box-shadow:0 0 10px #7FF0FF}
+.sq-quest{display:flex; flex-direction:column; gap:6px}
+.sq-quest h3{font-size:24px}
+.sq-quest p{margin:0 0 6px; color:var(--ink-soft)}
+.sq-build.broken{border-style:dashed}
+.sq-build.sel, .sq-comp.sel{border-color:#FFE27A; box-shadow:0 0 22px rgba(255,226,122,.35)}
+.sq-build .ic{width:20px; height:20px}
+.sq-qlist{display:grid; gap:8px}
+.sq-qrow{display:flex; align-items:center; gap:12px; padding:10px 14px; border:1.5px solid var(--line); border-radius:16px; background:rgba(26,30,84,.78); color:#F3F6FF; text-align:left; cursor:pointer; font:inherit}
+.sq-qrow.on{border-color:#7FF0FF; box-shadow:0 0 16px rgba(127,240,255,.35)}
+.sq-qrow.locked{opacity:.55}
+.sq-qn{width:38px; height:38px; flex:none; display:grid; place-items:center; border-radius:50%; background:#F3F6FF; color:#22374B; font:800 18px Lexend, sans-serif}
+.sq-qn .ic{width:22px; height:22px; fill:#E8577A; stroke:none}
+.sq-qt{display:flex; flex-direction:column; flex:1; min-width:0}
+.sq-qt b{font:900 17px "Zen Kaku Gothic New", Lexend, sans-serif}
+.sq-qt small{color:var(--ink-soft)}
+.sq-picks{display:flex; gap:8px; flex-wrap:wrap}
+.sq-pick{display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 10px; min-width:96px; border:1.5px solid var(--line-soft); border-radius:16px; background:rgba(26,30,84,.7); color:#F3F6FF; cursor:pointer; font:700 14px Lexend, sans-serif}
+.sq-pick.on{border-color:#7FF0FF; background:rgba(60,70,170,.75); box-shadow:0 0 16px rgba(127,240,255,.4)}
+.sq-pick small{font-size:12px}
+.sq-preview{display:flex; align-items:flex-end; justify-content:center; gap:4px}
+.sq-big{width:min(220px, 56vw); height:min(220px, 56vw); border-radius:50%; background:radial-gradient(circle at 50% 30%, #5A4AAA, #1A1A4A); border:1.5px solid var(--line); box-shadow:0 0 30px rgba(127,240,255,.3)}
+.sq-preview .sq-spirit{width:90px; height:90px; margin-left:-30px}
+.sq-comp > .sq-spirit{width:84px; height:84px; align-self:center}
+.sq-row{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.sq-results .rtitle{color:#FFFFFF; text-shadow:0 0 18px rgba(127,240,255,.6)}
+
+/* in the quest */
+#game.sky{background:#0D1446}
+#game.sky .hud-mp{border:1.5px solid rgba(143,230,255,.7); background:rgba(20,24,70,.7); color:#F3F6FF; box-shadow:0 0 12px rgba(127,240,255,.3)}
+#game.sky .hud-mp .ic{fill:#9BF6FF; stroke:#22374B}
+#game.sky .hud .icon-btn{border:1.5px solid rgba(143,230,255,.7); background:rgba(20,24,70,.7); color:#F3F6FF; box-shadow:none}
+.controls.sky{align-items:flex-end}
+.ctl-pair{display:flex; gap:10px; pointer-events:none}
+.ctl.sq{border:2px solid rgba(143,230,255,.75); box-shadow:0 0 18px rgba(127,240,255,.25); background:rgba(20,24,70,.55); color:#F3F6FF; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); font:900 16px "Zen Kaku Gothic New", Lexend, sans-serif}
+.ctl.sq.move{width:clamp(70px, 20vw, 96px); height:clamp(70px, 20vw, 96px)}
+.ctl.sq.jump{background:linear-gradient(180deg, rgba(255,140,200,.8), rgba(150,80,220,.8))}
+.ctl.sq.guard{width:clamp(130px, 38vw, 170px); height:clamp(130px, 38vw, 170px); background:radial-gradient(circle, rgba(127,240,255,.85), rgba(40,90,200,.8)); color:#06202A; font-size:22px; animation:pulse .8s ease infinite}
+.ctl.sq.down{transform:scale(.94); box-shadow:0 0 30px rgba(127,240,255,.6)}
+.choose.sky-q{inset:auto 0 0 0; align-items:flex-end; padding:0 10px calc(env(safe-area-inset-bottom, 0px) + 10px); background:none}
+.sq-card{width:100%; max-width:560px; display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; border:1.5px solid rgba(143,230,255,.7); border-radius:20px; background:rgba(16,20,64,.86); color:#F3F6FF; box-shadow:0 0 24px rgba(127,240,255,.25); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); animation:pop .25s cubic-bezier(.3,1.6,.6,1)}
+.sq-title{font:900 15px "Zen Kaku Gothic New", Lexend, sans-serif; color:#B9C8FF; text-align:center}
+.sq-q{display:flex; justify-content:center; color:#FFFFFF}
+.sq-q .qb-expr{font:800 clamp(30px, 9vw, 46px) Lexend, sans-serif; color:#FFFFFF; text-shadow:0 0 14px rgba(127,240,255,.5)}
+.sq-q .qb-slot{border-color:#7FF0FF; color:#7FF0FF}
+.sq-q .qb-label{color:#FFFFFF; font-family:"Zen Kaku Gothic New", Lexend, sans-serif; font-weight:900}
+.sq-q .qb-obj{width:34px; height:34px}
+.sq-opts{display:grid; gap:10px; width:100%}
+.sq-opts.n3{grid-template-columns:repeat(3, 1fr)} .sq-opts.n4{grid-template-columns:repeat(4, 1fr)}
+.sq-opt{position:relative; min-height:74px; border:1.5px solid rgba(255,255,255,.4); border-radius:16px; background:linear-gradient(180deg, rgba(110,200,255,.4), rgba(70,60,180,.5)); color:#FFFFFF; font:800 clamp(26px, 7.5vw, 36px) Lexend, sans-serif; cursor:pointer; touch-action:manipulation; box-shadow:0 4px 0 rgba(8,10,40,.6)}
+.sq-opt small{position:absolute; top:4px; left:8px; font-size:11px; opacity:.5}
+.sq-opt:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(8,10,40,.6)}
+.sq-opt.good{background:linear-gradient(180deg, #3BE0C6, #1F9BD8); box-shadow:0 0 22px #3BE0C6}
+.sq-opt.miss{background:linear-gradient(180deg, #FF6FB0, #A8356E)}
+.sq-opt.dim{opacity:.4}
+.sq-moves{display:grid; gap:8px; width:100%}
+.sq-moves.n3{grid-template-columns:repeat(3, 1fr)} .sq-moves.n4{grid-template-columns:repeat(2, 1fr)}
+.sq-move{position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-height:78px; padding:8px 6px; border:1.5px solid rgba(255,255,255,.45); border-radius:16px; color:#FFFFFF; cursor:pointer; touch-action:manipulation; box-shadow:0 4px 0 rgba(8,10,40,.6)}
+.sq-move b{font:900 clamp(14px, 4vw, 17px) "Zen Kaku Gothic New", Lexend, sans-serif; line-height:1.15}
+.sq-move small{font:800 11px Lexend, sans-serif; letter-spacing:.08em; text-transform:uppercase; opacity:.85}
+.sq-move i{position:absolute; top:4px; left:8px; font-size:11px; font-style:normal; opacity:.5}
+.sq-move.el-blossom{background:linear-gradient(180deg, rgba(255,140,200,.75), rgba(170,60,140,.75))}
+.sq-move.el-tide{background:linear-gradient(180deg, rgba(110,200,255,.75), rgba(40,80,190,.75))}
+.sq-move.el-ember{background:linear-gradient(180deg, rgba(255,170,90,.8), rgba(190,70,40,.8))}
+.sq-move.el-storm{background:linear-gradient(180deg, rgba(255,226,74,.8), rgba(150,110,30,.8)); color:#1A1400}
+.sq-move.special{width:100%; min-height:84px; background:linear-gradient(90deg, #7FF0FF, #FF9AC8, #FFE27A, #7FF0FF); background-size:300% 100%; color:#150E1C; animation:shimmer 1.6s linear infinite, pulse 1s ease infinite}
+.sq-move.special b{font:400 clamp(20px, 6vw, 28px) "Dela Gothic One", Lexend, sans-serif}
+@keyframes shimmer{to{background-position:300% 0}}
+.sq-crit{width:100%; display:flex; flex-direction:column; gap:3px; align-items:center}
+.sq-crit i{display:block; width:100%; height:6px; border-radius:3px; background:linear-gradient(90deg, #FFE27A, #FF6FB0); animation:crit linear forwards; transform-origin:left}
+.sq-crit.block i{background:linear-gradient(90deg, #7FF0FF, #FF6FB0)}
+.sq-crit span{font-size:12px; color:#FFE27A; font-weight:700}
+/* Sky Quest: enemy types */
+.sq-crit.block.fast i{height:8px; background:linear-gradient(90deg, #FF6FB0, #FF3D6A)}
+.sq-crit.block.slow i{background:linear-gradient(90deg, #FFE27A, #FFB347)}
+.sq-card.meet{gap:6px; text-align:center}
+.sq-foeimg{width:120px; height:120px; object-fit:contain; filter:drop-shadow(0 0 12px rgba(127,240,255,.35))}
+.sq-meet-name{font:900 20px "Zen Kaku Gothic New", Lexend, sans-serif; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center}
+.sq-meet-how{margin:0; max-width:420px; color:#D9E4FF; font-size:16px; line-height:1.35}
+.sq-tag{font:800 12px Lexend, sans-serif; letter-spacing:.06em; text-transform:uppercase; padding:2px 10px; border-radius:999px; border:1.5px solid currentColor}
+.sq-tag.t-imp{color:#7FF0FF} .sq-tag.t-golem{color:#FFB347} .sq-tag.t-knight{color:#9FD9FF} .sq-tag.t-trick{color:#FF9AC8}
+.sq-go{min-width:180px; min-height:58px; border:1.5px solid rgba(255,255,255,.45); border-radius:16px; background:linear-gradient(180deg, #3BE0C6, #1F9BD8); color:#06202A; font:900 20px "Zen Kaku Gothic New", Lexend, sans-serif; cursor:pointer; touch-action:manipulation}
+.sq-tier.weak{opacity:.6; border-style:dashed}
+.sq-tier.weak small{color:#FFB347}
+@keyframes crit{from{transform:scaleX(1)} to{transform:scaleX(0)}}
+.sq-leave{border:none; background:none; color:#B9C8FF; text-decoration:underline; font:700 14px Lexend, sans-serif; cursor:pointer; padding:2px 8px}
+#game.sky .refuel{border:1.5px solid rgba(143,230,255,.7); background:rgba(16,20,64,.95); color:#F3F6FF; box-shadow:0 0 30px rgba(127,240,255,.3)}
+#game.sky .refuel-head p{color:#B9C8FF}
+@media (pointer:coarse){ .sq-opt small, .sq-move i{display:none} }
+.sq-wrap canvas{display:block; width:100%; cursor:pointer}
+
+/* Sky Quest: move strength */
+.sq-tiers{display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; width:100%}
+.sq-tier{display:flex; flex-direction:column; align-items:center; gap:1px; padding:6px 4px; border:1.5px solid rgba(255,255,255,.3); border-radius:12px; background:rgba(255,255,255,.08); color:#F3F6FF; cursor:pointer; touch-action:manipulation}
+.sq-tier b{font:900 14px "Zen Kaku Gothic New", Lexend, sans-serif; color:#FFE27A; white-space:nowrap}
+.sq-tier small{font:600 11px Lexend, sans-serif; color:#B9C8FF; text-align:center; line-height:1.2}
+.sq-tier.on{border-color:#7FF0FF; background:rgba(127,240,255,.22); box-shadow:0 0 14px rgba(127,240,255,.45)}
+
+/* Sky Quest: three islands */
+.sq-isles{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin:-2px 0 10px}
+.sq-isle{display:flex; flex-direction:column; align-items:center; gap:1px; padding:8px 4px; border:1.5px solid var(--line-soft); border-radius:14px; background:rgba(26,30,84,.7); color:#F3F6FF; cursor:pointer; touch-action:manipulation; font:inherit; text-align:center}
+.sq-isle b{font:900 14px "Zen Kaku Gothic New", Lexend, sans-serif; line-height:1.15}
+.sq-isle small{font-size:11.5px; color:var(--ink-soft)}
+.sq-isle.on{box-shadow:0 0 16px rgba(127,240,255,.4)}
+.sq-isle.isle-blossom.on{border-color:#FF9AC8; background:rgba(150,60,130,.55)}
+.sq-isle.isle-tide.on{border-color:#7FF0FF; background:rgba(30,110,150,.6)}
+.sq-isle.isle-ember.on{border-color:#FFB347; background:rgba(150,60,40,.6); box-shadow:0 0 16px rgba(255,150,80,.4)}
+.sq-isle.locked{opacity:.5; border-style:dashed}
+.sq-qn.isle-tide{background:#BFF6FF}
+.sq-qn.isle-ember{background:#FFE2C2}
+.sq-qn.isle-tide .ic{fill:#2F6FB8}
+.sq-qn.isle-ember .ic{fill:#D8572E}
+.sq-sheet.isle-tide{border-color:#7FF0FF}
+.sq-sheet.isle-ember{border-color:#FFB347}
+.sq-movechips{display:flex; flex-wrap:wrap; gap:4px; margin-top:2px}
+.sq-movechips i{font-style:normal; font-size:11.5px; font-weight:700; padding:1px 8px; border-radius:999px; border:1px solid var(--line); color:#BFF6FF; background:rgba(20,24,70,.6)}
+/* dash and glide buttons, stacked next to Jump */
+.sq-acts{gap:8px; align-self:flex-end}
+.ctl.sq.mini{width:clamp(56px, 16vw, 74px); height:clamp(56px, 16vw, 74px); font-size:12px; gap:0}
+.ctl.sq.mini .ic{width:22px; height:22px}
+.ctl.sq.dash{background:linear-gradient(180deg, rgba(127,240,255,.75), rgba(40,90,200,.75)); color:#06202A}
+.ctl.sq.glide{background:linear-gradient(180deg, rgba(255,226,122,.8), rgba(255,140,90,.75)); color:#2A1400}
+.sq-move.special.two{background:linear-gradient(90deg, #FFE27A, #FF9A3D, #7FF0FF, #FFE27A); background-size:300% 100%}
+
+/* Big Rig Builders: the next job, always one tap away above the town map */
+.next-job{display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; padding:12px 14px; border:3px solid var(--line); border-radius:20px; background:#F6E6C8; color:#4A3226; box-shadow:0 5px 0 var(--line); cursor:pointer; text-align:left; font:inherit}
+.next-job .nj-t{display:flex; flex-direction:column; min-width:0}
+.next-job small{font-size:14px; font-weight:700; color:#7A6250}
+.next-job b{font:400 26px "Patrick Hand", var(--display); line-height:1.1}
+.next-job .nj-go{display:inline-flex; align-items:center; gap:6px; flex:none; padding:10px 16px; border-radius:16px; background:var(--leaf); color:var(--on-leaf); font:800 20px var(--display); border:3px solid var(--line)}
+.next-job .nj-go .ic{width:20px; height:20px}
+
+/* Game picker: one player, every game */
+.games{display:grid; gap:14px}
+@media (min-width:760px){ .games{grid-template-columns:repeat(2, 1fr)} }
+.game-t{position:relative; display:flex; align-items:center; gap:14px; padding:14px; border:3px solid var(--line); border-radius:var(--r); background:var(--card); color:var(--ink); box-shadow:0 5px 0 var(--line); cursor:pointer; text-align:left; font:inherit; touch-action:manipulation}
+@media (min-width:760px){ .game-t{flex-direction:column; text-align:center} }
+.game-t:active{transform:translateY(4px); box-shadow:0 1px 0 var(--line)}
+.game-art{width:104px; height:92px; flex:none; display:grid; place-items:center}
+.game-art svg, .game-art img{width:100%; height:100%}
+.game-art .portrait{width:92px; height:92px; border-radius:50%; object-fit:cover; background:radial-gradient(circle at 50% 30%, #4A3A9A, #1A1A4A)}
+.game-txt{display:flex; flex-direction:column; gap:3px; min-width:0}
+@media (min-width:760px){ .game-txt{align-items:center} }
+.game-txt > b{font:800 22px var(--display); line-height:1.1}
+.game-txt small{color:var(--ink-soft); font-size:14px}
+.game-prog, .game-coins{display:inline-flex; align-items:center; gap:4px; font-size:15px; font-weight:700; font-variant-numeric:tabular-nums}
+.game-prog .ic, .game-coins .ic{width:18px; height:18px}
+.g-trucks{background:#F6E6C8}
+.g-soccer{background:#DDF3D6}
+.g-anime{background:linear-gradient(160deg, #1A2160, #4A3290 70%, #8A4C94); color:#F3F6FF}
+.g-anime .game-txt small{color:#C9D4FF}
+.game-t.last{outline:4px solid var(--star); outline-offset:3px}
+.game-last{position:absolute; top:-12px; right:14px; padding:2px 10px; border-radius:999px; border:2px solid var(--line); background:var(--star); color:#3A2A00; font-size:12px; font-weight:800}
+.g-trucks, .g-soccer{color:#2E241C}
+.g-trucks .game-txt small, .g-soccer .game-txt small{color:#5E4C3E}
+
+/* Install as an app */
+.block.install{border:3px dashed var(--line); border-radius:var(--r); padding:14px 16px; background:var(--card)}
+.inst-row{display:flex; gap:14px; align-items:center}
+.inst-row h2{margin:0 0 4px}
+.inst-row p{margin:0; color:var(--ink-soft)}
+.inst-icon{width:64px; height:64px; border-radius:16px; flex:none; box-shadow:0 3px 0 var(--line)}
+.inst-share{display:inline-grid; place-items:center; width:22px; height:22px; vertical-align:-5px}
+.inst-share svg{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round}
+.inst-btns{display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap}
