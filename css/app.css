@@ -579,3 +579,11 @@ html.skyui .kicker{color:#9FD9FF}
 .sq-tier b{font:900 14px "Zen Kaku Gothic New", Lexend, sans-serif; color:#FFE27A; white-space:nowrap}
 .sq-tier small{font:600 11px Lexend, sans-serif; color:#B9C8FF; text-align:center; line-height:1.2}
 .sq-tier.on{border-color:#7FF0FF; background:rgba(127,240,255,.22); box-shadow:0 0 14px rgba(127,240,255,.45)}
+
+/* Big Rig Builders: the next job, always one tap away above the town map */
+.next-job{display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; padding:12px 14px; border:3px solid var(--line); border-radius:20px; background:#F6E6C8; color:#4A3226; box-shadow:0 5px 0 var(--line); cursor:pointer; text-align:left; font:inherit}
+.next-job .nj-t{display:flex; flex-direction:column; min-width:0}
+.next-job small{font-size:14px; font-weight:700; color:#7A6250}
+.next-job b{font:400 26px "Patrick Hand", var(--display); line-height:1.1}
+.next-job .nj-go{display:inline-flex; align-items:center; gap:6px; flex:none; padding:10px 16px; border-radius:16px; background:var(--leaf); color:var(--on-leaf); font:800 20px var(--display); border:3px solid var(--line)}
+.next-job .nj-go .ic{width:20px; height:20px}

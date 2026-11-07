@@ -29,7 +29,7 @@ PUM.fx = {
 /* ---------- state ---------- */
 let view = 'home', pid = null, draft = null, confirmDel = false, showSync = false, showWorlds = false, sel = null;
 let quiz = null, train = null, play = null, result = null;
-let townSel = null, townConfirm = false, jobFrom = null, jobResult = null, bg = null;
+let townSel = null, townConfirm = false, jobFrom = null, jobResult = null, bg = null, townScroll = false;
 const P = () => S.players.find(p => p.id === pid);
 const assistOf = p => p.age <= 5 ? 2 : p.age <= 7 ? 1 : 0;
 const UPS = p => CP.upgrades[p.theme];
@@ -231,7 +231,7 @@ function drawTruckCanvases() {
     c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr);
     const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const k = c.dataset.truck, s = Math.min(r.width * .9, r.height * 1.6);
-    R.drawTruck(ctx, k, r.width / 2 + s * .1 * (k === 'crane' ? 1 : 0), r.height - 6, s, R.paint(p, k), {load:c.dataset.mat ? 4 : 0, mat:c.dataset.mat || null, t:1});
+    R.drawTruck(ctx, k, r.width / 2, r.height - 6, s, R.paint(p, k), {load:c.dataset.mat ? 4 : 0, mat:c.dataset.mat || null, t:1});
   });
 }
 function afterRender() {
@@ -254,6 +254,7 @@ function afterRender() {
       },
     });
     c.style.touchAction = 'pan-y';
+    if (townScroll) { townScroll = false; const ly = cur === 4 ? 150 + 4 * 170 + 38 : 150 + cur * 170 + 40; const top = c.getBoundingClientRect().top + window.scrollY; if (ly > 260) setTimeout(() => { try { window.scrollTo({top:Math.max(0, top + ly - window.innerHeight * .55), behavior:'smooth'}); } catch (e) {} }, 60); }
   }
   if (view === 'job' || view === 'jobDone') {
     const c = document.getElementById('site'); if (!c) return;
@@ -268,6 +269,12 @@ function selectLot(i) {
   if (J.soon) { PUM.fx.toast('Coming soon!'); return; }
   if (i > pr.unlocked) { PUM.fx.toast('Finish the building before this one to unlock it'); A.sfx('no'); return; }
   townSel = i; townConfirm = false; A.sfx('tap'); render();
+}
+function nextJobBtn(p) {
+  const pr = p.prog.trucks, j = p.rig.job, all = R.builtCount(p) >= R.ACTIVE;
+  const i = j ? j.i : Math.min(pr.unlocked, R.ACTIVE - 1), J = R.job(i);
+  const what = j ? `Keep building: step ${j.stage + 1} of ${J.steps.length}` : all ? 'Main Street is built! Replay for stars' : R.built(p, i) ? 'Build it again for more stars' : `Next job: ${J.steps.length} steps`;
+  return `<button class="next-job" data-act="sel-lot" data-i="${i}"><span class="nj-t"><small>${esc(what)}</small><b>${esc(J.name)}</b></span><span class="nj-go">${icon('play')} Go</span></button>`;
 }
 function renderTown() {
   const p = P(), pr = p.prog.trucks, j = p.rig.job;
@@ -292,6 +299,7 @@ function renderTown() {
   }
   return `
   <header class="top">${backBtn('home', 'Back to players')}<div class="who">${avatar(p, 'av-sm')}<div style="min-width:0"><h2 class="title">${esc(p.name)}</h2><span class="pmeta">Big Rig Builders &middot; ${R.builtCount(p)} of ${R.ACTIVE} built</span></div></div><button class="icon-btn" data-act="edit" aria-label="Edit ${esc(p.name)}">${icon('pencil')}</button></header>
+  ${nextJobBtn(p)}
   <div class="town-bar">${mpChip(p)}<button class="btn small" data-act="garage">${icon('wrench')} Garage</button><button class="btn small primary" data-act="train">${icon('brain')} Practice yard</button></div>
   <div class="town-wrap"><canvas id="town" aria-label="Main Street. Tap a building lot to see the job."></canvas></div>
   ${sheet}
@@ -351,7 +359,7 @@ function rigComplete() {
   const bonus = stars * 2 + (J.boss ? 5 : 0);
   p.mp += bonus; p.mpTotal += bonus;
   jobResult = {i, stars, coins:j.coins + bonus, cargo, newTrucks:R.TRUCKS.filter(t => R.owns(p, t.k) && !before.includes(t.k)).map(t => t.name)};
-  p.rig.job = null; townSel = Math.min(pr.unlocked, R.ACTIVE - 1);
+  p.rig.job = null; townSel = null; townScroll = true;
   store.savePlayer(p); A.sfx('fanfare');
   go('jobDone');
 }
@@ -831,7 +839,7 @@ app.addEventListener('click', e => {
   if (a.startsWith('sky-') || a === 'sel-quest' || a === 'close-qsheet') { if (skyEvent(a, el)) return; }
   switch (a) {
     case 'add-player': draft = {name:'', color:pick(PUM.COLORS), theme:'trucks', hero:0, age:5}; confirmDel = false; A.sfx('tap'); go('form'); break;
-    case 'open': { pid = el.dataset.id; showWorlds = false; skySel = null; questSel = null; setup = null; A.sfx('tap'); const p = P(); townSel = isRig(p) ? (p.rig.job ? p.rig.job.i : Math.min(p.prog.trucks.unlocked, R.ACTIVE - 1)) : null; go('base'); break; }
+    case 'open': { pid = el.dataset.id; showWorlds = false; skySel = null; questSel = null; setup = null; A.sfx('tap'); const p = P(); townSel = null; townScroll = isRig(p); go('base'); break; }
     case 'edit': { const p = P(); if (!p) break; draft = {id:p.id, name:p.name, color:p.color, theme:p.theme, hero:p.hero, age:p.age}; confirmDel = false; A.sfx('tap'); go('form'); break; }
     case 'pick': { const k = el.dataset.k; draft[k] = (k === 'age' || k === 'hero') ? Number(el.dataset.v) : el.dataset.v; confirmDel = false; A.sfx('tap'); render(); break; }
     case 'save-player': saveForm(); break;
@@ -848,6 +856,7 @@ app.addEventListener('click', e => {
     case 'start': A.sfx('tap'); startGame(Number(el.dataset.i)); break;
     case 'garage': A.sfx('tap'); go('garage'); break;
     case 'close-sheet': townSel = null; A.sfx('tap'); render(); break;
+    case 'sel-lot': A.ac(); selectLot(Number(el.dataset.i)); break;
     case 'job-go': A.sfx('tap'); go('job'); break;
     case 'job-start': {
       const p = P(), i = Number(el.dataset.i), j = p.rig.job;
