@@ -45,14 +45,23 @@ const backBtn = (to, label = 'Back') => `<button class="icon-btn" data-act="back
 const avatar = (p, cls) => `<span class="avatar ${cls}">${PUM.avatarSVG(p)}</span>`;
 const mpChip = p => `<span class="mp-chip" id="mp-chip">${curIcon(p)} <b>${p.mp}</b> ${curName(p)}</span>`;
 const starsRow = (n, size = '') => `<span class="mini-stars ${size}">${[0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">${icon('star', 'fill')}</i>`).join('')}</span>`;
+let famStart = false, famNew = false;
 function syncChip() {
   const s = store.sync.state, fam = store.family();
   let panel = '';
+  const err = store.sync.joinErr ? `<p class="err">${esc(store.sync.joinErr)}</p>` : '';
   if (showSync) {
-    if (fam && s !== 'badcode') panel = `<div class="sync-panel"><p>Players and progress show up on every phone or tablet that has joined with this family code: <span class="code">${store.prettyCode(fam)}</span></p><div class="join-row"><button class="btn small" data-act="copy-link">Copy family link</button></div><p id="copy-note" hidden style="overflow-wrap:anywhere"></p></div>`;
-    else panel = `<div class="sync-panel"><p>Enter the family code to share players and progress with the family's other phones and tablets.</p><div class="join-row"><input id="joincode" class="field" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH-JKLM"><button class="btn small primary" data-act="join">Join</button></div>${store.sync.joinErr ? `<p class="err">${esc(store.sync.joinErr)}</p>` : ''}</div>`;
+    if (fam && s !== 'badcode') panel = `<div class="sync-panel">${famNew
+      ? `<p class="fam-new">Your family is ready! Your family code is:</p><p class="code big">${store.prettyCode(fam)}</p><p><b>Write it down.</b> Every other phone or tablet needs this code (or the family link) to join.</p>`
+      : `<p>Players and progress show up on every phone or tablet that has joined with this family code: <span class="code">${store.prettyCode(fam)}</span></p>`}
+      <div class="join-row"><button class="btn small ${famNew ? 'go' : ''}" data-act="copy-link">Copy family link</button></div><p id="copy-note" hidden style="overflow-wrap:anywhere"></p></div>`;
+    else if (famStart) panel = `<div class="sync-panel"><p><b>Start a new family?</b> This makes a family code for your family's phones and tablets. Kids already on this device move into the family.</p>
+      <div class="join-row"><button class="btn small go" data-act="fam-create">Yes, start a family</button><button class="btn small ghost" data-act="fam-cancel">Cancel</button></div>${err}</div>`;
+    else panel = `<div class="sync-panel"><p>Share players and progress across your family's phones and tablets.</p>
+      <p class="lab-sm">First device in your family?</p><div class="join-row"><button class="btn small go" data-act="fam-start">${icon('plus')} Start a new family</button></div>
+      <p class="lab-sm">Already have a family code?</p><div class="join-row"><input id="joincode" class="field" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH-JKLM"><button class="btn small primary" data-act="join">Join</button></div>${err}</div>`;
   }
-  return `<div class="sync" id="sync"><button class="sync-b" data-s="${s}" data-act="sync-info" aria-expanded="${showSync}"><span class="dot"></span>${store.SYNC_TEXT[s]}${!fam ? ' · Join family' : ''}</button>${panel}</div>`;
+  return `<div class="sync" id="sync"><button class="sync-b" data-s="${s}" data-act="sync-info" aria-expanded="${showSync}"><span class="dot"></span>${store.SYNC_TEXT[s]}${!fam ? ' · Share with family' : ''}</button>${panel}</div>`;
 }
 store.sync.onChange = () => { const el = document.getElementById('sync'); if (el) el.outerHTML = syncChip(); };
 store.sync.onPulled = () => { if (pid && !P()) { pid = null; if (view !== 'form') view = 'home'; } if (view === 'home' || view === 'games' || view === 'base' || view === 'map' || view === 'garage' || view === 'skyGarden' || view === 'skyForge') render(); };
@@ -984,7 +993,10 @@ app.addEventListener('click', e => {
     }
     case 'toggle-worlds': showWorlds = !showWorlds; A.sfx('tap'); render(); break;
     case 'set-world': { const p = P(); if (!p || !PUM.LV[el.dataset.level]) break; p.world = el.dataset.level; store.lv(p, p.world); showWorlds = false; store.savePlayer(p); A.sfx('tap'); render(); break; }
-    case 'sync-info': showSync = !showSync; store.sync.joinErr = ''; store.sync.onChange(); break;
+    case 'sync-info': showSync = !showSync; famStart = false; famNew = false; store.sync.joinErr = ''; store.sync.onChange(); break;
+    case 'fam-start': famStart = true; store.sync.joinErr = ''; A.sfx('tap'); store.sync.onChange(); break;
+    case 'fam-cancel': famStart = false; store.sync.joinErr = ''; store.sync.onChange(); break;
+    case 'fam-create': { if (el.dataset.busy) break; el.dataset.busy = '1'; el.textContent = 'Starting…'; store.create().then(ok => { famStart = !ok; famNew = ok; showSync = true; if (ok) A.sfx('fanfare'); render(); }); break; }
     case 'join': { const f = document.getElementById('joincode'); store.join(f ? f.value : '').then(ok => { if (ok) showSync = false; render(); }); break; }
     case 'copy-link': {
       const link = store.familyLink(), note = document.getElementById('copy-note');

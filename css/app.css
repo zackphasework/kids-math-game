@@ -660,3 +660,8 @@ html.skyui .kicker{color:#9FD9FF}
 .inst-share{display:inline-grid; place-items:center; width:22px; height:22px; vertical-align:-5px}
 .inst-share svg{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round}
 .inst-btns{display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap}
+
+/* Family sharing: start or join */
+.sync-panel .lab-sm{margin:10px 0 4px; font-weight:800; font-size:14px}
+.sync-panel .fam-new{font-weight:800}
+.sync-panel .code.big{display:block; margin:4px 0 8px; font:800 26px Lexend, sans-serif; letter-spacing:.06em; color:var(--ink); user-select:all}
