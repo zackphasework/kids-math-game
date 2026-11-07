@@ -496,12 +496,31 @@ PUM.games.sky = function (o) {
     c.restore();
     K.petals(c, Wd, Hd, t, 18);
     const heal = g.heal; if (heal < 1) { c.save(); c.globalCompositeOperation = 'saturation'; c.fillStyle = `rgba(128,128,128,${(1 - heal) * .55})`; c.fillRect(0, 0, Wd, Hd); c.restore(); }
-    /* HUD */
-    const top = 10 + (window.visualViewport ? 0 : 0);
-    glass(c, 64, top, Math.min(Wd - 150, 210), 50);
-    drawHearts(c, 82, top + 18);
-    label(c, objText(), 74, top + 38, 12, '#D9E4FF', 'left');
+    hudExplore(c);
   }
+  function hudExplore(c) {
+    glass(c, 64, 10, Math.min(Wd - 150, 210), 50);
+    drawHearts(c, 82, 28);
+    label(c, objText(), 74, 48, 12, '#D9E4FF', 'left');
+  }
+  /* the same stage drawn as a 3D island; the 2D canvas on top keeps the hints, sparkles and HUD */
+  let R3 = null, lastDraw = 0;
+  function drawExplore3D(c, t) {
+    const dt = Math.max(0, Math.min(.05, t - lastDraw)); lastDraw = t;
+    c.clearRect(0, 0, Wd, Hd);
+    R3.render(t, dt);
+    if (assist >= 1) for (const gp of W.gaps) {
+      if (gp.x < hero.x - 40 || gp.x - hero.x > 700) continue;
+      const a = .6 + .4 * Math.sin(t * 6); c.save(); c.globalAlpha = a; c.shadowColor = '#FFE27A'; c.shadowBlur = 12; c.strokeStyle = '#FFE27A'; c.lineWidth = 4; c.setLineDash([10, 10]); c.beginPath();
+      for (let i = 0; i <= 16; i++) { const k = i / 16, x = (1 - k) * (1 - k) * (gp.x - 30) + 2 * (1 - k) * k * (gp.x + gp.w / 2) + k * k * (gp.x + gp.w + 30), y = (1 - k) * (1 - k) * (gp.h - 10) + 2 * (1 - k) * k * (gp.h - 200) + k * k * (gp.h - 10); const [sx, sy] = R3.project(x, y); i ? c.lineTo(sx, sy) : c.moveTo(sx, sy); }
+      c.stroke(); c.setLineDash([]); const [lx, ly] = R3.project(gp.x - 10, gp.h - 70); label(c, 'JUMP!', lx, ly, 18, '#FFE27A', 'center', 'D'); c.restore();
+    }
+    if (!double) for (const sc of W.secrets) { if (Math.abs(sc.x - hero.x) > 500) continue; const [qx, qy] = R3.project(sc.x, sc.y - 70); label(c, '?', qx, qy + Math.sin(t * 3) * 4, 30, '#FFE27A', 'center', 'D'); if (Math.abs(hero.x - sc.x) < 200) { const [mx, my] = R3.project(sc.x, sc.h - 150); label(c, 'Too high! A guardian can teach you double jump.', mx, my, 13, '#FFFFFF'); } }
+    const k = R3.ppu(), [ox, oy] = R3.project(hero.x, hero.y);
+    c.save(); c.translate(ox - hero.x * k, oy - hero.y * k); c.scale(k, k); parts.draw(c); c.restore();
+    hudExplore(c);
+  }
+  const drawWorld = (c, t) => R3 ? drawExplore3D(c, t) : drawExplore(c, t);
   function drawBattle(c, t) {
     K.battleBg(c, Wd, Hd, t, {boss:b.boss});
     const fx = Wd * .66 + b.x - (b.lunge || 0) * Wd * .2, fy = Hd * .3 + (b.lunge || 0) * Hd * .08, fk = Math.min(Wd / 420, Hd / 760);
@@ -561,8 +580,10 @@ PUM.games.sky = function (o) {
   }
 
   return {
-    onStart() { api.ctrl(exploreCtrl()); banner(Q.name, Q.story.length < 60 ? Q.story : Q.obj, 2.2, '#FFC6DD'); say(Q.story); },
-    resize(w, h) { Wd = w; Hd = h; s = Math.min(h / 700, w / 380); gy = h * .64; },
+    onStart() {
+      if (PUM.SKY3D && PUM.SKY3D.ready()) { try { R3 = PUM.SKY3D.create({world:W, hero, g, look:L, comp, double, tower}); const gc = document.getElementById('gc'); gc.parentNode.insertBefore(R3.canvas, gc); R3.resize(Wd, Hd); } catch (e) { console.error(e); if (R3) R3.dispose(); R3 = null; } }
+      api.ctrl(exploreCtrl()); banner(Q.name, Q.story.length < 60 ? Q.story : Q.obj, 2.2, '#FFC6DD'); say(Q.story); },
+    resize(w, h) { Wd = w; Hd = h; s = Math.min(h / 700, w / 380); gy = h * .64; if (R3) R3.resize(w, h); },
     update(dt) {
       g.t += dt; parts.update(dt);
       if (g.banner) { g.banner.t += dt; if (g.banner.t > g.banner.dur) g.banner = null; }
@@ -580,10 +601,10 @@ PUM.games.sky = function (o) {
       c.save();
       if (g.shake > .5) c.translate((Math.random() - .5) * g.shake, (Math.random() - .5) * g.shake);
       if (g.mode === 'battle' && b) drawBattle(c, t);
-      else if (g.mode === 'trans') { drawExplore(c, t); drawTrans(c, g.trans / .75, true); }
-      else if (g.mode === 'trans2') { drawExplore(c, t); drawTrans(c, g.trans / .6, false); }
+      else if (g.mode === 'trans') { drawWorld(c, t); drawTrans(c, g.trans / .75, true); }
+      else if (g.mode === 'trans2') { drawWorld(c, t); drawTrans(c, g.trans / .6, false); }
       else if (g.mode === 'end' && b && b.boss) drawBattle(c, t);
-      else drawExplore(c, t);
+      else drawWorld(c, t);
       if (g.mode === 'battle' || (b && b.boss)) parts.draw(c);
       drawNums(c);
       c.restore();
@@ -612,7 +633,8 @@ PUM.games.sky = function (o) {
       if (g.mode === 'battle' && b) { api.ctrl(''); toPick(); }
       else if (g.mode === 'explore') api.ctrl(exploreCtrl());
     },
-    onStop() {},
+    onStop() { if (R3) { R3.dispose(); R3 = null; } },
+    is3d: () => !!R3,
     xpEarned: () => g.xp,
     _debug: () => ({g, hero, W, get b() { return b; }, get lock() { return lock; }}),
   };

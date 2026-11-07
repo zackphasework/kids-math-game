@@ -530,6 +530,7 @@ function skyCanvas(id, scene, hFn) {
   bgRun(c, g); c.style.touchAction = 'pan-y'; return g;
 }
 function skyAfterRender(p) {
+  if (PUM.SKY3D) PUM.SKY3D.ensure();
   if (view === 'base') {
     let hits = [];
     skyCanvas('village', {draw(ctx, W, H, t) { hits = KA.village(ctx, W, H, t, {buildings:p.sky.b, comps:compList(p)}, skySel); },
