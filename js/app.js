@@ -225,7 +225,7 @@ function render() {
   app.hidden = view === 'game';
   stopBg();
   if (view === 'game') return;
-  const rig = isRig(P()), sky = isSky(P()) && view !== 'home' && view !== 'form' && view !== 'games';
+  const rig = isRig(P()), sky = !!isSky(P()) && view !== 'home' && view !== 'form' && view !== 'games';
   document.documentElement.classList.toggle('skyui', sky);
   app.innerHTML = view === 'form' ? renderForm() : view === 'games' ? renderGames() : view === 'base' ? (rig ? renderTown() : sky ? renderVillage() : renderBase()) : view === 'garage' ? renderGarage() : view === 'job' ? renderJob() : view === 'jobDone' ? renderJobDone()
     : view === 'map' ? (sky ? renderSkyMap() : renderMap()) : view === 'skySetup' ? renderSkySetup() : view === 'skyGarden' ? renderGarden() : view === 'skyForge' ? renderForge() : view === 'skyDone' ? renderSkyDone()

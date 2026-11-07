@@ -732,14 +732,25 @@ PUM.games.sky = function (o) {
     hudExplore(c);
   }
   const drawWorld = (c, t) => R3 ? drawExplore3D(c, t) : drawExplore(c, t);
+  /* the hit flash whitens the art with 'source-atop', so a flashing enemy is drawn on its own layer first;
+     otherwise the flash would light up a rectangle of the background too */
+  let layer = null;
+  function onLayer(c, use, draw) {
+    if (!use) { draw(c); return; }
+    const cv = c.canvas; if (!layer) layer = document.createElement('canvas');
+    if (layer.width !== cv.width || layer.height !== cv.height) { layer.width = cv.width; layer.height = cv.height; }
+    const lc = layer.getContext('2d'); lc.setTransform(1, 0, 0, 1, 0, 0); lc.clearRect(0, 0, layer.width, layer.height);
+    lc.setTransform(c.getTransform()); draw(lc);
+    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(layer, 0, 0); c.restore();
+  }
   function drawBattle(c, t) {
     K.battleBg(c, Wd, Hd, t, {boss:b.boss, isle});
     const fx = Wd * .66 + b.x - (b.lunge || 0) * Wd * .2, fy = Hd * .3 + (b.lunge || 0) * Hd * .08, fk = Math.min(Wd / 420, Hd / 760);
     const winA = b.state === 'win' && !b.boss ? Math.max(0, 1 - b.tm / 1.2) : 1;
-    if (b.boss) K.guardian(c, b.guard, fx + 20 * fk, Hd * .47, fk * .62, t, b.pure, {flash:b.flash, hit:b.flash > .5, charge:(b.state === 'wind' || b.state === 'block') && b.phase === 2});
+    if (b.boss) onLayer(c, b.flash > 0, lc => K.guardian(lc, b.guard, fx + 20 * fk, Hd * .47, fk * .62, t, b.pure, {flash:b.flash, hit:b.flash > .5, charge:(b.state === 'wind' || b.state === 'block') && b.phase === 2}));
     /* golems, knights and foxes stand on the ground, lower than the floating shadows */
     const stand = b.type === 'golem' || b.type === 'knight' || b.type === 'trick', fs = fk * (b.big ? .95 : .8);
-    if (!b.boss) K.foe(c, foeArt(), fx, stand ? fy + Hd * .22 - 140 * fs : fy, fs, t, {face:-1, flash:b.flash, alpha:winA, seed:b.seed, shield:b.shield ? b.shield.got / b.shield.need : -1, hit:b.flash > .5, atk:b.state === 'wind'});
+    if (!b.boss) onLayer(c, b.flash > 0, lc => K.foe(lc, foeArt(), fx, stand ? fy + Hd * .22 - 140 * fs : fy, fs, t, {face:-1, flash:b.flash, alpha:winA, seed:b.seed, shield:b.shield ? b.shield.got / b.shield.need : -1, hit:b.flash > .5, atk:b.state === 'wind'}));
     /* guardians get a shadow barrier; a knight's own shield (drawn on the knight) shows the cracks */
     if (b.shield && b.boss) { c.save(); c.translate(Wd * .66, Hd * .3); const r = 150 * fk; c.shadowColor = '#B04CFF'; c.shadowBlur = 24; c.strokeStyle = 'rgba(200,120,255,.9)'; c.fillStyle = 'rgba(120,40,200,.18)'; c.lineWidth = 3; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + t * .3; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.fill(); c.stroke();
       c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 2; for (let i = 0; i < b.shield.got; i++) { c.beginPath(); c.moveTo(0, 0); for (let j = 1; j < 5; j++) c.lineTo(Math.cos(i * 2.1 + j * .4) * r * j / 4, Math.sin(i * 2.1 + j * .3) * r * j / 4); c.stroke(); } c.restore(); }
