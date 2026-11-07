@@ -17,13 +17,18 @@ const HERO = [
   {skin:'#FCE5D6', skinS:'#EBB9A5', irisD:'#182462', irisL:'#46E6FF', hair:'navy', outfit:'snow'},
   {skin:'#FFEADF', skinS:'#EFBCA9', irisD:'#3A1460', irisL:'#D98BFF', hair:'rose', outfit:'violet'},
   {skin:'#E8C09C', skinS:'#C9946E', irisD:'#4A2208', irisL:'#FFB347', hair:'ink', outfit:'crimson'},
+  /* villain-style looks: a horned dark knight with a scythe, and a hooded masked ninja with twin daggers */
+  {skin:'#F4DCCB', skinS:'#DDB3A0', irisD:'#5A2A00', irisL:'#FFD24A', hair:'silver', outfit:'night', villain:true},
+  {skin:'#EBC6A6', skinS:'#CF9F7E', irisD:'#06402E', irisL:'#5BFFB0', hair:'ink', outfit:'violet', villain:true},
 ];
-K.heroDefaults = i => ({hair:HERO[i].hair, outfit:HERO[i].outfit});
+K.HEROES = HERO.length;
+K.heroDefaults = i => ({hair:(HERO[i] || HERO[0]).hair, outfit:(HERO[i] || HERO[0]).outfit});
 /* Resolve a look: hero index plus picked colours into everything the drawings need. */
 K.look = (hero, hair, outfit, scarf) => {
-  const H = HERO[hero] || HERO[0], hc = K.HAIR[hair] || K.HAIR[H.hair], oc = K.OUTFIT[outfit] || K.OUTFIT[H.outfit], sc = K.CLR[scarf] || scarf || '#7B5CFF';
+  if (!HERO[hero]) hero = 0;
+  const H = HERO[hero], hc = K.HAIR[hair] || K.HAIR[H.hair], oc = K.OUTFIT[outfit] || K.OUTFIT[H.outfit], sc = K.CLR[scarf] || scarf || '#7B5CFF';
   const darkOutfit = outfit === 'night' || outfit === 'violet' || outfit === 'forest' || outfit === 'crimson';
-  return {style:hero, line:LINE, lw:2.2, skin:H.skin, shade:H.skinS, irisD:H.irisD, irisL:H.irisL,
+  return {style:hero, villain:!!H.villain, line:LINE, lw:2.2, skin:H.skin, shade:H.skinS, irisD:H.irisD, irisL:H.irisL,
     hair:hc, hairHi:E.shade(hc, hair === 'silver' ? .45 : .32), rim:'#8FE6FF', jacket:oc, jacketS:E.shade(oc, -.2), trim:darkOutfit ? '#E9C46A' : '#E9B949',
     scarf:sc, scarfS:E.shade(sc, -.25), pants:'#283056', boots:'#1F2440'};
 };
@@ -73,25 +78,77 @@ function bustEye(c, L, x, y, f, blink) {
   c.lineTo(x + f * 29, y - 13 * h); c.lineTo(x + f * 24, y - 4 * h); c.bezierCurveTo(x + f * 12, y - 16 * h, x - f * 14, y - 15 * h, x - f * 24, y + 1 * h); c.closePath(); c.fill();
   line(c, L, 1.3); c.beginPath(); c.moveTo(x + f * 20, y + 12 * h); c.quadraticCurveTo(x + f * 6, y + 19 * h, x - f * 8, y + 17 * h); c.stroke();
 }
+/* ---- villain-style looks for the bust (style 3: horned dark knight, style 4: hooded masked ninja) ---- */
+function knightBack(c, L) {
+  /* cape behind the shoulders, lined in the player's colour */
+  c.beginPath(); c.moveTo(62, 440); c.quadraticCurveTo(52, 360, 108, 326); c.lineTo(252, 326); c.quadraticCurveTo(308, 360, 298, 440); c.closePath(); c.fillStyle = L.scarfS; c.fill(); line(c, L); c.stroke();
+  /* long hair flowing out from under the helmet */
+  const hb = [[110,150],[94,230],[90,310],[102,352],[140,334],[180,344],[220,334],[258,352],[270,310],[266,230],[250,150]];
+  c.beginPath(); smooth(c, hb); c.fillStyle = L.hair; c.fill(); line(c, L); c.stroke();
+  c.save(); c.beginPath(); smooth(c, hb); c.clip(); c.strokeStyle = L.hairHi; c.lineWidth = 6; c.beginPath(); c.moveTo(102, 220); c.quadraticCurveTo(98, 290, 108, 340); c.moveTo(258, 220); c.quadraticCurveTo(262, 290, 252, 340); c.stroke(); c.restore();
+}
+function knightArmour(c, L) {
+  for (const f of [-1, 1]) {
+    const x = 180 + f * 94;
+    c.beginPath(); c.moveTo(x - 48, 384); c.quadraticCurveTo(x - 42, 336, x, 332); c.quadraticCurveTo(x + 42, 336, x + 48, 384); c.quadraticCurveTo(x, 368, x - 48, 384); c.closePath(); c.fillStyle = L.jacketS; c.fill(); line(c, L); c.stroke();
+    c.strokeStyle = L.trim; c.lineWidth = 3; c.beginPath(); c.moveTo(x - 40, 374); c.quadraticCurveTo(x, 360, x + 40, 374); c.stroke();
+    c.beginPath(); c.moveTo(x - f * 8, 338); c.lineTo(x + f * 22, 300); c.lineTo(x + f * 24, 342); c.closePath(); c.fillStyle = '#F1E6CF'; c.fill(); line(c, L, 1.8); c.stroke();
+  }
+  c.save(); c.shadowColor = L.scarf; c.shadowBlur = 14; c.fillStyle = L.scarf; c.beginPath(); c.moveTo(180, 386); c.lineTo(194, 404); c.lineTo(180, 422); c.lineTo(166, 404); c.closePath(); c.fill(); c.restore(); line(c, L, 1.8); c.stroke();
+}
+function knightHelmet(c, L) {
+  const helm = () => { c.beginPath(); c.moveTo(100, 238); c.lineTo(98, 150); c.bezierCurveTo(100, 84, 140, 62, 180, 62); c.bezierCurveTo(220, 62, 260, 84, 262, 150); c.lineTo(260, 238); c.lineTo(242, 228); c.lineTo(242, 188); c.quadraticCurveTo(214, 170, 186, 176); c.lineTo(185, 204); c.lineTo(180, 210); c.lineTo(175, 204); c.lineTo(174, 176); c.quadraticCurveTo(146, 170, 118, 188); c.lineTo(118, 228); c.closePath(); };
+  /* horns, curling up like a dragon's */
+  const horns = () => { for (const f of [-1, 1]) { c.beginPath(); c.moveTo(180 + f * 62, 92); c.bezierCurveTo(180 + f * 112, 84, 180 + f * 140, 64, 180 + f * 128, 44); c.bezierCurveTo(180 + f * 120, 70, 180 + f * 100, 92, 180 + f * 76, 122); c.closePath(); c.fillStyle = '#F1E6CF'; c.fill(); line(c, L); c.stroke(); c.fillStyle = 'rgba(160,140,110,.45)'; c.beginPath(); c.moveTo(180 + f * 92, 92); c.lineTo(180 + f * 112, 84); c.lineTo(180 + f * 100, 102); c.closePath(); c.fill(); } };
+  helm(); c.fillStyle = L.jacket; c.fill();
+  c.save(); helm(); c.clip(); c.fillStyle = L.jacketS; c.fillRect(186, 40, 90, 220); c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.ellipse(140, 104, 26, 12, -.5, 0, TAU); c.fill(); c.restore();
+  helm(); line(c, L); c.stroke();
+  c.strokeStyle = L.trim; c.lineWidth = 4; c.beginPath(); c.moveTo(118, 188); c.quadraticCurveTo(146, 170, 174, 176); c.moveTo(186, 176); c.quadraticCurveTo(214, 170, 242, 188); c.stroke();
+  c.save(); c.beginPath(); helm(); c.clip(); c.beginPath(); c.rect(0, 0, 120, 400); c.clip(); helm(); c.strokeStyle = L.rim; c.lineWidth = 8; c.shadowColor = L.rim; c.shadowBlur = 10; c.stroke(); c.restore();
+  c.save(); c.shadowColor = L.scarf; c.shadowBlur = 14; c.fillStyle = L.scarf; c.beginPath(); c.moveTo(180, 96); c.lineTo(192, 112); c.lineTo(180, 128); c.lineTo(168, 112); c.closePath(); c.fill(); c.restore(); line(c, L, 1.8); c.stroke();
+  horns();
+}
+function ninjaBack(c, L) {
+  c.beginPath(); c.moveTo(64, 362); c.bezierCurveTo(56, 200, 88, 68, 180, 62); c.bezierCurveTo(272, 68, 304, 200, 296, 362); c.closePath(); c.fillStyle = L.jacketS; c.fill(); line(c, L); c.stroke();
+}
+function ninjaGear(c, L) {
+  /* a strap across the chest with two dagger handles over the shoulder */
+  for (const [x, a] of [[96, -.5], [116, -.2]]) { c.save(); c.translate(x, 352); c.rotate(a); c.fillStyle = '#4A3A2E'; c.fillRect(-5, -48, 10, 40); line(c, L, 1.8); c.strokeRect(-5, -48, 10, 40); c.fillStyle = L.trim; c.fillRect(-9, -10, 18, 6); c.restore(); }
+  c.lineCap = 'butt'; c.strokeStyle = LINE; c.lineWidth = 18; c.beginPath(); c.moveTo(104, 346); c.lineTo(250, 440); c.stroke(); c.strokeStyle = '#2A2238'; c.lineWidth = 13; c.stroke(); c.lineCap = 'round';
+}
+function ninjaMask(c, L) {
+  /* the mask's ties flutter out to the side in the player's colour */
+  c.beginPath(); c.moveTo(254, 206); c.quadraticCurveTo(298, 192, 320, 212); c.lineTo(306, 222); c.quadraticCurveTo(290, 210, 256, 222); c.closePath(); c.fillStyle = L.scarf; c.fill(); line(c, L, 1.8); c.stroke();
+  c.beginPath(); c.moveTo(254, 214); c.quadraticCurveTo(292, 220, 304, 244); c.lineTo(292, 246); c.quadraticCurveTo(280, 228, 256, 226); c.closePath(); c.fillStyle = L.scarfS; c.fill(); line(c, L, 1.8); c.stroke();
+  c.beginPath(); c.moveTo(106, 200); c.quadraticCurveTo(180, 184, 254, 200); c.lineTo(254, 234); c.quadraticCurveTo(220, 248, 190, 238); c.lineTo(180, 230); c.lineTo(170, 238); c.quadraticCurveTo(140, 248, 106, 234); c.closePath(); c.fillStyle = '#1E1B2E'; c.fill(); line(c, L); c.stroke();
+}
+function ninjaHood(c, L) {
+  c.beginPath(); c.moveTo(94, 304); c.bezierCurveTo(80, 180, 108, 80, 180, 76); c.bezierCurveTo(252, 80, 280, 180, 266, 304); c.lineTo(250, 304); c.bezierCurveTo(260, 192, 238, 112, 180, 108); c.bezierCurveTo(122, 112, 100, 192, 110, 304); c.closePath(); c.fillStyle = L.jacket; c.fill(); line(c, L); c.stroke();
+  c.save(); c.beginPath(); c.moveTo(94, 304); c.bezierCurveTo(80, 180, 108, 80, 180, 76); c.lineTo(180, 108); c.bezierCurveTo(122, 112, 100, 192, 110, 304); c.closePath(); c.clip(); c.strokeStyle = L.rim; c.lineWidth = 7; c.shadowColor = L.rim; c.shadowBlur = 10; c.beginPath(); c.moveTo(92, 300); c.bezierCurveTo(80, 180, 108, 80, 180, 76); c.stroke(); c.restore();
+}
 /* o: {mouth:'smile'|'shout'|'grin', blink, glowEyes} */
 K.bust = function (c, L, o = {}) {
   const st = L.style, sp = st === 0 ? .85 : st === 1 ? .7 : .6;
-  const back = BACK[st].map(([x, y]) => [180 + (x - 180) * (.78 + .22 * sp), 150 + (y - 150) * (.8 + .2 * sp)]);
+  if (st === 3) knightBack(c, L); else if (st === 4) ninjaBack(c, L);
+  const back = (BACK[st] || BACK[0]).map(([x, y]) => [180 + (x - 180) * (.78 + .22 * sp), 150 + (y - 150) * (.8 + .2 * sp)]);
   /* ponytail (Juno) */
   if (st === 2) {
     const pt = [[226,84],[276,62],[318,92],[334,160],[326,232],[302,306],[294,244],[292,176],[278,122],[244,108]];
     c.beginPath(); smooth(c, pt); c.fillStyle = L.hair; c.fill(); line(c, L); c.stroke();
     c.save(); c.beginPath(); smooth(c, pt); c.clip(); c.strokeStyle = L.hairHi; c.lineWidth = 6; c.beginPath(); c.moveTo(292, 84); c.quadraticCurveTo(326, 140, 312, 236); c.stroke(); c.restore();
   }
-  c.beginPath(); spiky(c, back, 180, 160, 8 + 10 * (1 - sp)); c.closePath(); c.fillStyle = L.hair; c.fill(); line(c, L); c.stroke();
-  c.save(); c.beginPath(); spiky(c, back, 180, 160, 8 + 10 * (1 - sp)); c.closePath(); c.clip(); c.beginPath(); c.rect(196, 0, 164, 260); c.clip();
-  c.beginPath(); spiky(c, back, 180, 160, 8 + 10 * (1 - sp)); c.closePath(); c.strokeStyle = L.rim; c.lineWidth = 9; c.shadowColor = L.rim; c.shadowBlur = 10; c.stroke(); c.restore();
+  if (st < 3) {
+    c.beginPath(); spiky(c, back, 180, 160, 8 + 10 * (1 - sp)); c.closePath(); c.fillStyle = L.hair; c.fill(); line(c, L); c.stroke();
+    c.save(); c.beginPath(); spiky(c, back, 180, 160, 8 + 10 * (1 - sp)); c.closePath(); c.clip(); c.beginPath(); c.rect(196, 0, 164, 260); c.clip();
+    c.beginPath(); spiky(c, back, 180, 160, 8 + 10 * (1 - sp)); c.closePath(); c.strokeStyle = L.rim; c.lineWidth = 9; c.shadowColor = L.rim; c.shadowBlur = 10; c.stroke(); c.restore();
+  }
   /* torso */
   c.beginPath(); c.moveTo(48, 440); c.bezierCurveTo(58, 380, 92, 356, 150, 342); c.lineTo(210, 342); c.bezierCurveTo(268, 356, 302, 380, 312, 440); c.closePath();
   c.fillStyle = L.jacket; c.fill(); line(c, L); c.stroke();
   c.save(); c.clip(); c.fillStyle = L.jacketS; c.beginPath(); c.moveTo(220, 342); c.bezierCurveTo(270, 360, 300, 390, 312, 440); c.lineTo(240, 440); c.bezierCurveTo(236, 400, 228, 370, 214, 350); c.closePath(); c.fill(); c.restore();
   c.strokeStyle = L.trim; c.lineWidth = 5; c.beginPath(); c.moveTo(150, 346); c.lineTo(132, 440); c.moveTo(210, 346); c.lineTo(228, 440); c.stroke();
   line(c, L, 1.8); c.beginPath(); c.moveTo(150, 346); c.lineTo(132, 440); c.moveTo(210, 346); c.lineTo(228, 440); c.stroke();
+  if (st === 3) knightArmour(c, L); else if (st === 4) ninjaGear(c, L);
   /* neck */
   c.beginPath(); c.moveTo(162, 290); c.lineTo(160, 345); c.lineTo(200, 345); c.lineTo(198, 290); c.closePath(); c.fillStyle = L.skin; c.fill(); line(c, L); c.stroke();
   c.fillStyle = L.shade; c.beginPath(); c.moveTo(161, 296); c.lineTo(199, 296); c.lineTo(199, 316); c.quadraticCurveTo(180, 326, 161, 312); c.closePath(); c.fill();
@@ -109,16 +166,19 @@ K.bust = function (c, L, o = {}) {
   c.restore();
   face(); line(c, L); c.stroke();
   for (const x of [134, 226]) { const g = c.createRadialGradient(x, 249, 1, x, 249, 16); g.addColorStop(0, 'rgba(255,120,150,.45)'); g.addColorStop(1, 'rgba(255,120,150,0)'); c.fillStyle = g; c.beginPath(); c.ellipse(x, 249, 17, 9, 0, 0, TAU); c.fill(); }
-  if (o.glowEyes) { c.save(); c.shadowColor = L.irisL; c.shadowBlur = 30; c.fillStyle = 'rgba(0,0,0,0)'; }
+  if (st === 4) ninjaMask(c, L);
+  const glowE = o.glowEyes || L.villain;
+  if (glowE) { c.save(); c.shadowColor = L.irisL; c.shadowBlur = o.glowEyes ? 30 : 12; c.fillStyle = 'rgba(0,0,0,0)'; }
   bustEye(c, L, 146, 220, -1, o.blink); bustEye(c, L, 214, 220, 1, o.blink);
-  if (o.glowEyes) c.restore();
+  if (glowE) c.restore();
   /* brows */
   line(c, L, 2.8);
-  for (const f of [-1, 1]) { const x = 180 + f * 34; c.beginPath(); if (o.fierce) { c.moveTo(x - f * 20, 184); c.quadraticCurveTo(x, 182, x + f * 22, 192); } else { c.moveTo(x - f * 20, 188); c.quadraticCurveTo(x, 178, x + f * 22, 186); } c.stroke(); }
+  for (const f of [-1, 1]) { const x = 180 + f * 34; c.beginPath(); if (st === 4 && !o.fierce && f === 1) { c.moveTo(x - 20, 180); c.quadraticCurveTo(x, 166, x + 22, 176); } else if (o.fierce) { c.moveTo(x - f * 20, 184); c.quadraticCurveTo(x, 182, x + f * 22, 192); } else { c.moveTo(x - f * 20, 188); c.quadraticCurveTo(x, 178, x + f * 22, 186); } c.stroke(); }
   /* nose and mouth */
   line(c, L, 2); c.beginPath(); c.moveTo(183, 240); c.quadraticCurveTo(178, 251, 181, 254); c.stroke();
   if (o.mouth === 'shout') { c.beginPath(); c.moveTo(166, 264); c.quadraticCurveTo(181, 262, 196, 264); c.quadraticCurveTo(190, 286, 181, 286); c.quadraticCurveTo(172, 286, 166, 264); c.closePath(); c.fillStyle = '#7A2230'; c.fill(); line(c, L, 2); c.stroke(); c.fillStyle = '#FF8FA0'; c.beginPath(); c.ellipse(181, 280, 7, 4, 0, 0, TAU); c.fill(); }
   else if (o.mouth === 'grin') { c.beginPath(); c.moveTo(166, 266); c.quadraticCurveTo(182, 280, 198, 262); c.quadraticCurveTo(184, 270, 166, 266); c.fillStyle = '#7A2230'; c.fill(); line(c, L, 2); c.stroke(); }
+  else if (L.villain) { c.beginPath(); c.moveTo(166, 270); c.quadraticCurveTo(184, 276, 198, 260); c.stroke(); c.beginPath(); c.moveTo(196, 258); c.lineTo(200, 264); c.stroke(); }
   else { c.beginPath(); c.moveTo(169, 268); c.quadraticCurveTo(181, 276, 193, 267); c.stroke(); }
   /* long side locks (Mira) */
   if (st === 1) for (const f of [-1, 1]) {
@@ -127,7 +187,8 @@ K.bust = function (c, L, o = {}) {
     c.beginPath(); smooth(c, lock); c.fillStyle = L.hair; c.fill(); line(c, L); c.stroke();
     c.save(); c.beginPath(); smooth(c, lock); c.clip(); c.strokeStyle = L.hairHi; c.lineWidth = 4; c.beginPath(); const a = m([112, 180]), b = m([104, 300]); c.moveTo(a[0], a[1]); c.quadraticCurveTo(a[0] - f * 4, 240, b[0], b[1]); c.stroke(); c.restore();
   }
-  /* fringe */
+  /* fringe (the knight wears a helmet instead) */
+  if (st === 3) { knightHelmet(c, L); return; }
   const fr = FRINGE.map(([x, y]) => [x + (st === 2 && x < 200 ? 6 : 0), 140 + (y - 140) * (.9 + .1 * sp)]);
   c.beginPath(); spiky(c, fr, 180, 150, 4 + 4 * (1 - sp)); c.closePath(); c.fillStyle = L.hair; c.fill();
   c.save(); c.clip(); c.fillStyle = L.hairHi; c.beginPath(); c.moveTo(118, 118); c.quadraticCurveTo(180, 92, 244, 118); c.lineTo(236, 128); c.lineTo(226, 116); c.lineTo(214, 128); c.lineTo(200, 112); c.lineTo(186, 128); c.lineTo(172, 112); c.lineTo(158, 128); c.lineTo(144, 114); c.lineTo(130, 128); c.closePath(); c.fill(); c.restore();
@@ -136,6 +197,7 @@ K.bust = function (c, L, o = {}) {
   /* hair pieces */
   if (st === 1) { c.save(); c.shadowColor = '#FFB7D5'; c.shadowBlur = 8; blossom(c, 244, 112, 22, '#FFC6DD', '#FFE27A'); c.restore(); }
   if (st === 2) { c.fillStyle = L.scarf; c.beginPath(); c.ellipse(250, 90, 12, 9, .9, 0, TAU); c.fill(); line(c, L, 1.8); c.stroke(); }
+  if (st === 4) ninjaHood(c, L);
 };
 /* Cached portrait image (head and shoulders) for menus and avatars. */
 const imgCache = {};
@@ -193,17 +255,26 @@ K.sprite = function (c, L, x, y, k, o = {}) {
   /* back hair (Mira long, Juno ponytail) */
   if (L.style === 1) { c.beginPath(); smooth(c, [[-8,-98],[-20,-86],[-22,-66],[-20,-50],[-14,-40],[-8,-50],[-4,-46],[0,-62],[8,-72],[10,-90]]); c.fillStyle = L.hair; c.fill(); line(c, L, lw); c.stroke(); }
   if (L.style === 2) { const s = Math.sin(t * 6 + ph) * 3; c.beginPath(); smooth(c, [[-4,-100],[-18,-108],[-34,-100 + s],[-40,-84 + s],[-34,-70 + s],[-30,-82 + s],[-22,-92],[-10,-92]]); c.fillStyle = L.hair; c.fill(); line(c, L, lw); c.stroke(); }
+  /* the dark knight's cape and long hair */
+  if (L.style === 3) {
+    const cw = Math.sin(t * 7 + ph) * 2;
+    c.beginPath(); c.moveTo(-4, -64); c.quadraticCurveTo(-24 - sw * 5, -46, -30 - sw * 8, -22 + cw); c.lineTo(-20 - sw * 4, -18 + cw); c.lineTo(-6, -28); c.closePath(); c.fillStyle = L.scarfS; c.fill(); line(c, L, lw); c.stroke();
+    c.beginPath(); smooth(c, [[-6,-88],[-18,-80],[-20,-64],[-14,-56],[-8,-62],[-2,-74]]); c.fillStyle = L.hair; c.fill(); line(c, L, lw); c.stroke();
+  }
   leg(-1, aB, bB);
   /* back arm */
   const armA = air != null ? -1.2 : sp > .1 ? -aF * .9 : .15;
   const arm = (sx, a, col) => { const hx = sx + Math.sin(a) * 20, hy = -58 + Math.cos(a) * 20; c.strokeStyle = L.line; c.lineWidth = 8; c.beginPath(); c.moveTo(sx, -58); c.lineTo(hx, hy); c.stroke(); c.strokeStyle = col; c.lineWidth = 5; c.beginPath(); c.moveTo(sx, -58); c.lineTo(hx, hy); c.stroke(); c.fillStyle = L.skin; c.beginPath(); c.arc(hx, hy, 3.4, 0, TAU); c.fill(); c.strokeStyle = L.line; c.lineWidth = 1.4; c.stroke(); return [hx, hy]; };
-  arm(-4, -armA, L.jacketS);
+  const [bhx, bhy] = arm(-4, -armA, L.jacketS);
+  if (L.style === 4 && o.weapon !== false) { c.save(); c.translate(bhx, bhy); c.rotate(.5 - armA * .3); c.strokeStyle = L.line; c.lineWidth = 4.6; c.beginPath(); c.moveTo(0, 2); c.lineTo(0, -14); c.stroke(); c.strokeStyle = '#C9D2EE'; c.lineWidth = 2.6; c.beginPath(); c.moveTo(0, -1); c.lineTo(0, -13); c.stroke(); c.restore(); }
   /* torso and coat */
   c.beginPath(); c.moveTo(-10, -63); c.lineTo(10, -63); c.lineTo(12, -38); c.lineTo(15, -27); c.lineTo(3, -31); c.lineTo(-4, -28); c.lineTo(-15, -27); c.lineTo(-12, -38); c.closePath();
   c.fillStyle = L.jacket; c.fill(); line(c, L, lw); c.stroke();
   c.fillStyle = L.jacketS; c.beginPath(); c.moveTo(4, -62); c.lineTo(10, -63); c.lineTo(12, -38); c.lineTo(15, -27); c.lineTo(5, -30); c.closePath(); c.fill();
   c.strokeStyle = L.trim; c.lineWidth = 2.2; c.beginPath(); c.moveTo(1, -61); c.lineTo(2, -32); c.stroke();
   c.strokeStyle = L.line; c.lineWidth = 3; c.beginPath(); c.moveTo(-12, -40); c.lineTo(12, -40); c.stroke();
+  if (L.style === 3) { c.beginPath(); c.ellipse(-2, -60, 12, 6, -.2, 0, TAU); c.fillStyle = L.jacketS; c.fill(); line(c, L, lw); c.stroke(); c.fillStyle = '#F1E6CF'; c.beginPath(); c.moveTo(-8, -64); c.lineTo(-12, -72); c.lineTo(-3, -65); c.closePath(); c.fill(); }
+  if (L.style === 4) { c.strokeStyle = '#2A2238'; c.lineWidth = 3; c.beginPath(); c.moveTo(-9, -60); c.lineTo(10, -34); c.stroke(); }
   leg(1, aF, bF);
   /* scarf wrap */
   c.beginPath(); c.ellipse(0, -61, 10, 4.5, 0, 0, TAU); c.fillStyle = L.scarf; c.fill(); line(c, L, lw); c.stroke();
@@ -213,14 +284,28 @@ K.sprite = function (c, L, x, y, k, o = {}) {
     c.save(); c.translate(hx, hy);
     if (L.style === 0) { c.rotate(-.9 + armA * .3); c.strokeStyle = L.line; c.lineWidth = 6; c.beginPath(); c.moveTo(0, 2); c.lineTo(0, -30); c.stroke(); c.strokeStyle = '#E8F0FF'; c.lineWidth = 3.4; c.beginPath(); c.moveTo(0, -1); c.lineTo(0, -29); c.stroke(); c.fillStyle = L.trim; c.fillRect(-5, -2, 10, 3); }
     else if (L.style === 1) { c.rotate(-.15); c.strokeStyle = L.line; c.lineWidth = 5; c.beginPath(); c.moveTo(0, 14); c.lineTo(0, -34); c.stroke(); c.strokeStyle = '#B98A5E'; c.lineWidth = 2.6; c.beginPath(); c.moveTo(0, 13); c.lineTo(0, -33); c.stroke(); c.shadowColor = '#D98BFF'; c.shadowBlur = 10; c.fillStyle = '#E9C9FF'; c.beginPath(); c.arc(0, -38, 5, 0, TAU); c.fill(); c.shadowBlur = 0; }
+    else if (L.style === 3) {
+      /* scythe: a long handle with a curved crescent blade */
+      c.rotate(-.35 + armA * .2); c.strokeStyle = L.line; c.lineWidth = 5.5; c.beginPath(); c.moveTo(0, 18); c.lineTo(0, -40); c.stroke(); c.strokeStyle = '#5A4A6E'; c.lineWidth = 3; c.stroke();
+      c.beginPath(); c.moveTo(0, -40); c.quadraticCurveTo(-26, -48, -34, -30); c.quadraticCurveTo(-22, -38, -2, -32); c.closePath(); c.fillStyle = '#E8F0FF'; c.fill(); c.strokeStyle = L.line; c.lineWidth = 1.6; c.stroke();
+      c.save(); c.shadowColor = L.scarf; c.shadowBlur = 8; c.fillStyle = L.scarf; c.beginPath(); c.arc(0, -41, 2.6, 0, TAU); c.fill(); c.restore();
+    }
+    else if (L.style === 4) {
+      /* twin daggers, one in each hand */
+      const dag = (rx, ry, a) => { c.save(); c.translate(rx, ry); c.rotate(a); c.strokeStyle = L.line; c.lineWidth = 4.6; c.beginPath(); c.moveTo(0, 2); c.lineTo(0, -15); c.stroke(); c.strokeStyle = '#DDE6FF'; c.lineWidth = 2.6; c.beginPath(); c.moveTo(0, -1); c.lineTo(0, -14); c.stroke(); c.fillStyle = L.trim; c.fillRect(-4, -1, 8, 2.5); c.restore(); };
+      dag(0, 0, -.6 + armA * .3);
+    }
     else { c.rotate(-.2); c.strokeStyle = L.line; c.lineWidth = 4.4; c.beginPath(); c.arc(-8, -6, 18, -1.1, 1.1); c.stroke(); c.strokeStyle = '#C98F4A'; c.lineWidth = 2.4; c.beginPath(); c.arc(-8, -6, 18, -1.1, 1.1); c.stroke(); c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = 1; c.beginPath(); c.moveTo(-8 + Math.cos(-1.1) * 18, -6 + Math.sin(-1.1) * 18); c.lineTo(-8 + Math.cos(1.1) * 18, -6 + Math.sin(1.1) * 18); c.stroke(); }
     c.restore();
   }
   /* head */
   c.save(); c.translate(0, -76);
   const cap = [[13,4],[18,-8],[22,-12],[15,-20],[13,-30],[3,-25],[-5,-33],[-9,-23],[-19,-27],[-17,-17],[-26,-14],[-19,-7],[-25,3],[-15,1],[-17,12],[-10,6]];
-  c.beginPath(); spiky(c, cap, 0, -8, 2.5); c.closePath(); c.fillStyle = L.hair; c.fill(); line(c, L, lw); c.stroke();
-  c.save(); c.beginPath(); spiky(c, cap, 0, -8, 2.5); c.closePath(); c.clip(); c.strokeStyle = L.rim; c.lineWidth = 3; c.shadowColor = L.rim; c.shadowBlur = 6; c.beginPath(); c.moveTo(-26, -14); c.quadraticCurveTo(-22, 0, -17, 12); c.stroke(); c.restore();
+  if (L.style === 4) { c.beginPath(); c.moveTo(14, -4); c.quadraticCurveTo(16, -30, -4, -30); c.quadraticCurveTo(-26, -28, -26, -4); c.quadraticCurveTo(-26, 12, -14, 16); c.lineTo(-4, 14); c.closePath(); c.fillStyle = L.jacketS; c.fill(); line(c, L, lw); c.stroke(); }
+  else if (L.style !== 3) {
+    c.beginPath(); spiky(c, cap, 0, -8, 2.5); c.closePath(); c.fillStyle = L.hair; c.fill(); line(c, L, lw); c.stroke();
+    c.save(); c.beginPath(); spiky(c, cap, 0, -8, 2.5); c.closePath(); c.clip(); c.strokeStyle = L.rim; c.lineWidth = 3; c.shadowColor = L.rim; c.shadowBlur = 6; c.beginPath(); c.moveTo(-26, -14); c.quadraticCurveTo(-22, 0, -17, 12); c.stroke(); c.restore();
+  }
   c.beginPath(); c.ellipse(-9, 1, 3, 4.6, 0, 0, TAU); c.fillStyle = L.skin; c.fill(); line(c, L, lw * .8); c.stroke();
   const faceP = () => { c.beginPath(); c.moveTo(-10, -9); c.bezierCurveTo(-11, 2, -8, 9, -1, 13); c.quadraticCurveTo(3, 15, 6, 13); c.bezierCurveTo(11, 9, 13, 2, 12, -9); c.closePath(); };
   faceP(); c.fillStyle = L.skin; c.fill(); c.save(); faceP(); c.clip(); c.fillStyle = L.shade; c.fillRect(-12, -10, 26, 6); c.beginPath(); c.moveTo(-11, 0); c.quadraticCurveTo(-7, 10, 0, 14); c.lineTo(-12, 14); c.closePath(); c.fill(); c.restore();
@@ -234,15 +319,27 @@ K.sprite = function (c, L, x, y, k, o = {}) {
     c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(ex - .6, -1.6, 1.2, 0, TAU); c.fill();
     c.strokeStyle = L.line; c.lineWidth = 1.8; c.beginPath(); c.moveTo(ex - w - .5, -1); c.quadraticCurveTo(ex, -5.6, ex + w + 1, -2.6); c.stroke();
   };
+  if (L.style === 4) { c.fillStyle = '#1E1B2E'; c.beginPath(); c.moveTo(-10, -4); c.quadraticCurveTo(2, -7, 14, -4); c.lineTo(14, 4); c.quadraticCurveTo(2, 6, -10, 4); c.closePath(); c.fill(); c.fillStyle = L.scarf; c.beginPath(); c.moveTo(-10, -2); c.lineTo(-20, -6 + Math.sin(t * 8) * 2); c.lineTo(-19, 2 + Math.sin(t * 8 + 1) * 2); c.closePath(); c.fill(); }
+  if (L.villain) { c.save(); c.shadowColor = L.irisL; c.shadowBlur = 6; }
   if (o.flash && Math.floor(t * 20) % 2) { c.strokeStyle = L.line; c.lineWidth = 1.8; c.beginPath(); c.moveTo(0, -1); c.lineTo(4, 1); c.lineTo(0, 3); c.moveTo(11, -1); c.lineTo(7, 1); c.lineTo(11, 3); c.stroke(); }
   else { eyeS(1.5, 2.8); eyeS(8.6, 3.2); }
-  c.strokeStyle = L.line; c.lineWidth = 1.3; c.beginPath(); c.moveTo(3.5, 9); c.quadraticCurveTo(5.5, 10.5, 7.5, 8.8); c.stroke();
+  if (L.villain) c.restore();
+  c.strokeStyle = L.line; c.lineWidth = 1.3; c.beginPath(); if (L.villain) { c.moveTo(3, 9.5); c.quadraticCurveTo(6, 10.5, 9, 7.5); } else { c.moveTo(3.5, 9); c.quadraticCurveTo(5.5, 10.5, 7.5, 8.8); } c.stroke();
   c.fillStyle = 'rgba(255,120,150,.35)'; c.beginPath(); c.ellipse(9, 5, 2.6, 1.4, 0, 0, TAU); c.fill();
-  /* fringe */
-  const fr = [[-11,0],[-13,-12],[-6,-21],[4,-23],[13,-19],[15,-9],[14,3],[11,-5],[9,2],[6,-7],[3,1],[0,-8],[-4,-1],[-7,-9]];
-  c.beginPath(); spiky(c, fr, 2, -6, 1.6); c.closePath(); c.fillStyle = L.hair; c.fill();
-  c.save(); c.clip(); c.fillStyle = L.hairHi; c.beginPath(); c.moveTo(-8, -14); c.quadraticCurveTo(3, -20, 13, -13); c.lineTo(11, -10); c.lineTo(3, -14); c.lineTo(-6, -10); c.closePath(); c.fill(); c.restore();
-  c.beginPath(); spiky(c, fr, 2, -6, 1.6); c.closePath(); line(c, L, lw); c.stroke();
+  /* fringe, or the knight's horned helmet */
+  if (L.style === 3) {
+    for (const [bx, tx, ty] of [[-6, -20, -34], [8, 18, -35]]) { c.beginPath(); c.moveTo(bx - 3, -22); c.quadraticCurveTo(tx, -26, tx, ty); c.quadraticCurveTo(tx * .6 + bx * .4, -28, bx + 4, -20); c.closePath(); c.fillStyle = '#F1E6CF'; c.fill(); line(c, L, lw * .8); c.stroke(); }
+    const helm = () => { c.beginPath(); c.moveTo(-16, 6); c.lineTo(-16, -12); c.quadraticCurveTo(-14, -30, 0, -30); c.quadraticCurveTo(17, -29, 16, -12); c.lineTo(16, -4); c.lineTo(12, -6); c.lineTo(12, -9); c.lineTo(6.5, -8); c.lineTo(6.5, 2); c.lineTo(4, 2); c.lineTo(4, -8); c.lineTo(-10, -8); c.lineTo(-10, 6); c.closePath(); };
+    helm(); c.fillStyle = L.jacket; c.fill(); c.save(); helm(); c.clip(); c.fillStyle = L.jacketS; c.fillRect(-20, -12, 40, 20); c.restore(); helm(); line(c, L, lw); c.stroke();
+    c.fillStyle = L.scarf; c.beginPath(); c.arc(0, -20, 2.4, 0, TAU); c.fill();
+  } else {
+    const fr = [[-11,0],[-13,-12],[-6,-21],[4,-23],[13,-19],[15,-9],[14,3],[11,-5],[9,2],[6,-7],[3,1],[0,-8],[-4,-1],[-7,-9]];
+    if (L.style === 4) { c.save(); c.beginPath(); c.rect(-20, -8, 40, 12); c.clip(); }
+    c.beginPath(); spiky(c, fr, 2, -6, 1.6); c.closePath(); c.fillStyle = L.hair; c.fill();
+    c.save(); c.clip(); c.fillStyle = L.hairHi; c.beginPath(); c.moveTo(-8, -14); c.quadraticCurveTo(3, -20, 13, -13); c.lineTo(11, -10); c.lineTo(3, -14); c.lineTo(-6, -10); c.closePath(); c.fill(); c.restore();
+    c.beginPath(); spiky(c, fr, 2, -6, 1.6); c.closePath(); line(c, L, lw); c.stroke();
+    if (L.style === 4) { c.restore(); c.beginPath(); c.moveTo(-14, -6); c.quadraticCurveTo(0, -14, 15, -7); c.lineTo(16, -14); c.quadraticCurveTo(2, -26, -12, -18); c.closePath(); c.fillStyle = L.jacket; c.fill(); line(c, L, lw); c.stroke(); }
+  }
   if (L.style === 1) blossom(c, -6, -19, 6, '#FFC6DD');
   if (L.style === 2) { c.fillStyle = L.scarf; c.beginPath(); c.arc(-9, -22, 3, 0, TAU); c.fill(); }
   c.restore();
