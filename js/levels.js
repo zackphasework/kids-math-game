@@ -21,8 +21,8 @@ L.upgrades = {
   ],
   anime: [
     {k:'weapon', name:'Weapon', what:'Every attack hits harder.'},
+    {k:'armor', name:'Armor', what:'One more heart on every quest.'},
     {k:'charm', name:'Spirit charm', what:'Your Spirit meter fills faster, so special moves come sooner.'},
-    {k:'boots', name:'Sky boots', what:'Run faster and jump higher on the islands.'},
   ],
 };
 L.cost = [6, 12, 20, 32, 50];
