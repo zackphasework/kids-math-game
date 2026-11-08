@@ -55,8 +55,33 @@ S.xpFrac = xp => { const l = S.level(xp); if (l >= LV_XP.length) return 1; retur
 S.title = l => l >= 8 ? 'Sky Hero' : l >= 4 ? 'Guardian' : 'Apprentice';
 S.stats = p => {
   const lv = S.level(p.sky.xp), up = p.up;
-  return {lv, hearts:3 + Math.floor((lv - 1) / 3) + (p.sky.b.spring ? 1 : 0), atk:10 + 2.5 * (lv - 1) + 5 * (up.weapon || 0), meter:.34 + .05 * (up.charm || 0), boots:up.boots || 0, storm:lv >= 3};
+  return {lv, hearts:3 + Math.floor((lv - 1) / 3) + (p.sky.b.spring ? 1 : 0) + (up.armor || 0), atk:10 + 2.5 * (lv - 1) + 5 * (up.weapon || 0), meter:.34 + .05 * (up.charm || 0), boots:0, storm:lv >= 3};
 };
+
+/* ---------- the hero shop ----------
+   Prices are multiples of 5 so the littlest kids can pay in bags of 5. Kids pay by solving a checkout
+   puzzle (PUM.SHOP.puzzle) that matches their math level. */
+S.SHOP = [
+  {k:'weapon', max:5, cost:[10, 15, 25, 35, 50], stat:'Hit power', what:'Every attack hits harder.'},
+  {k:'armor', name:'Armor', max:3, cost:[20, 35, 50], stat:'Hearts', what:'One more heart on every quest.'},
+  {k:'charm', name:'Spirit charm', max:5, cost:[10, 15, 25, 35, 50], stat:'Spirit meter', what:'Each right answer fills your Spirit meter more, so special moves come sooner.'},
+  {k:'snack', name:'Spirit snack', cost:[10], stat:'Snacks', what:'Feed it to a spirit in the garden. One snack is one level.'},
+];
+S.weaponName = p => S.STYLE[p.hero].split(':')[0];
+S.itemName = (p, k) => k === 'weapon' ? S.weaponName(p) : S.SHOP.find(it => it.k === k).name;
+S.itemLevel = (p, k) => k === 'snack' ? 0 : (p.up[k] || 0);
+S.itemPrice = (p, k) => { const it = S.SHOP.find(o => o.k === k), l = S.itemLevel(p, k); return it.max && l >= it.max ? null : it.cost[Math.min(l, it.cost.length - 1)]; };
+/* the number the shop shows for an item, now and after one more level */
+S.itemStat = (p, k, extra = 0) => {
+  if (k === 'snack') return p.sky.snacks + extra;
+  const up = Object.assign({}, p.up); up[k] = (up[k] || 0) + extra;
+  const st = S.stats(Object.assign({}, p, {up}));
+  return k === 'weapon' ? Math.round(st.atk) : k === 'armor' ? st.hearts : `${Math.round(st.meter * 100)}%`;
+};
+/* Power = hero level + gear levels. Quests recommend a power that assumes some shopping along the way. */
+S.power = p => S.level(p.sky.xp) + (p.up.weapon || 0) + (p.up.armor || 0) + (p.up.charm || 0);
+const GEAR_REC = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7];
+S.recPower = i => S.QUESTS[i].rec + (GEAR_REC[i] || 0);
 
 /* ---------- spirits ---------- */
 S.stage = lv => lv >= 10 ? 3 : lv >= 5 ? 2 : 1;
@@ -68,7 +93,7 @@ S.activeComp = p => { const k = p.sky.comps[p.sky.comp] ? p.sky.comp : Object.ke
 S.BUILD = [
   {k:'dojo', name:'Training dojo', cost:0, what:'Practice 10 quick questions for crystals and XP.'},
   {k:'garden', name:'Spirit garden', cost:20, what:'Feed snacks to your spirits so they level up and evolve.'},
-  {k:'forge', name:'Forge', cost:30, what:'Upgrade your weapon, charm and boots.'},
+  {k:'shop', name:'Hero shop', cost:0, what:'Buy a stronger weapon, armor, charms and snacks. Pay by counting out your crystals!'},
   {k:'spring', name:'Healing spring', cost:40, what:'Start every quest with one extra heart.'},
   {k:'tower', name:'Lantern tower', cost:50, what:'Lights up secret paths on the islands.'},
   {k:'shrine', name:'Sky shrine', cost:0, guardians:2, what:'Unlocks your second special move. Defeat 2 guardians to open it.'},
@@ -643,7 +668,7 @@ PUM.games.sky = function (o) {
   const glass = (c, x, y, w, h, r = 14) => { c.save(); E.rr(c, x, y, w, h, r); c.fillStyle = 'rgba(20,24,70,.66)'; c.fill(); c.shadowColor = '#7FF0FF'; c.shadowBlur = 10; c.strokeStyle = 'rgba(143,230,255,.7)'; c.lineWidth = 2; c.stroke(); c.restore(); };
   const heart = (c, x, y, r, on) => { c.fillStyle = on ? '#FF6FB0' : 'rgba(255,255,255,.22)'; c.beginPath(); c.moveTo(x, y + r); c.bezierCurveTo(x - r * 1.5, y, x - r, y - r * 1.1, x, y - r * .4); c.bezierCurveTo(x + r, y - r * 1.1, x + r * 1.5, y, x, y + r); c.fill(); if (on) { c.fillStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.arc(x - r * .4, y - r * .3, r * .22, 0, TAU); c.fill(); } };
   const label = (c, text, x, y, size, col = '#F3F6FF', align = 'center', font = 'Lexend') => { c.font = `800 ${size}px ${font === 'D' ? '"Dela Gothic One", Lexend' : '"Zen Kaku Gothic New", Lexend'}, sans-serif`; c.textAlign = align; c.textBaseline = 'middle'; c.fillStyle = col; c.fillText(text, x, y); };
-  function drawHearts(c, x, y) { for (let i = 0; i < g.maxH; i++) heart(c, x + i * 22, y, 8, i < g.hearts); }
+  function drawHearts(c, x, y) { const big = g.maxH > 8, step = big ? 17 : 22; for (let i = 0; i < g.maxH; i++) heart(c, x + i * step, y, big ? 6.5 : 8, i < g.hearts); }
   function drawMeter(c, x, y, w) {
     c.save(); E.rr(c, x, y, w, 10, 5); c.fillStyle = 'rgba(0,0,0,.4)'; c.fill(); c.beginPath(); c.rect(x + 1, y + 1, (w - 2) * g.meter, 8); c.clip(); c.shadowColor = '#7FF0FF'; c.shadowBlur = 12; c.fillStyle = g.meter >= 1 ? `hsl(${(g.t * 200) % 360},90%,70%)` : '#7FF0FF'; c.fillRect(x, y, w, 10); c.restore();
     c.strokeStyle = 'rgba(143,230,255,.7)'; c.lineWidth = 1.5; E.rr(c, x, y, w, 10, 5); c.stroke();

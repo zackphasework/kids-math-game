@@ -1542,7 +1542,7 @@ K.cutin = function (c, W, H, k, L, name, col, t) {
 };
 
 /* ---------- Sky Village: home base on a floating island. Returns tap areas. ---------- */
-const VPOS = {dojo:[.5, .52], garden:[.2, .6], forge:[.8, .6], spring:[.3, .8], tower:[.72, .34], shrine:[.5, .26]};
+const VPOS = {dojo:[.5, .52], garden:[.2, .6], shop:[.8, .6], spring:[.3, .8], tower:[.72, .34], shrine:[.5, .26]};
 K.VPOS = VPOS;
 function roofHouse(c, x, y, w, h, wall, roof, lit, t) {
   c.strokeStyle = LINE; c.lineWidth = 2;
@@ -1577,8 +1577,110 @@ function ruin(c, x, y, w, h, t = 0) {
   c.fillStyle = '#5A6070'; c.save(); c.translate(sx + w * .05, sy - h * .76); c.rotate(-.9); c.fillRect(-w * .06, -h * .05, w * .12, h * .1); c.restore();
   c.restore();
 }
+/* ---------- the hero shop ----------
+   Tanu the tanuki runs a market stall: striped awning, crystal sign, goods on the counter. */
+function tanuki(c, x, y, s, t, wave = 0) {
+  c.save(); c.translate(x, y); c.scale(s, s); c.strokeStyle = LINE; c.lineWidth = 2.6; c.lineJoin = 'round';
+  c.translate(0, Math.sin(t * 2.4) * 2);
+  /* tail */
+  c.fillStyle = '#8A5A3C'; c.beginPath(); c.ellipse(34, -18, 14, 22, .6, 0, TAU); c.fill(); c.stroke();
+  c.fillStyle = '#4A3328'; c.beginPath(); c.ellipse(40, -30, 7, 6, .6, 0, TAU); c.fill();
+  /* body and apron */
+  c.fillStyle = '#A06C48'; c.beginPath(); c.ellipse(0, -30, 30, 32, 0, 0, TAU); c.fill(); c.stroke();
+  c.fillStyle = '#3FA7A0'; c.beginPath(); c.moveTo(-20, -44); c.lineTo(20, -44); c.lineTo(24, -4); c.quadraticCurveTo(0, 4, -24, -4); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#FFE27A'; c.beginPath(); c.moveTo(0, -36); c.lineTo(5, -28); c.lineTo(0, -20); c.lineTo(-5, -28); c.closePath(); c.fill(); c.lineWidth = 1.6; c.stroke(); c.lineWidth = 2.6;
+  /* arms: the right one waves */
+  c.fillStyle = '#8A5A3C';
+  c.beginPath(); c.ellipse(-28, -36, 8, 14, .5, 0, TAU); c.fill(); c.stroke();
+  c.save(); c.translate(26, -46); c.rotate(-1.2 + Math.sin(t * 6) * (wave ? .35 : .07)); c.beginPath(); c.ellipse(0, -12, 8, 14, 0, 0, TAU); c.fill(); c.stroke(); c.restore();
+  /* head */
+  c.translate(0, -70);
+  c.fillStyle = '#A06C48';
+  for (const sx of [-1, 1]) { c.beginPath(); c.arc(sx * 22, -22, 10, 0, TAU); c.fill(); c.stroke(); c.fillStyle = '#4A3328'; c.beginPath(); c.arc(sx * 22, -22, 5, 0, TAU); c.fill(); c.fillStyle = '#A06C48'; }
+  c.beginPath(); c.ellipse(0, 0, 30, 26, 0, 0, TAU); c.fill(); c.stroke();
+  c.fillStyle = '#F3E2C6'; c.beginPath(); c.ellipse(0, 9, 17, 13, 0, 0, TAU); c.fill();
+  /* the dark mask round the eyes */
+  c.fillStyle = '#4A3328'; for (const sx of [-1, 1]) { c.beginPath(); c.ellipse(sx * 12, -2, 11, 8, sx * -.35, 0, TAU); c.fill(); }
+  const blink = (t % 4) < .12 ? .15 : 1;
+  c.fillStyle = '#FFFFFF'; for (const sx of [-1, 1]) { c.beginPath(); c.ellipse(sx * 12, -2, 4.5, 5 * blink, 0, 0, TAU); c.fill(); }
+  c.fillStyle = '#1A1220'; for (const sx of [-1, 1]) { c.beginPath(); c.ellipse(sx * 12 + 1, -1.5, 2.6, 3.2 * blink, 0, 0, TAU); c.fill(); }
+  c.beginPath(); c.ellipse(0, 6, 4.5, 3.2, 0, 0, TAU); c.fill();
+  c.lineWidth = 2; c.beginPath(); c.moveTo(-5, 12); c.quadraticCurveTo(0, 17, 5, 12); c.stroke();
+  c.fillStyle = 'rgba(255,120,140,.45)'; for (const sx of [-1, 1]) { c.beginPath(); c.ellipse(sx * 20, 9, 5, 3, 0, 0, TAU); c.fill(); }
+  /* a straw hat with a leaf */
+  c.lineWidth = 2.6; c.fillStyle = '#E8C77A'; c.beginPath(); c.moveTo(-34, -16); c.quadraticCurveTo(0, -46, 34, -16); c.quadraticCurveTo(0, -22, -34, -16); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#5CCB7A'; c.beginPath(); c.ellipse(6, -34, 9, 4, -.5, 0, TAU); c.fill(); c.lineWidth = 1.6; c.stroke();
+  c.restore();
+}
+K.tanuki = tanuki;
+/* goods on the counter */
+function shopGood(c, k, x, y, s, t) {
+  c.save(); c.translate(x, y); c.scale(s, s); c.strokeStyle = LINE; c.lineWidth = 2.2; c.lineJoin = 'round';
+  if (k === 'weapon') { c.rotate(-.5); c.fillStyle = '#E8F2FF'; c.beginPath(); c.moveTo(-3, -6); c.lineTo(-3, -40); c.lineTo(0, -46); c.lineTo(3, -40); c.lineTo(3, -6); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#FFC233'; E.rr(c, -11, -7, 22, 5, 2); c.fill(); c.stroke(); c.fillStyle = '#8E4F3A'; E.rr(c, -2.5, -2, 5, 12, 2); c.fill(); c.stroke(); }
+  else if (k === 'armor') { c.fillStyle = '#9FB8E8'; c.beginPath(); c.moveTo(-16, -30); c.quadraticCurveTo(0, -24, 16, -30); c.lineTo(14, -6); c.quadraticCurveTo(0, 4, -14, -6); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#FFE27A'; c.beginPath(); c.arc(0, -15, 5, 0, TAU); c.fill(); c.stroke(); }
+  else if (k === 'charm') { c.strokeStyle = '#C8384A'; c.lineWidth = 2; c.beginPath(); c.moveTo(-8, -34); c.lineTo(0, -24); c.lineTo(8, -34); c.stroke(); c.strokeStyle = LINE; c.lineWidth = 2.2; c.save(); c.shadowColor = '#FF9AC8'; c.shadowBlur = 10 + Math.sin(t * 3) * 4; c.fillStyle = '#FF9AC8'; c.beginPath(); c.arc(0, -14, 10, 0, TAU); c.fill(); c.restore(); c.stroke(); c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(-3, -17, 3, 0, TAU); c.fill(); }
+  else if (k === 'snack') { c.fillStyle = '#FFFFFF'; c.beginPath(); c.moveTo(0, -26); c.quadraticCurveTo(14, -6, 12, -2); c.lineTo(-12, -2); c.quadraticCurveTo(-14, -6, 0, -26); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#2E3A3A'; c.fillRect(-6, -10, 12, 8); }
+  c.restore();
+}
+/* a small stall for the village map */
+function stall(c, x, y, u, t) {
+  c.save(); c.strokeStyle = LINE; c.lineWidth = 2;
+  c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(x, y + 2, 34 * u, 8 * u, 0, 0, TAU); c.fill();
+  c.fillStyle = '#8E5A3C'; c.fillRect(x - 26 * u, y - 46 * u, 4 * u, 46 * u); c.fillRect(x + 22 * u, y - 46 * u, 4 * u, 46 * u);
+  tanuki(c, x, y - 14 * u, .3 * u, t, 1);
+  c.fillStyle = '#C98A5A'; E.rr(c, x - 30 * u, y - 20 * u, 60 * u, 20 * u, 3); c.fill(); c.stroke();
+  c.fillStyle = '#A86E46'; c.fillRect(x - 30 * u, y - 20 * u, 60 * u, 4 * u);
+  const sw = 64 / 6 * u;
+  for (let i = 0; i < 6; i++) { const x0 = x - 32 * u + i * sw; c.fillStyle = i % 2 ? '#FFF4E6' : '#E84A5F'; c.beginPath(); c.moveTo(x0, y - 48 * u); c.lineTo(x0 + sw, y - 48 * u); c.lineTo(x0 + sw, y - 40 * u); c.quadraticCurveTo(x0 + sw / 2, y - 34 * u, x0, y - 40 * u); c.closePath(); c.fill(); }
+  c.beginPath(); c.moveTo(x - 32 * u, y - 48 * u); c.lineTo(x + 32 * u, y - 48 * u); c.stroke();
+  K.crystal(c, x, y - 58 * u, 6 * u, t);
+  c.restore();
+}
+/* the big shop scene. o: {sel: item to spotlight, happy: Tanu waves} */
+K.shop = function (c, W, H, t, o = {}) {
+  K.skyGradient(c, W, H, '#101A52', '#40308E', '#C77BB8', '#FFC2A8');
+  K.stars(c, W, H * .5, t, 40, 9);
+  const u = Math.min(W / 360, H / 260), cx = W / 2, gy = H * .9;
+  c.fillStyle = '#4FBF9A'; c.beginPath(); c.ellipse(cx, H * 1.02, W * .75, H * .22, 0, 0, TAU); c.fill();
+  c.fillStyle = '#7FE0BC'; c.beginPath(); c.ellipse(cx, H * .98, W * .68, H * .12, 0, Math.PI, TAU); c.fill();
+  /* lanterns on a string */
+  c.save(); c.strokeStyle = 'rgba(255,255,255,.4)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, H * .08); c.quadraticCurveTo(cx, H * .22, W, H * .08); c.stroke(); c.restore();
+  for (const i of [1, 2, 4, 5]) { const k = i / 6; K.lantern(c, W * k, H * .08 + Math.sin(k * Math.PI) * H * .07 + 8 * u, .4 * u, true, t + i); }
+  const sw = Math.min(W * .86, 330 * u), sx = cx - sw / 2, ctop = gy - 60 * u;
+  c.save(); c.strokeStyle = LINE; c.lineWidth = 2.5;
+  /* back wall and posts */
+  c.fillStyle = '#5A3E5E'; c.fillRect(sx + 6 * u, ctop - 112 * u, sw - 12 * u, 112 * u);
+  c.fillStyle = '#8E5A3C'; for (const px of [sx, sx + sw - 9 * u]) { c.fillRect(px, ctop - 128 * u, 9 * u, 128 * u); c.strokeRect(px, ctop - 128 * u, 9 * u, 128 * u); }
+  /* a shelf of crystals */
+  c.fillStyle = '#A86E46'; c.fillRect(sx + 14 * u, ctop - 78 * u, sw - 28 * u, 6 * u);
+  c.restore();
+  for (let i = 0; i < 9; i++) K.crystal(c, sx + 30 * u + i * (sw - 60 * u) / 8, ctop - 88 * u, 5 * u, t + i, i % 3 === 1 ? '#FFC6DD' : '#9BF6FF');
+  tanuki(c, cx, ctop + 8 * u, .95 * u, t, o.happy);
+  /* counter */
+  c.save(); c.strokeStyle = LINE; c.lineWidth = 2.5;
+  c.fillStyle = '#C98A5A'; E.rr(c, sx - 6 * u, ctop, sw + 12 * u, gy - ctop, 6 * u); c.fill(); c.stroke();
+  c.fillStyle = '#A86E46'; c.fillRect(sx - 6 * u, ctop, sw + 12 * u, 9 * u); c.strokeRect(sx - 6 * u, ctop, sw + 12 * u, 9 * u);
+  c.strokeStyle = 'rgba(80,40,20,.35)'; for (let i = 1; i < 4; i++) { const ly = ctop + 9 * u + i * (gy - ctop - 9 * u) / 4; c.beginPath(); c.moveTo(sx, ly); c.lineTo(sx + sw, ly); c.stroke(); }
+  /* awning */
+  const n = 8, aw = sw + 24 * u, ax = cx - aw / 2, ay = ctop - 138 * u;
+  c.strokeStyle = LINE;
+  for (let i = 0; i < n; i++) { const x0 = ax + i * aw / n, x1 = x0 + aw / n; c.fillStyle = i % 2 ? '#FFF4E6' : '#E84A5F'; c.beginPath(); c.moveTo(x0, ay); c.lineTo(x1, ay); c.lineTo(x1, ay + 26 * u); c.quadraticCurveTo((x0 + x1) / 2, ay + 38 * u, x0, ay + 26 * u); c.closePath(); c.fill(); c.stroke(); }
+  /* sign */
+  c.font = `${Math.round(15 * u)}px "Dela Gothic One", Lexend, sans-serif`; const tw = c.measureText('HERO SHOP').width, bw = tw + 52 * u;
+  c.fillStyle = '#3A2F78'; E.rr(c, cx - bw / 2, ay - 32 * u, bw, 32 * u, 8 * u); c.fill(); c.stroke();
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#FFE27A'; c.fillText('HERO SHOP', cx + 9 * u, ay - 15 * u);
+  c.restore();
+  K.crystal(c, cx - bw / 2 + 16 * u, ay - 14 * u, 5 * u, t);
+  /* goods on the counter */
+  ['weapon', 'armor', 'charm', 'snack'].forEach((k, i) => {
+    const gx = sx + sw * [.13, .3, .7, .87][i], gy2 = ctop + 2 * u, on = o.sel === k;
+    if (on) { c.save(); c.shadowColor = '#FFE27A'; c.shadowBlur = 24; c.fillStyle = 'rgba(255,226,122,.45)'; c.beginPath(); c.arc(gx, gy2 - 18 * u, 28 * u, 0, TAU); c.fill(); c.restore(); }
+    shopGood(c, k, gx, gy2, 1.1 * u * (on ? 1.15 + Math.sin(t * 5) * .05 : 1), t);
+  });
+  K.petals(c, W, H, t, 8);
+};
 /* where each village building stands, in island units (x across, y front-to-back) */
-const VSPOT = {shrine:[-.04, -.3], tower:[.62, -.26], garden:[-.56, .02], dojo:[0, .03], forge:[.5, .16], spring:[-.24, .28]};
+const VSPOT = {shrine:[-.04, -.3], tower:[.62, -.26], garden:[-.56, .02], dojo:[0, .03], shop:[.5, .16], spring:[-.24, .28]};
 K.village = function (c, W, H, t, st, sel) {
   K.skyGradient(c, W, H, '#101A52', '#40308E', '#C77BB8', '#FFC2A8');
   K.stars(c, W, H * .7, t, 50, 21);
@@ -1598,19 +1700,19 @@ K.village = function (c, W, H, t, st, sel) {
   const at = k => [cx + VSPOT[k][0] * r, cy + VSPOT[k][1] * r];
   /* stone paths from the dojo out to every building */
   const [dx0, dy0] = at('dojo');
-  const paths = () => { c.beginPath(); for (const k of ['garden', 'forge', 'spring', 'tower', 'shrine']) { const [x, y] = at(k); c.moveTo(dx0, dy0); c.quadraticCurveTo((dx0 + x) / 2 + (y - dy0) * .25, (dy0 + y) / 2 - (x - dx0) * .08, x, y); } };
+  const paths = () => { c.beginPath(); for (const k of ['garden', 'shop', 'spring', 'tower', 'shrine']) { const [x, y] = at(k); c.moveTo(dx0, dy0); c.quadraticCurveTo((dx0 + x) / 2 + (y - dy0) * .25, (dy0 + y) / 2 - (x - dx0) * .08, x, y); } };
   c.save(); c.lineCap = 'round'; paths(); c.strokeStyle = 'rgba(0,0,0,.2)'; c.lineWidth = r * .1; c.stroke(); paths(); c.strokeStyle = '#C9A98A'; c.lineWidth = r * .08; c.stroke(); paths(); c.strokeStyle = '#F6E7CF'; c.lineWidth = r * .055; c.stroke(); paths(); c.setLineDash([r * .018, r * .04]); c.strokeStyle = 'rgba(120,90,70,.35)'; c.lineWidth = r * .018; c.stroke(); c.restore();
   const u = r / 190, hits = [], B = st.buildings || {}, items = [];
   /* cherry trees around the edge */
   for (const [x, y, s2] of [[-.86, -.1, .34], [-.3, -.3, .3], [.26, -.34, .28], [.86, -.06, .32], [.18, .34, .28], [-.66, .3, .3], [.82, .2, .28], [.36, -.3, .26]]) items.push([y, () => { c.save(); c.globalAlpha = .95; sakura(c, cx + x * r, cy + y * r, s2 * u, seed(Math.round(x * 100 + 700)), true); c.restore(); }]);
-  for (const k of ['shrine', 'tower', 'garden', 'dojo', 'forge', 'spring']) {
-    const [x, y] = at(k), built = k === 'dojo' || B[k];
+  for (const k of ['shrine', 'tower', 'garden', 'dojo', 'shop', 'spring']) {
+    const [x, y] = at(k), built = k === 'dojo' || k === 'shop' || B[k];
     items.push([VSPOT[k][1], () => {
       if (sel === k) { c.save(); c.shadowColor = '#FFE27A'; c.shadowBlur = 20; c.fillStyle = 'rgba(255,226,122,.4)'; c.beginPath(); c.ellipse(x, y, 52 * u, 14 * u, 0, 0, TAU); c.fill(); c.restore(); }
       if (!built) ruin(c, x, y, 60 * u, 44 * u, t);
       else if (k === 'dojo') roofHouse(c, x, y, 76 * u, 44 * u, '#F3E6D0', '#C8384A', true, t);
       else if (k === 'garden') { roofHouse(c, x, y, 50 * u, 28 * u, '#E8F6EE', '#2F7A5E', true, t); for (let i = 0; i < 5; i++) blossom(c, x - 28 * u + i * 14 * u, y + 4 * u, 6 * u, '#FFC6DD'); }
-      else if (k === 'forge') { roofHouse(c, x, y, 54 * u, 36 * u, '#5A4A5E', '#3A3448', true, t); c.save(); c.shadowColor = '#FF8A3D'; c.shadowBlur = 16; c.fillStyle = '#FF8A3D'; c.fillRect(x - 6 * u, y - 14 * u, 12 * u, 12 * u); c.restore(); for (let i = 0; i < 3; i++) { c.fillStyle = 'rgba(200,190,220,.35)'; c.beginPath(); c.arc(x + 18 * u + Math.sin(t + i) * 4, y - 62 * u - ((t * 14 + i * 12) % 36) * u, (5 + i * 2) * u, 0, TAU); c.fill(); } }
+      else if (k === 'shop') stall(c, x, y, u * 1.1, t);
       else if (k === 'spring') { c.save(); c.fillStyle = '#B7ADC8'; c.beginPath(); c.ellipse(x, y - 4 * u, 40 * u, 15 * u, 0, 0, TAU); c.fill(); c.strokeStyle = LINE; c.lineWidth = 2; c.stroke(); c.shadowColor = '#7FF0FF'; c.shadowBlur = 18; c.fillStyle = '#9BE8FF'; c.beginPath(); c.ellipse(x, y - 6 * u, 33 * u, 11 * u, 0, 0, TAU); c.fill(); c.restore(); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 1.5; for (let i = 0; i < 3; i++) { const q = (t * 10 + i * 8) % 24; c.beginPath(); c.ellipse(x, y - 6 * u, (10 + q) * u, (3 + q * .3) * u, 0, 0, TAU); c.stroke(); } for (let i = 0; i < 3; i++) { const q = (t * .5 + i / 3) % 1; c.fillStyle = `rgba(255,255,255,${.4 * (1 - q)})`; c.beginPath(); c.arc(x - 10 * u + i * 10 * u, y - 14 * u - q * 26 * u, (4 + q * 6) * u, 0, TAU); c.fill(); } }
       else if (k === 'tower') {
         c.fillStyle = '#E8DCC8'; c.strokeStyle = LINE; c.lineWidth = 2; c.beginPath(); c.moveTo(x - 12 * u, y); c.lineTo(x - 9 * u, y - 66 * u); c.lineTo(x + 9 * u, y - 66 * u); c.lineTo(x + 12 * u, y); c.closePath(); c.fill(); c.stroke();

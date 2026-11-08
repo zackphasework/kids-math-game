@@ -678,3 +678,38 @@ html.skyui .kicker{color:#9FD9FF}
 .lobby-top h1{font-size:clamp(34px, 9vw, 48px)}
 .kid-badge{width:84px; height:84px; border-radius:50%; display:grid; place-items:center; background:var(--c); color:#fff; font:800 44px var(--display); border:3px solid var(--line); box-shadow:0 4px 0 var(--line); text-shadow:0 2px 0 rgba(0,0,0,.25)}
 .block.lobby .player{min-height:150px}
+
+/* Sky Quest: hero shop and checkout */
+.sq-btns{display:flex; gap:10px}
+.sq-btns .btn{flex:1; min-width:0; white-space:nowrap; padding-left:10px; padding-right:10px}
+.shop-stat{font-weight:700; font-size:15px; display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+.shop-stat b{font:800 18px Lexend, sans-serif}
+.shop-stat b.up{color:#5BFFB0}
+.shop-stat .arr{opacity:.7}
+.shop-item.sel{border-color:#FFE27A; box-shadow:0 0 22px rgba(255,226,122,.35)}
+.shop-sheet .price-tag{display:inline-flex; align-items:center; gap:4px; font:800 18px Lexend, sans-serif; padding:3px 10px; border-radius:99px; border:1.5px solid var(--line); background:rgba(20,24,70,.7)}
+.tanu-say{position:relative; margin:4px 0 2px; padding:12px 14px; border-radius:16px; background:#FFF4E6; color:#22374B; font-weight:700; font-size:17px; line-height:1.35}
+.tanu-say::before{content:''; position:absolute; top:-9px; left:22px; border:9px solid transparent; border-top:0; border-bottom-color:#FFF4E6}
+.pay-tray{display:flex; flex-wrap:wrap; align-items:flex-end; gap:6px; min-height:92px; padding:10px; border-radius:16px; border:2px dashed rgba(143,230,255,.6); background:rgba(10,14,50,.5)}
+.pay-empty{margin:auto; color:var(--ink-soft); font-weight:600; font-size:14px}
+.pay-ghost{width:52px; height:58px; border-radius:12px; border:2px dashed rgba(255,226,122,.7)}
+.pay-bank{display:flex; justify-content:center; gap:14px}
+.pay-row{display:flex; gap:10px; align-items:center}
+.pay-row .btn.go{flex:1}
+.pay-piece{display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:2px; padding:4px; border:0; background:none; color:#F3F6FF; cursor:pointer; touch-action:manipulation; font:800 13px Lexend, sans-serif}
+.pay-piece:disabled{cursor:default}
+.pay-bank .pay-piece{min-width:84px; min-height:96px; padding:8px 12px; border-radius:18px; border:1.5px solid var(--line); background:rgba(60,70,170,.75); box-shadow:0 4px 0 rgba(8,10,40,.55); font-size:16px}
+.pay-bank .pay-piece:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(8,10,40,.55)}
+.pay-piece .bag-ic{width:46px; height:50px; display:block}
+.pay-bank .pay-piece .bag-ic{width:58px; height:64px}
+.pay-piece .rod{display:flex; flex-direction:column; gap:1px; padding:2px; border-radius:4px; background:#22374B}
+.pay-piece .rod i, .pay-piece .cube i{display:block; width:14px; height:5px; border-radius:1px; background:#9BF6FF}
+.pay-bank .pay-piece .rod i, .pay-bank .pay-piece .cube i{width:18px; height:6px}
+.pay-piece .cube{padding:2px; border-radius:3px; background:#22374B}
+.pay-piece .cube i{height:14px; background:#FFC6DD}
+.pay-bank .pay-piece .cube i{height:18px}
+.pay-wrong{display:flex; flex-direction:column; gap:10px; padding:12px; border-radius:16px; background:rgba(255,179,71,.16); border:1.5px solid #FFB347}
+.pay-wrong p{font-size:17px}
+.shop-sheet .choices .cnum{font:800 30px Lexend, sans-serif}
+html.skyui .block{padding:16px 14px; border-radius:22px}
+.sheet.still{animation:none}
