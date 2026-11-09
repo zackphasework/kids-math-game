@@ -90,6 +90,8 @@ S3.create = function (o) {
   const earthMat = (w) => { const key = Math.max(1, Math.round(w / 1.6)); if (earthMats[key]) return earthMats[key]; const t2 = keep(earthTex.clone()); t2.needsUpdate = true; t2.repeat.set(key, 1); const m = new T3.MeshToonMaterial({map:t2, gradientMap:gm}); if (isle === 2) { m.emissive = col('#FF5A1A'); m.emissiveMap = t2; m.emissiveIntensity = .18; } return (earthMats[key] = keep(m)); };
   const bitGeo = G('bit', () => new T3.OctahedronGeometry(.05, 0)), bits = [];
   for (const bl of W.blocks) {
+    /* moving, falling and appearing platforms are drawn on the 2D layer by the stage kit */
+    if (bl.dyn) continue;
     const x0 = bl.x * U, w = bl.w * U, top = -bl.top * U, cx = x0 + w / 2;
     if (bl.ground) {
       const h = top + 5;

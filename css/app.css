@@ -713,3 +713,54 @@ html.skyui .kicker{color:#9FD9FF}
 .shop-sheet .choices .cnum{font:800 30px Lexend, sans-serif}
 html.skyui .block{padding:16px 14px; border-radius:22px}
 .sheet.still{animation:none}
+
+/* ---------- Sky Quest: challenges, the timing tap, the in-stage question ---------- */
+.chal-row{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; width:100%; max-width:440px; margin:4px auto}
+.chal{display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 4px; border:1.5px solid rgba(143,230,255,.35); border-radius:14px; background:rgba(16,20,64,.6); color:#9AA8D8; text-align:center}
+.chal .ic{width:24px; height:24px; stroke:currentColor; fill:none; stroke-width:2}
+.chal b{font:800 12px Lexend, sans-serif; color:#C9D3F5; line-height:1.15}
+.chal small{font-size:11px; color:#8F9CC8}
+.chal.on{border-color:#FFE27A; color:#FFE27A; background:rgba(80,64,20,.45)}
+.chal.on b{color:#FFFFFF}
+.chal.new{box-shadow:0 0 16px rgba(255,226,122,.6); animation:pop .4s cubic-bezier(.3,1.6,.6,1)}
+.chal.new small{color:#FFE27A; font-weight:800}
+.sq-tapcard{padding:10px}
+.sq-tap{width:100%; min-height:84px; font-size:22px; background:linear-gradient(180deg, #FFE27A, #FF9A3D); color:#2A1406}
+#game.sky .qbanner{top:calc(env(safe-area-inset-top, 0px) + 74px); border:1.5px solid rgba(143,230,255,.7); border-radius:18px; background:rgba(16,20,64,.88); color:#F3F6FF; box-shadow:0 0 22px rgba(127,240,255,.3); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px)}
+#game.sky .qbanner .qb-hint{color:#BFF6FF}
+#game.sky .qbanner .qb-slot{border-color:#7FF0FF; color:#7FF0FF}
+#game.sky .qbanner.ok{background:rgba(20,90,70,.9)}
+#game.sky .qbanner.bad{background:rgba(110,30,60,.9)}
+
+/* move powers and move stars */
+.sq-moves.n1{grid-template-columns:1fr}
+.sq-mstars{color:#FFE27A; letter-spacing:.04em; text-transform:none; text-shadow:0 0 6px rgba(255,226,122,.6)}
+.sq-move.el-storm .sq-mstars{color:#5A3B00; text-shadow:none}
+.sq-move .sq-mstars i{display:inline; position:static; font-style:normal; font-size:inherit; opacity:.3; text-shadow:none}
+.sq-pow{font:800 11px Lexend, sans-serif; font-style:normal; padding:1px 8px; border-radius:999px; background:rgba(10,12,44,.45); color:rgba(255,255,255,.75)}
+.sq-pow.on{background:rgba(255,255,255,.92); color:#1A1440}
+.sq-ready{display:flex; align-items:center; gap:6px; margin-top:6px; padding:6px 10px; border:1.5px solid #FFE27A; border-radius:12px; background:rgba(80,64,20,.55); color:#FFE27A; font:800 13px Lexend, sans-serif; text-align:left; cursor:pointer; animation:pulse 1.4s ease infinite}
+.sq-ready .ic{width:16px; height:16px; flex:none}
+.sq-build.ready{border-color:#FFE27A; box-shadow:0 0 22px rgba(255,226,122,.45)}
+.mv-list{grid-template-columns:1fr}
+.mv-card .upg-head b{font:900 18px "Zen Kaku Gothic New", Lexend, sans-serif}
+.mv-card.locked{opacity:.6}
+.mv-el{font:800 11px Lexend, sans-serif; letter-spacing:.08em; text-transform:uppercase; margin-top:-6px}
+.mv-el.el-blossom{color:#FF7FB5} .mv-el.el-tide{color:#46C8FF} .mv-el.el-ember{color:#FF9A3D} .mv-el.el-storm{color:#FFE24A}
+.mv-card.el-blossom{border-left:6px solid #FF7FB5} .mv-card.el-tide{border-left:6px solid #46C8FF} .mv-card.el-ember{border-left:6px solid #FF9A3D} .mv-card.el-storm{border-left:6px solid #FFE24A}
+.mv-stars{display:flex; gap:2px; font-size:20px; line-height:1}
+.mv-stars i{font-style:normal; color:rgba(255,255,255,.2)}
+.mv-stars i.on{color:#FFE27A; text-shadow:0 0 8px rgba(255,226,122,.7)}
+.mv-next{display:flex; flex-direction:column; gap:4px}
+.mv-next small{color:var(--ink-soft); font-size:12.5px}
+.mv-pow{display:flex; flex-direction:column; gap:6px; padding:10px 12px; border:1.5px dashed var(--line); border-radius:14px; background:rgba(10,12,44,.35)}
+.mv-pow.on{border-style:solid; border-color:rgba(255,226,122,.6)}
+.mv-pow > b{display:flex; align-items:center; gap:6px; font:800 15px Lexend, sans-serif}
+.mv-pow > b .ic{width:18px; height:18px}
+.mv-pow small{color:var(--ink-soft); font-size:12.5px}
+.mv-perks{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px}
+.mv-perks li{font-size:13.5px; color:#8F9CC8}
+.mv-perks li b{display:inline-block; min-width:52px; color:rgba(255,255,255,.35); letter-spacing:.04em}
+.mv-perks li.on{color:#F3F6FF}
+.mv-perks li.on b{color:#FFE27A}
+.sq-results .mv-perks{max-width:360px; margin:0 auto; text-align:left}
