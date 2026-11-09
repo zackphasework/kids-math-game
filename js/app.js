@@ -485,6 +485,7 @@ function rigCrane() {
 const SK = PUM.SKY, KA = PUM.SKYART;
 let skySel = null, questSel = null, skyIsle = null, setup = null, skyResult = null, evo = null, shopSel = null, buy = null;
 const SKYKEYS = {ArrowLeft:'left', ArrowRight:'right', ArrowUp:'jump', ' ':'jump', '1':'k1', '2':'k2', '3':'k3', '4':'k4', s:'k0', d:'dash', Shift:'dash', f:'glide', ArrowDown:'glide'};
+const chalIcon = k => icon(k === 'secret' ? 'key' : k === 'nohit' ? 'heart' : 'bolt');
 const spiritImg = (k, stage) => `<img class="sq-spirit" src="${KA.spiritImg(k, stage)}" alt="" draggable="false">`;
 function compList(p) { return Object.keys(p.sky.comps).map(k => ({k, kind:k, c:p.sky.comps[k], stage:SK.isGuardian(k) ? 3 : SK.stage(p.sky.comps[k].lv), name:SK.compName(k, p.sky.comps[k])})); }
 /* what the sky map and village need to know about each island */
@@ -550,10 +551,12 @@ function renderSkyMap() {
       <p class="stars-help">Power is your level plus your gear from the shop.</p>
       <button class="btn go big wide" data-act="sky-quest" data-i="${i}">${icon('play')} ${best ? 'Play again for more stars' : 'Start quest'}</button>
       <p class="stars-help">Stars: 1 for finishing, 1 for losing at most one heart, 1 for getting most of the math right.</p>
+      <div class="lab">Challenges &middot; +${SK.CHAL_GEMS} crystals each, the first time</div>
+      <div class="chal-row">${SK.CHAL.map(c => { const on = (p.sky.chal[i] || 0) & c.bit, need = c.k === 'secret' && !on ? SK.secretNeed(p, i) : null; return `<span class="chal ${on ? 'on' : ''}">${chalIcon(c.k)}<b>${c.name}</b><small>${on ? 'Done' : need ? `Needs ${SK.MOVE_INFO[need].name.toLowerCase()}` : 'Not yet'}</small></span>`; }).join('')}</div>
     </div>`;
   }
   const tabs = SK.ISLANDS.map((I, k) => { const open = SK.isleOpen(p, k); return `<button class="sq-isle isle-${I.k} ${k === k0 ? 'on' : ''} ${open ? '' : 'locked'}" data-act="sky-isle" data-k="${k}" aria-pressed="${k === k0}" ${open ? '' : 'aria-disabled="true"'}><b>${I.name}</b><small>${open ? `${SK.cleared(p, k)} of 5 ${SK.cleared(p, k) === 5 ? '&middot; saved!' : ''}` : 'Locked'}</small></button>`; }).join('');
-  const rows = SK.QUESTS.map((Q, i) => ({Q, i})).filter(o => o.Q.isle === k0).map(({Q, i}) => `<button class="sq-qrow ${i > pr.unlocked ? 'locked' : ''} ${questSel === i ? 'on' : ''}" data-act="sel-quest" data-i="${i}" ${i > pr.unlocked ? 'aria-disabled="true"' : ''}><span class="sq-qn isle-${I0.k}">${Q.boss ? icon('star', 'fill') : i % 5 + 1}</span><span class="sq-qt"><b>${esc(Q.name)}</b><small>${i > pr.unlocked ? 'Locked' : Q.boss ? `Guardian &middot; Recommended power ${SK.recPower(i)}` : `Recommended power ${SK.recPower(i)}`}</small></span>${pr.stars[i] ? starsRow(pr.stars[i], 'tiny') : ''}</button>`).join('');
+  const rows = SK.QUESTS.map((Q, i) => ({Q, i})).filter(o => o.Q.isle === k0).map(({Q, i}) => `<button class="sq-qrow ${i > pr.unlocked ? 'locked' : ''} ${questSel === i ? 'on' : ''}" data-act="sel-quest" data-i="${i}" ${i > pr.unlocked ? 'aria-disabled="true"' : ''}><span class="sq-qn isle-${I0.k}">${Q.boss ? icon('star', 'fill') : i % 5 + 1}</span><span class="sq-qt"><b>${esc(Q.name)}</b><small>${i > pr.unlocked ? 'Locked' : Q.boss ? `Guardian &middot; Recommended power ${SK.recPower(i)}` : `Recommended power ${SK.recPower(i)}`}${pr.stars[i] ? ` &middot; Challenges ${SK.CHAL.filter(c => (p.sky.chal[i] || 0) & c.bit).length}/3` : ''}</small></span>${pr.stars[i] ? starsRow(pr.stars[i], 'tiny') : ''}</button>`).join('');
   return `<header class="top">${backBtn('base', 'Back to Sky Village')}<h2 class="title">Sky map</h2>${mpChip(p)}</header>
     <div class="town-wrap sq-wrap"><canvas id="skymap" aria-label="The sky map. Tap a quest on ${I0.name}, or tap another island to fly there."></canvas></div>
     <div class="sq-isles" role="group" aria-label="Islands">${tabs}</div>
@@ -685,6 +688,7 @@ function renderSkyDone() {
     ${r.ok ? `<div class="rstars">${[0, 1, 2].map(i => `<span class="rs ${i < r.stars ? 'on' : ''}" style="--i:${i}">${icon('star', 'fill')}</span>`).join('')}</div>` : ''}
     <div class="site-card sq-wrap"><canvas id="skydone" aria-label="${esc(Q.name)}"></canvas></div>
     ${r.ok ? '' : `<p class="rmsg">You were knocked out. Buy gear at the shop, train at the dojo, or bring a spirit the shadows are weak to.</p>`}
+    ${r.ok ? `<div class="chal-row">${SK.CHAL.map(c => `<span class="chal ${r.chalAll & c.bit ? 'on' : ''} ${r.chalNew & c.bit ? 'new' : ''}">${chalIcon(c.k)}<b>${c.name}</b><small>${r.chalNew & c.bit ? `New! +${SK.CHAL_GEMS}` : r.chal & c.bit ? 'Done' : r.chalAll & c.bit ? 'Done before' : c.k === 'fast' ? `${r.runT}s, aim for ${r.par}s` : 'Not yet'}</small></span>`).join('')}</div>` : ''}
     ${lvUp ? `<p class="unlock">${icon('up')} Level up! You're now level ${r.lv1}, ${SK.title(r.lv1)}.${r.lv0 < 3 && r.lv1 >= 3 ? ' New move: Storm!' : ''}</p>` : ''}
     ${r.unlocks.map(u => `<p class="unlock">${icon('star', 'fill')} ${esc(u)}</p>`).join('')}
     <p class="rnote">${icon('gem', 'gem')} +${r.crystals} crystals &middot; +${r.xp} XP${r.snacks ? ` &middot; +${r.snacks} spirit snack${r.snacks > 1 ? 's' : ''}` : ''}</p>
@@ -791,9 +795,11 @@ function skyFinish(r) {
       if (SK.guardians(p) === 2 && !s.b.shrine) unlocks.push('The Sky shrine can open now. Visit Sky Village!');
     }
   }
+  let chalNew = 0;
+  if (r.ok) { const old = s.chal[qi] || 0; chalNew = (r.chal || 0) & ~old; s.chal[qi] = old | (r.chal || 0); bonus += SK.CHAL.filter(c => chalNew & c.bit).length * SK.CHAL_GEMS; }
   s.snacks = Math.min(99, s.snacks + snacks);
   p.mp += bonus; p.mpTotal += bonus;
-  skyResult = {qi, ok:r.ok, stars, crystals:mp + bonus, xp:r.xp, lv0, lv1, snacks, unlocks};
+  skyResult = {qi, ok:r.ok, stars, crystals:mp + bonus, xp:r.xp, lv0, lv1, snacks, unlocks, chal:r.chal || 0, chalNew, chalAll:s.chal[qi] || 0, runT:r.runT, par:r.par};
   store.savePlayer(p); A.sfx(r.ok ? 'fanfare' : 'no');
   go('skyDone');
 }
@@ -886,6 +892,7 @@ function startGame(levelIndex) {
     make:api => PUM.games[p.theme]({player:p, assist:assistOf(p), levelIndex, api})});
   pr.plays++;
 }
+let qbTimer = 0;
 function openShell(cfg) {
   const p = P(); if (!p) return go('home');
   if (quiz) { quiz.destroy(); quiz = null; }
@@ -899,8 +906,8 @@ function openShell(cfg) {
     toast: m => PUM.fx.toast(esc(m)),
     needRefuel: reason => openRefuel(reason),
     finish: r => cfg.onFinish(r),
-    showQuestion: (q, hint) => { const b = document.getElementById('qbanner'); if (!b) return; b.innerHTML = `<span class="qb-hint">${esc(hint || '')}</span><span class="qb-q">${PUM.questionHTML(q)}</span>`; b.hidden = false; b.classList.remove('ok', 'bad'); if (p.speak) A.say(q.spoken); },
-    hideQuestion: ok => { const b = document.getElementById('qbanner'); if (!b) return; b.classList.add(ok ? 'ok' : 'bad'); setTimeout(() => { b.hidden = true; }, 900); },
+    showQuestion: (q, hint) => { clearTimeout(qbTimer); const b = document.getElementById('qbanner'); if (!b) return; b.innerHTML = `<span class="qb-hint">${esc(hint || '')}</span><span class="qb-q">${PUM.questionHTML(q)}</span>`; b.hidden = false; b.classList.remove('ok', 'bad'); if (p.speak) A.say(q.spoken); },
+    hideQuestion: ok => { const b = document.getElementById('qbanner'); if (!b) return; b.classList.add(ok ? 'ok' : 'bad'); clearTimeout(qbTimer); qbTimer = setTimeout(() => { b.hidden = true; }, 900); },
     answer: (ok, q) => { const r = PUM.recordAnswer(p, ok, false); play.mp += r.mp; const el = document.getElementById('g-mp'); if (el) el.textContent = play.mp; if (r.up) PUM.fx.toast(`${icon('up')} Math step up!`); if (p.speak) A.say(ok ? pick(['Yes!', 'Great!', 'Nice!']) : `It was ${q.ans}`); A.sfx(ok ? 'yes' : 'no'); store.savePlayer(p); return r; },
     say: t => { if (p.speak) A.say(t); },
     ctrl: html => { const el = shell.querySelector('.controls'); if (el) el.innerHTML = html; },

@@ -167,38 +167,38 @@ S.FOES = FOES;
 S.foeScale = qi => 1 + .15 * Math.min(qi, 4) + .08 * Math.max(0, qi - 4);
 S.QUESTS = [
   {name:'The Lost Cubs', rec:1, goal:'cage', story:'Shadow wisps have trapped the blossom cubs. Find them and set them free!', obj:'Free the cubs',
-    foes:['petal'], route:[['flat', 360], ['foe', 'petal'], ['gap', 100], ['flat', 260], ['chest', 'snack'], ['up', 60], ['flat', 220], ['gap', 110], ['down', 60], ['flat', 260], ['foe', 'petal'], ['secret'], ['flat', 160], ['goal']]},
+    foes:['petal'], route:[['flat', 320], ['wisps', 2], ['foe', 'petal'], ['gap', 100], ['flat', 200], ['bounce'], ['chest', 'snack'], ['gap', 110], ['down', 60], ['flat', 200], ['wisps', 1], ['foe', 'petal'], ['secret'], ['flat', 160], ['goal']]},
   {name:'Lantern Path', rec:2, goal:'lanterns', story:'Light the three shrine lanterns so lost spirits can find their way home.', obj:'Light the lanterns',
-    foes:['puddle', 'petalimp'], route:[['flat', 300], ['lantern'], ['hop', 2], ['flat', 200], ['foe', 'puddle'], ['lantern'], ['gate'], ['up', 70], ['flat', 220], ['gap', 110], ['chest', 'snack'], ['down', 70], ['foe', 'petalimp'], ['lantern'], ['secret'], ['goal']]},
+    foes:['puddle', 'petalimp'], route:[['flat', 300], ['lantern'], ['wisps', 2], ['hop', 2], ['flat', 160], ['foe', 'puddle'], ['lantern'], ['stones'], ['up', 70], ['flat', 200], ['chest', 'snack'], ['down', 70], ['foe', 'petalimp'], ['lantern'], ['secret'], ['goal']]},
   {name:'The Silent Bell', rec:3, goal:'bell', story:'Climb to the hilltop and ring the old bell to wake the island up.', obj:'Ring the bell',
-    foes:['petalimp', 'mossgolem'], route:[['flat', 300], ['up', 70], ['flat', 180], ['up', 80], ['foe', 'petalimp'], ['hop', 3], ['chest', 'snack'], ['up', 60], ['gate'], ['flat', 200], ['foe', 'mossgolem'], ['gap', 110], ['secret'], ['goal']]},
+    foes:['petalimp', 'mossgolem'], route:[['flat', 300], ['up', 70], ['wisps', 2], ['foe', 'petalimp'], ['crumble', 3], ['chest', 'snack'], ['flat', 120], ['power'], ['flat', 200], ['foe', 'mossgolem'], ['gap', 110], ['secret'], ['goal']]},
   {name:'Sakura Falls', rec:4, goal:'falls', story:'Chase the shadows from the river so the waterfall can flow again.', obj:'Restore the falls',
-    foes:['puddle', 'petalimp', 'mossgolem'], route:[['flat', 300], ['foe', 'puddle'], ['gap', 110], ['flat', 160], ['hop', 2], ['foe', 'petalimp'], ['chest', 'snack'], ['down', 60], ['gate'], ['flat', 200], ['up', 80], ['foe', 'mossgolem'], ['secret'], ['goal']]},
+    foes:['puddle', 'petalimp', 'mossgolem'], route:[['flat', 300], ['foe', 'puddle'], ['flat', 200], ['chase'], ['flat', 320], ['wisps', 2], ['gap', 110], ['crumble', 2], ['flat', 160], ['bounce', 200], ['flat', 200], ['hop', 2], ['flat', 260], ['chaseEnd'], ['foe', 'petalimp'], ['chest', 'snack'], ['gate'], ['flat', 200], ['foe', 'mossgolem'], ['secret'], ['goal']]},
   {name:'Hanamori', rec:5, goal:'grove', boss:true, story:'Hanamori, the Blossom Deer, has been taken over by shadow. Defeat the guardian!', obj:'Reach the grove',
-    foes:['hanamori', 'petalimp'], route:[['flat', 380], ['chest', 'snack'], ['gap', 110], ['flat', 260], ['foe', 'petalimp'], ['flat', 120], ['goal']]},
+    foes:['hanamori', 'petalimp'], route:[['flat', 360], ['wisps', 2], ['chest', 'snack'], ['stones'], ['flat', 200], ['foe', 'petalimp'], ['secret'], ['flat', 120], ['goal']]},
   /* ---- Tide Grotto: sea caves, tide pools and glowing jellyfish. 'secret' ledges need double jump;
      a 'cliff' is a high ledge with a far-away secret island that needs dash or glide. ---- */
   {name:'Pearl of the Grotto', rec:5, goal:'pearl', story:'Shadows hid the great pearl of the sea caves. Find the giant shell and wake the pearl!', obj:'Find the pearl',
-    foes:['jelly', 'shellknight', 'bubblebat'], route:[['flat', 340], ['foe', 'jelly'], ['gap', 120], ['flat', 240], ['chest', 'snack'], ['up', 70], ['flat', 200], ['hop', 2], ['foe', 'shellknight'], ['down', 70], ['flat', 220], ['gap', 130], ['flat', 160], ['secret'], ['foe', 'bubblebat'], ['flat', 200], ['goal']]},
+    foes:['jelly', 'shellknight', 'bubblebat'], route:[['flat', 340], ['foe', 'jelly'], ['bubbles', 3], ['flat', 240], ['wisps', 2], ['chest', 'snack'], ['up', 70], ['flat', 200], ['foe', 'shellknight'], ['down', 70], ['bounce'], ['gap', 130], ['flat', 160], ['secret'], ['foe', 'bubblebat'], ['flat', 200], ['goal']]},
   {name:'Jelly Lights', rec:6, goal:'jellies', story:'The glowing jellyfish fell asleep. Wake all three so the dark tunnel shines again!', obj:'Wake the jellies',
-    foes:['steam', 'bubblebat', 'shellknight'], route:[['flat', 300], ['lantern'], ['hop', 3], ['foe', 'steam'], ['lantern'], ['gate'], ['up', 80], ['flat', 200], ['gap', 130], ['chest', 'snack'], ['down', 80], ['foe', 'bubblebat'], ['flat', 180], ['lantern'], ['secret'], ['foe', 'shellknight'], ['goal']]},
+    foes:['steam', 'bubblebat', 'shellknight'], route:[['flat', 300], ['lantern'], ['hop', 3], ['foe', 'steam'], ['lantern'], ['power'], ['wisps', 2], ['up', 80], ['flat', 200], ['stones'], ['chest', 'snack'], ['foe', 'bubblebat'], ['flat', 180], ['lantern'], ['secret'], ['foe', 'shellknight'], ['goal']]},
   {name:'Coral Garden', rec:7, goal:'coral', story:'Shadow ink covered the coral garden. Chase it away so the coral can bloom!', obj:'Save the coral',
-    foes:['coral', 'coralknight', 'crabgolem'], route:[['flat', 300], ['foe', 'coral'], ['gap', 130], ['flat', 200], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'dash'], ['foe', 'coralknight'], ['hop', 3], ['chest', 'snack'], ['gate'], ['flat', 200], ['foe', 'crabgolem'], ['secret'], ['goal']]},
+    foes:['coral', 'coralknight', 'crabgolem'], route:[['flat', 300], ['foe', 'coral'], ['bubbles', 2], ['flat', 200], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'dash'], ['foe', 'coralknight'], ['wisps', 2], ['bounce'], ['chest', 'snack'], ['gate'], ['flat', 200], ['foe', 'crabgolem'], ['secret'], ['goal']]},
   {name:'The Sleepy Turtle', rec:8, goal:'turtle', story:'A giant sea turtle is stuck in shadow vines. Free it so it can carry you to the dragon!', obj:'Free the turtle',
-    foes:['bubblebat', 'steam', 'crabgolem', 'shellknight'], route:[['flat', 300], ['foe', 'bubblebat'], ['hop', 3], ['flat', 160], ['up', 80], ['foe', 'steam'], ['gap', 140], ['chest', 'snack'], ['down', 80], ['gate'], ['flat', 200], ['foe', 'crabgolem'], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'glide'], ['hop', 2], ['foe', 'shellknight'], ['secret'], ['flat', 200], ['goal']]},
+    foes:['bubblebat', 'steam', 'crabgolem', 'shellknight'], route:[['flat', 300], ['foe', 'bubblebat'], ['hop', 3], ['wisps', 2], ['up', 80], ['foe', 'steam'], ['bubbles', 3], ['chest', 'snack'], ['down', 80], ['stones'], ['flat', 200], ['foe', 'crabgolem'], ['up', 90], ['up', 90], ['up', 90], ['up', 90], ['cliff', 'glide'], ['hop', 2], ['foe', 'shellknight'], ['secret'], ['flat', 200], ['goal']]},
   {name:'Umikaze', rec:9, goal:'lair', boss:true, story:'Umikaze, the Tide Dragon, has been taken over by shadow. Defeat the guardian!', obj:'Reach the dragon\'s cave',
-    foes:['umikaze', 'bubblebat', 'coralknight'], route:[['flat', 360], ['chest', 'snack'], ['gap', 130], ['flat', 240], ['foe', 'bubblebat'], ['hop', 2], ['flat', 160], ['foe', 'coralknight'], ['flat', 140], ['goal']]},
+    foes:['umikaze', 'bubblebat', 'coralknight'], route:[['flat', 360], ['chest', 'snack'], ['turtle', 1500], ['wisps', 2], ['foe', 'bubblebat'], ['hop', 2], ['flat', 160], ['foe', 'coralknight'], ['secret'], ['flat', 140], ['goal']]},
   /* ---- Ember Peak: volcano slopes, lava glow and torii on the cliffs. 'dash' gaps are too long to jump. ---- */
   {name:'Ash Trail', rec:10, goal:'spring', story:'Grey ash covered the hot spring. Clear the trail so the warm water can bubble again!', obj:'Wake the hot spring',
-    foes:['ash', 'maskfox', 'sparkimp'], route:[['flat', 320], ['foe', 'ash'], ['dash', 330], ['flat', 240], ['chest', 'snack'], ['up', 80], ['flat', 200], ['foe', 'maskfox'], ['gap', 140], ['flat', 160], ['hop', 2], ['down', 80], ['flat', 200], ['secret'], ['foe', 'sparkimp'], ['flat', 200], ['goal']]},
+    foes:['ash', 'maskfox', 'sparkimp'], route:[['flat', 320], ['foe', 'ash'], ['dash', 330], ['flat', 200], ['bounce'], ['chest', 'snack'], ['wisps', 2], ['foe', 'maskfox'], ['crumble', 3], ['flat', 160], ['down', 80], ['flat', 200], ['secret'], ['foe', 'sparkimp'], ['flat', 200], ['goal']]},
   {name:'Fire Bowls', rec:11, goal:'bowls', story:'Light the three fire bowls on the cliff path so travellers can find the way up.', obj:'Light the fire bowls',
-    foes:['sparkimp', 'magmagolem', 'maskfox'], route:[['flat', 300], ['lantern'], ['up', 80], ['flat', 160], ['foe', 'sparkimp'], ['dash', 340], ['lantern'], ['gate'], ['hop', 3], ['foe', 'magmagolem'], ['up', 80], ['flat', 200], ['chest', 'snack'], ['dash', 340], ['down', 80], ['lantern'], ['foe', 'maskfox'], ['secret'], ['goal']]},
+    foes:['sparkimp', 'magmagolem', 'maskfox'], route:[['flat', 300], ['lantern'], ['up', 80], ['flat', 160], ['foe', 'sparkimp'], ['dash', 340], ['lantern'], ['power'], ['wisps', 2], ['foe', 'magmagolem'], ['stones'], ['chest', 'snack'], ['dash', 340], ['down', 80], ['lantern'], ['foe', 'maskfox'], ['secret'], ['goal']]},
   {name:'The Great Drum', rec:12, goal:'drum', story:'Climb the high cliffs and beat the great drum to wake the mountain up!', obj:'Beat the drum',
-    foes:['maskfox', 'ashknight', 'magmagolem'], route:[['flat', 300], ['foe', 'maskfox'], ['up', 90], ['up', 90], ['foe', 'ashknight'], ['up', 90], ['up', 90], ['cliff', 'glide'], ['dash', 340], ['chest', 'snack'], ['foe', 'magmagolem'], ['hop', 3], ['gate'], ['secret'], ['flat', 200], ['goal']]},
+    foes:['maskfox', 'ashknight', 'magmagolem'], route:[['flat', 300], ['foe', 'maskfox'], ['bounce'], ['crumble', 3], ['foe', 'ashknight'], ['up', 90], ['up', 90], ['cliff', 'glide'], ['dash', 340], ['chest', 'snack'], ['wisps', 3], ['foe', 'magmagolem'], ['bounce'], ['gate'], ['secret'], ['flat', 200], ['goal']]},
   {name:'Lava River', rec:13, goal:'flame', story:'The sacred flame on the peak went dark. Cross the lava river and light it again!', obj:'Light the sacred flame',
-    foes:['sparkimp', 'ashknight', 'magmagolem', 'maskfox'], route:[['flat', 300], ['foe', 'sparkimp'], ['dash', 350], ['flat', 200], ['hop', 3], ['foe', 'ashknight'], ['up', 80], ['flat', 160], ['dash', 350], ['chest', 'snack'], ['gate'], ['down', 80], ['foe', 'magmagolem'], ['gap', 140], ['flat', 160], ['dash', 350], ['foe', 'maskfox'], ['secret'], ['flat', 200], ['goal']]},
+    foes:['sparkimp', 'ashknight', 'magmagolem', 'maskfox'], route:[['flat', 300], ['foe', 'sparkimp'], ['dash', 350], ['flat', 200], ['wisps', 2], ['foe', 'ashknight'], ['lava', 6], ['flat', 160], ['chest', 'snack'], ['gate'], ['foe', 'magmagolem'], ['crumble', 2], ['flat', 160], ['dash', 350], ['foe', 'maskfox'], ['secret'], ['flat', 200], ['goal']]},
   {name:'Homura', rec:14, goal:'summit', boss:true, story:'Homura, the Flame Fox, has been taken over by shadow. Defeat the last guardian!', obj:'Reach the summit',
-    foes:['homura', 'maskfox', 'magmagolem'], route:[['flat', 360], ['chest', 'snack'], ['dash', 340], ['flat', 240], ['foe', 'maskfox'], ['up', 80], ['flat', 160], ['hop', 2], ['foe', 'magmagolem'], ['flat', 160], ['goal']]},
+    foes:['homura', 'maskfox', 'magmagolem'], route:[['flat', 360], ['chest', 'snack'], ['wisps', 2], ['dash', 340], ['flat', 240], ['foe', 'maskfox'], ['stones'], ['bounce'], ['foe', 'magmagolem'], ['secret'], ['flat', 160], ['goal']]},
 ];
 S.QUESTS.forEach((Q, i) => { Q.isle = S.isleOf(i); });
 S.ACTIVE = S.QUESTS.length;
@@ -221,8 +221,14 @@ S.normalize = function (raw, p) {
   return {v:num(x.v), made:!!x.made, name:String(x.name || '').trim().slice(0, 16), hair:K.HAIR[x.hair] ? x.hair : null, outfit:K.OUTFIT[x.outfit] ? x.outfit : null, xp:clamp(num(x.xp), 0, 1e6),
     comp:K.SPIRITS[x.comp] ? x.comp : null, comps, snacks:clamp(num(x.snacks), 0, 99),
     b:{garden:!!b.garden, forge:!!b.forge, spring:!!b.spring, tower:!!b.tower, shrine:!!b.shrine}, moves:{double:!!mv.double, dash:!!mv.dash, glide:!!mv.glide},
-    seen:Object.fromEntries(Object.keys(S.TYPES).filter(k => x.seen && x.seen[k]).map(k => [k, true]))};
+    seen:Object.fromEntries(Object.keys(S.TYPES).filter(k => x.seen && x.seen[k]).map(k => [k, true])),
+    chal:S.QUESTS.map((Q, i) => clamp(Math.round(num(Array.isArray(x.chal) ? x.chal[i] : 0)), 0, 7))};
 };
+/* quest challenges, one bit each */
+S.CHAL = [{bit:1, k:'secret', name:'Find the secret chest'}, {bit:2, k:'nohit', name:'No hits at all'}, {bit:4, k:'fast', name:'Fast finish'}];
+S.CHAL_GEMS = 5;
+/* the guardian move a quest's secret chest needs, if the player hasn't learned it yet */
+S.secretNeed = (p, i) => { const r = S.QUESTS[i].route; const need = r.some(x => x[0] === 'secret') ? 'double' : null; const cl = r.find(x => x[0] === 'cliff'); const all = [need, cl && cl[1]].filter(Boolean); return all.find(n => p.sky.moves[n]) ? null : all[0] || null; };
 /* Called by store.normalize. Sky Quest replaced the old runner: progress starts fresh once and
    old hero upgrades turn into crystals. */
 S.migrate = function (p, rawUp) {
@@ -265,6 +271,7 @@ PUM.avatarSVG = p => p.theme === 'anime' ? K.portraitImg(p.sky ? K.lookOf(p) : K
 function build(Q, opts = {}) {
   const W = {blocks:[], crystals:[], chests:[], gates:[], foes:[], lanterns:[], secrets:[], gaps:[], goal:null, len:0};
   let x = 0, h = 0;
+  if (S.STAGE) S.STAGE.init(W);
   const ground = w => { W.blocks.push({x, w, top:h, ground:true}); };
   const row = (x0, w, y, n) => { for (let i = 0; i < n; i++) W.crystals.push({x:x0 + (i + .5) * w / n, y, got:false, v:1}); };
   for (const [kind, arg] of Q.route) {
@@ -299,6 +306,7 @@ function build(Q, opts = {}) {
       row(edge + D + 240, 300, h - 46, 3);
       x += D + 380;
     }
+    else if (S.STAGE && S.STAGE.pieces[kind]) [x, h] = S.STAGE.pieces[kind](W, x, h, arg, Q.isle || 0);
     else if (kind === 'goal') { ground(640); W.goal = {x:x + 330, y:h, kind:Q.goal, done:false}; x += 640; }
   }
   W.len = x;
@@ -316,7 +324,7 @@ PUM.games.sky = function (o) {
   const parts = E.Particles();
   const hero = {x:90, y:0, vx:0, vy:0, ground:true, face:1, run:0, coyote:0, buf:0, used2:false, inv:0, safe:{x:90, y:0}, dashT:0, dashQ:0, dashCd:0, usedDash:false, gliding:false};
   const g = {tier:1, mode:'explore', t:0, hearts:st.hearts, maxH:st.hearts, meter:0, revived:false, lost:0, right:0, asked:0, snacks:0, crystals:0, beaten:0,
-    shake:0, banner:null, nums:[], trans:0, heal:S.heal(p, isle), healTo:S.heal(p, isle), camX:0, camY:0, comp:{x:40, y:-110}, endT:0, lit:0, xp:0, dashes:0, glides:0, blockLog:[]};
+    shake:0, banner:null, nums:[], trans:0, heal:S.heal(p, isle), healTo:S.heal(p, isle), camX:0, camY:0, comp:{x:40, y:-110}, endT:0, lit:0, xp:0, dashes:0, glides:0, blockLog:[], bumps:0, secret:false, runT:0, greats:0};
   const ctl = {left:false, right:false, glide:false};
   let Wd = 360, Hd = 640, s = 1, gy = 400, b = null, lock = null;
   const SPEED = 250 * (1 + .06 * st.boots), JV = -880 * (1 + .025 * st.boots), JV2 = -700, GRAV = 2300, HW = 14;
@@ -330,16 +338,31 @@ PUM.games.sky = function (o) {
   const objText = () => LIT[Q.goal] ? `${Q.obj} ${g.lit} / ${W.lanterns.length}` : Q.obj;
   const litName = isle === 1 ? ['Jellyfish awake!', 'Wake every jellyfish first'] : isle === 2 ? ['Fire bowl lit!', 'Light every fire bowl first'] : ['Lantern lit!', 'Light every lantern first'];
   const NEED_MSG = {double:'Too high! A guardian can teach you double jump.', dash:'Too far! A guardian can teach you dash.', glide:'Too far! A guardian can teach you glide.'};
+  /* the moving parts of the stage: wisps, bouncers, number stones, spirit powers, the wave, the turtle, the lava */
+  const X = S.STAGE.run({W, hero, g, p, api, assist, isle, comp, parts, banner, say, openLock, hurt:hitHero, locked:() => !!lock});
+  const PAR = S.STAGE.par(W, age);
 
   /* ---- explore ---- */
   function hurtFall() {
-    hero.x = hero.safe.x; hero.y = hero.safe.y; hero.vx = 0; hero.vy = 0; hero.inv = 1.2; hero.dashT = 0; hero.usedDash = false; hero.gliding = false;
-    if (assist >= 2) { banner('Whoops!', 'Try that jump again', 1); A.sfx('hurt'); return; }
+    const rs = X.respawn();
+    hero.x = rs ? rs.x : hero.safe.x; hero.y = rs ? rs.y - 40 : hero.safe.y; hero.vx = 0; hero.vy = 0; hero.inv = 1.2; hero.dashT = 0; hero.usedDash = false; hero.gliding = false; hero.on = null;
+    X.onFall();
+    if (assist >= 2) { banner('Whoops!', 'Try that jump again', 1); A.sfx('hurt'); g.bumps++; return; }
     g.hearts--; g.lost++; A.sfx('hurt'); g.shake = 8;
     banner('Ouch!', g.hearts > 0 ? 'You lost a heart' : '', 1);
     if (g.hearts <= 0) knockedOut();
   }
+  /* hurt where you stand: the wave, the lava */
+  function hitHero(msg) {
+    hero.inv = 1.2; g.shake = 8; A.sfx('hurt');
+    if (assist >= 2) { banner('Whoops!', msg || '', 1); g.bumps++; return; }
+    g.hearts--; g.lost++;
+    banner(msg || 'Ouch!', g.hearts > 0 ? 'You lost a heart' : '', 1);
+    if (g.hearts <= 0) knockedOut();
+  }
   function updateExplore(dt) {
+    X.pre(dt);
+    if (g.mode !== 'explore') return;
     const h = hero, dir = (ctl.right ? 1 : 0) - (ctl.left ? 1 : 0);
     /* glide: hold Glide while falling to float down slowly, drifting forward */
     const wasGliding = h.gliding;
@@ -366,11 +389,13 @@ PUM.games.sky = function (o) {
     let nx = h.x + h.vx * dt;
     for (const bl of W.blocks) if (bl.ground && nx + HW > bl.x && nx - HW < bl.x + bl.w && h.y > bl.top + 3) { if (h.x <= bl.x) nx = bl.x - HW; else if (h.x >= bl.x + bl.w) nx = bl.x + bl.w + HW; h.vx = 0; }
     for (const gt of W.gates) if (!gt.solved && nx > gt.x - 46 && h.x <= gt.x - 45) { nx = gt.x - 46; h.vx = 0; if (!lock) openLock('gate', gt); }
+    nx = X.barrier(nx);
     nx = clamp(nx, 20, W.len - 20);
     let ny = h.y + h.vy * dt, landed = null;
-    if (h.vy >= 0) for (const bl of W.blocks) if (nx + HW * .7 > bl.x && nx - HW * .7 < bl.x + bl.w && h.y <= bl.top + .5 && ny >= bl.top) { if (!landed || bl.top < landed.top) landed = bl; }
-    if (landed) { ny = landed.top; h.vy = 0; h.ground = true; h.coyote = .1; h.used2 = false; h.usedDash = false; h.gliding = false; if (landed.ground) h.safe = {x:clamp(nx, landed.x + 40, landed.x + landed.w - 40), y:landed.top}; }
-    else { if (h.ground) h.coyote = .1; h.ground = false; }
+    if (h.vy >= 0) for (const bl of W.blocks) if (!bl.off && nx + HW * .7 > bl.x && nx - HW * .7 < bl.x + bl.w && h.y <= bl.top + .5 && ny >= bl.top) { if (!landed || bl.top < landed.top) landed = bl; }
+    if (landed) { ny = landed.top; h.vy = 0; h.ground = true; h.coyote = .1; h.used2 = false; h.usedDash = false; h.gliding = false; h.on = landed; if (landed.ground) h.safe = {x:clamp(nx, landed.x + 40, landed.x + landed.w - 40), y:landed.top}; }
+    else { if (h.ground) h.coyote = .1; h.ground = false; h.on = null; }
+    X.land(landed);
     h.x = nx; h.y = ny; h.run += Math.abs(h.vx) * dt * .045;
     if (h.y > 560) hurtFall();
     /* pickups and things */
@@ -381,12 +406,13 @@ PUM.games.sky = function (o) {
     if (W.goal && !W.goal.done && h.x > W.goal.x - 60) reachGoal();
     /* companion follows */
     g.comp.x = lerp(g.comp.x, h.x - h.face * 52, 1 - Math.exp(-dt * 4)); g.comp.y = lerp(g.comp.y, h.y - 112, 1 - Math.exp(-dt * 4));
+    if (g.mode === 'explore') X.post(dt);
   }
   function camUpdate(dt) {
     const vw = Wd / s;
     const tx = clamp(hero.x - vw * .36, 0, Math.max(0, W.len - vw));
     g.camX = lerp(g.camX, tx, 1 - Math.exp(-dt * 8));
-    const ty = clamp(hero.y + 150, -420, 0);
+    const ty = clamp(hero.y + 150, -3000, 0);
     g.camY = lerp(g.camY, Math.min(ty, 0), 1 - Math.exp(-dt * 4));
   }
 
@@ -401,7 +427,7 @@ PUM.games.sky = function (o) {
     lock = {kind, ref, q, options, answered:false};
     hero.vx = 0; hero.dashT = 0; ctl.left = ctl.right = ctl.glide = false;
     api.ctrl('');
-    const title = kind === 'chest' ? (ref.gift === 'secret' ? 'Secret chest! Answer to open the lock' : 'Treasure chest! Answer to open the lock') : 'Spirit gate! Answer to open the way';
+    const title = kind === 'chest' ? (ref.gift === 'secret' ? 'Secret chest! Answer to open the lock' : 'Treasure chest! Answer to open the lock') : kind === 'power' ? `${comp.name} can help! Answer to power it up` : 'Spirit gate! Answer to open the way';
     api.panel(qPanel(title, q, options, null, kind === 'chest' ? `<button class="sq-leave" data-gp="leave">Leave it</button>` : ''), 'sky-q');
     say(q.spoken);
     g.mode = 'lock';
@@ -418,11 +444,12 @@ PUM.games.sky = function (o) {
       const {kind, ref} = lock; lock = null; api.panel(null); api.ctrl(exploreCtrl()); g.mode = 'explore';
       if (kind === 'chest') {
         ref.open = true; A.sfx('chest');
-        const sec = ref.gift === 'secret', sn = sec ? 2 : 1, cr = sec ? 8 : 4;
+        const sec = ref.gift === 'secret', sn = sec ? 2 : 1, cr = sec ? 8 : 4; if (sec) g.secret = true;
         g.snacks += sn; api.addMp(cr); g.crystals += cr;
         parts.burst(ref.x, ref.y - 40, 24, {speed:220, life:1, size:4, color:['#FFE27A', '#9BF6FF', '#FFC6DD'], shape:'star', g:300});
         banner(sec ? 'Secret treasure!' : 'Treasure!', `+${sn} spirit snack${sn > 1 ? 's' : ''} and +${cr} crystals`, 1.6);
-      } else { ref.solved = true; A.sfx('chime'); banner('The gate opens!', '', 1); }
+      } else if (kind === 'power') X.solved(ref);
+      else { ref.solved = true; A.sfx('chime'); banner('The gate opens!', '', 1); }
     }, ok ? 900 : 1400);
   }
 
@@ -518,6 +545,7 @@ PUM.games.sky = function (o) {
       const th = b.phase === 0 ? .66 : b.phase === 1 ? .33 : -1;
       if (b.hp / b.max <= th) { b.hp = Math.ceil(th * b.max); b.shield = {got:0}; setState('shieldUp'); A.sfx('boss'); banner('Shadow shield!', '3 right answers in a row break it', 2); say('Shadow shield! Answer 3 in a row to break it!'); return; }
       if (b.phase === 2 && b.hp <= 1 && !b.finale) { b.finale = true; g.meter = 1; banner(`${b.name} is weak!`, 'Use your special move!', 1.8); say('Use your special move!'); }
+      if (b.dizzy) { b.dizzy = false; banner('Still dizzy!', 'Attack again!', 1.3, '#FFE27A'); say('Attack again!'); toPick(); return; }
     }
     enemyTurn();
   }
@@ -528,7 +556,7 @@ PUM.games.sky = function (o) {
      heavy golems a long timer with questions at the kid's level. */
   function enemyTurn(again) {
     const TY = b.TY;
-    if (!again) b.attacksLeft = TY.attacks;
+    if (!again) { b.attacksLeft = b.boss && b.phase >= 2 && age > 5 && assist === 0 ? 2 : TY.attacks; b.atkMax = b.attacksLeft; }
     const base = b.boss ? b.phases[b.phase].hits.slice() : [TY.attacks > 1 ? .8 : TY.armor ? 1.8 : 1.4];
     b.hits = base.map(t0 => ({t:t0 * .7 + .25, done:false, blocked:false}));
     b.windDur = b.hits[b.hits.length - 1].t + (TY.attacks > 1 ? .5 : .8);
@@ -536,8 +564,8 @@ PUM.games.sky = function (o) {
     const {q, options} = S.question(p, TY.blockD, nOpts());
     b.q = q; b.opts = options; b.answered = false; b.blockLim = blockTime() * TY.blockMul;
     g.blockLog.push({type:b.type, lim:+b.blockLim.toFixed(2), d:TY.blockD, q:q.text || q.spoken || '', ans:q.ans});
-    const two = TY.attacks > 1 ? ` (${TY.attacks - b.attacksLeft + 1} of ${TY.attacks})` : '';
-    const title = b.type === 'imp' ? `${b.name} darts in!${two} Quick, block it!` : b.type === 'golem' ? `${b.name} winds up a big hit! Answer to block` : `${b.name} is attacking! Answer to block`;
+    const two = b.atkMax > 1 ? ` (${b.atkMax - b.attacksLeft + 1} of ${b.atkMax})` : '';
+    const title = b.type === 'imp' ? `${b.name} darts in!${two} Quick, block it!` : b.type === 'golem' ? `${b.name} winds up a big hit! Answer to block` : `${b.name} is attacking!${two} Answer to block`;
     const bar = `<div class="sq-crit block ${b.type === 'imp' ? 'fast' : b.type === 'golem' ? 'slow' : ''}"><i style="animation-duration:${b.blockLim}s"></i><span>${b.type === 'imp' ? 'Quick! Answer before it hits!' : b.type === 'golem' ? 'Lots of time. Think it through!' : 'Answer before it hits!'}</span></div>`;
     api.ctrl(''); api.panel(qPanel(title, q, options, null, bar), 'sky-q'); say(q.spoken);
     setState('block');
@@ -572,7 +600,8 @@ PUM.games.sky = function (o) {
     else { g.mode = 'lose'; g.endT = 0; api.panel(null); api.ctrl(''); banner('Knocked out', 'Train up and try again!', 3); }
   }
   function updateBattle(dt) {
-    b.tm += dt; b.flash = Math.max(0, (b.flash || 0) - dt * 4); b.x *= Math.exp(-dt * 10); b.lunge = Math.max(0, (b.lunge || 0) - dt * 3);
+    b.tm += dt;
+    b.awayK = lerp(b.awayK || 0, b.state === 'away' || b.state === 'minion' || b.state === 'minionHit' ? 1 : 0, 1 - Math.exp(-dt * 3)); b.flash = Math.max(0, (b.flash || 0) - dt * 4); b.x *= Math.exp(-dt * 10); b.lunge = Math.max(0, (b.lunge || 0) - dt * 3);
     g.blockFx = Math.max(0, (g.blockFx || 0) - dt * 2.5); g.hurtFx = Math.max(0, (g.hurtFx || 0) - dt * 2.5);
     b.elFx = Math.max(0, (b.elFx || 0) - dt * .8);
     if (b.state === 'intro' && b.tm > 1.5) { if (!b.boss && b.type !== 'shadow' && !(p.sky.seen && p.sky.seen[b.type])) meetCard(); else toPick(); }
@@ -584,18 +613,39 @@ PUM.games.sky = function (o) {
         g.meter = Math.min(1, g.meter + st.meter * .5);
         if (b.shield.got >= (b.shield.need || 3)) {
           b.shield = null; setState('shieldBreak'); g.shake = 18;
-          if (b.boss) { b.phase++; banner('Shield broken!', `Phase ${b.phase + 1}: ${b.phases[b.phase].name}`, 1.8); }
+          if (b.boss) { b.phase++; banner('Shield broken!', b.phase === 2 && age > 5 && assist === 0 ? `${b.phases[2].name}: it attacks twice now!` : `Phase ${b.phase + 1}: ${b.phases[b.phase].name}`, 1.8); }
           else { g.shieldsBroken = (g.shieldsBroken || 0) + 1; banner('Shield broken!', 'Now attack!', 1.6); }
         }
         else setState('crack');
         return;
       }
-      setState('atk'); b.hitsLeft = p.hero === 0 ? 2 : p.hero === 4 ? (Math.random() < .3 ? 3 : 2) : 1; b.hitsN = b.hitsLeft;
       g.meter = Math.min(1, g.meter + st.meter);
+      if (assist >= 2) startAtk();
+      else { setState('timing'); b.ringDur = age <= 6 ? 1.4 : 1.1; b.tapped = false; api.panel(`<div class="sq-card sq-tapcard"><button class="sq-go sq-tap" data-gp="tap">TAP when the rings meet!</button></div>`, 'sky-q'); }
     }
+    else if (b.state === 'timing' && b.tm > b.ringDur + .45) tapRing(null);
     else if (b.state === 'crack' && b.tm > .7) toAsk('shield');
     else if (b.state === 'shieldUp' && b.tm > 2.1) toPick();
-    else if (b.state === 'shieldBreak' && b.tm > 1.9) toPick();
+    else if (b.state === 'shieldBreak' && b.tm > 1.9) { if (b.boss && b.phase === 1 && !b.flew) startAway(); else toPick(); }
+    else if (b.state === 'away' && b.tm > 1.9) minionAsk();
+    else if (b.state === 'minion' && b.tm > b.blockLim) answerMinion(null);
+    else if (b.state === 'minionHit') {
+      if (!b.mDone && b.tm > .45) {
+        b.mDone = true; api.panel(null);
+        const m = b.minions[b.mi], [mx, my] = minionPos(b.mi, g.t); m.alive = false;
+        if (b.mOk) { A.sfx('shatter'); num(mx, my - 40, 'POP!', '#FFE27A', true); parts.burst(mx, my, 22, {speed:240, life:.6, size:3.5, color:[S.EL[b.el].col, '#FFFFFF'], shape:'star'}); api.addMp(2); g.crystals += 2; }
+        else {
+          g.hurtFx = 1; g.shake = 12; A.sfx('hurt'); parts.burst(mx, my, 12, {speed:160, life:.4, size:3, color:['#B04CFF']});
+          if (assist < 2) { g.hearts = Math.max(0, g.hearts - 1); g.lost++; num(Wd * .26 + 40, Hd * .45 - 70, '-1', '#FF6FB0', true); if (g.hearts <= 0) { setState('ko'); knockedOut(); return; } }
+        }
+      }
+      if (b.tm > 1.3) {
+        b.mDone = false; b.mi++;
+        if (b.mi < b.minions.length) minionAsk();
+        else { b.dizzy = true; setState('land'); A.sfx('boss'); g.shake = 14; banner(`${b.name} came back down!`, "It's dizzy: you get two turns in a row!", 2.1, '#FFE27A'); say("It's dizzy! You get two turns in a row!"); }
+      }
+    }
+    else if (b.state === 'land' && b.tm > 2.2) toPick();
     else if (b.state === 'miss' && b.tm > 1.3) {
       api.panel(null);
       if (b.move === 'shield' && assist === 0) b.shield.got = 0;
@@ -607,8 +657,9 @@ PUM.games.sky = function (o) {
       const bounce = b.TY.armor && b.tierUsed && b.tierUsed.k === 'light';
       if (b.hitsLeft > 0 && bounce && b.tm > .35) { b.hitsLeft = 0; g.bounces = (g.bounces || 0) + 1; A.sfx('block'); b.x = 6; num(Wd * .66, Hd * .3 - 40, 'BOUNCE!', '#FFE27A', true); parts.burst(Wd * .66, Hd * .3, 14, {speed:220, life:.5, size:3, color:['#FFE27A', '#FFFFFF']}); banner('Too tough!', 'Use a Strong or Mega move', 1.6, '#FFB347'); say('Too tough! Use a Strong or Mega move.'); }
       if (b.hitsLeft > 0 && b.tm > (b.hitsN > 1 ? .3 + (b.hitsN - b.hitsLeft) * (p.hero === 4 ? .18 : .25) : .35)) { b.hitsLeft--; if (p.hero === 4 && b.hitsN === 3 && b.hitsLeft === 0) num(Wd * .66, Hd * .3 - 80, 'TRIPLE!', '#5BFFB0', true); hitFoe(damage(b.move, heroPower() * (b.isCrit ? 1.35 : 1) * (b.tierUsed ? b.tierUsed.mult : 1)), col, b.isCrit || (b.tierUsed && b.tierUsed.k === 'mega')); }
+      if (b.bonus && !b.bonusDone && !bounce && b.tm > .72) { b.bonusDone = true; num(Wd * .66, Hd * .3 - 70, 'BONUS!', '#FFE27A', true); hitFoe(damage(b.move, heroPower() * .6 * (b.tierUsed ? b.tierUsed.mult : 1)), '#FFE27A', true); }
       if (!b.compDone && b.tm > .95) { b.compDone = true; b.compFx = 1; hitFoe(Math.max(1, Math.round(st.atk * (.25 + .04 * comp.lv) * S.mult(comp.el, b.el))), S.EL[comp.el].col, false); }
-      if (b.tm > 1.5) { b.compDone = false; afterHeroTurn(); }
+      if (b.tm > 1.5) { b.compDone = false; b.bonus = false; b.bonusDone = false; afterHeroTurn(); }
     }
     else if (b.state === 'cutin' && b.tm > 1.8) { setState('specAtk'); }
     else if (b.state === 'specAtk') {
@@ -633,6 +684,39 @@ PUM.games.sky = function (o) {
       if (b.boss) { b.pure = Math.min(1, b.tm / 2.4); if (b.tm > 1 && !b.joined) { const GD = S.GUARDIANS[b.guard]; b.joined = true; banner(`${b.name} is free!`, `${GD.title.replace(/^the/, 'The')} joins your team!`, 2.4, '#FFC6DD'); } if (b.tm > 3.6) { finishQuest(); } }
       else if (b.tm > 1.8) { b.f.done = true; b = null; g.mode = 'trans2'; g.trans = 0; }
     }
+  }
+  /* guardians: after the first shield breaks they fly out of reach and send shadow minions */
+  const minionPos = (i, t) => [Wd * (.52 + i * .2), Hd * .37 + Math.sin(t * 3 + i * 2) * 8];
+  function startAway() {
+    b.flew = true; b.minions = [{alive:true}, {alive:true}]; b.mi = 0;
+    setState('away'); A.sfx('boss');
+    banner(`${b.name} flew out of reach!`, 'Answer to pop its shadow minions', 1.9, '#B04CFF'); say(`${b.name} flew out of reach! Pop the shadow minions!`);
+  }
+  function minionAsk() {
+    const {q, options} = S.question(p, -1, nOpts());
+    b.q = q; b.opts = options; b.answered = false; b.blockLim = blockTime() * 1.15;
+    const bar = `<div class="sq-crit block"><i style="animation-duration:${b.blockLim}s"></i><span>Pop it before it hits you!</span></div>`;
+    api.panel(qPanel(`Shadow minion ${b.mi + 1} of ${b.minions.length}! Answer to pop it`, q, options, null, bar), 'sky-q'); say(q.spoken);
+    setState('minion');
+  }
+  function answerMinion(v) {
+    if (b.state !== 'minion' || b.answered) return;
+    const timeUp = v == null, ok = !timeUp && v === b.q.ans; b.answered = true;
+    if (!timeUp) { g.asked++; api.answer(ok, b.q); }
+    if (ok) { g.right++; g.xp += 6; }
+    api.panel(qPanel(ok ? 'Pop!' : timeUp ? `Too slow! It was ${b.q.ans}.` : `Not quite. It's ${b.q.ans}.`, b.q, b.opts, timeUp ? null : {picked:v}), 'sky-q');
+    b.mOk = ok; setState('minionHit');
+  }
+  function startAtk() { setState('atk'); b.hitsLeft = p.hero === 0 ? 2 : p.hero === 4 ? (Math.random() < .3 ? 3 : 2) : 1; b.hitsN = b.hitsLeft; }
+  /* the timing ring: tap close to the moment the shrinking ring meets the target for a bonus hit */
+  function tapRing(tm) {
+    if (!b || b.state !== 'timing' || b.tapped) return;
+    b.tapped = true; api.panel(null);
+    const win = age <= 6 ? .3 : age <= 9 ? .22 : .16;
+    b.bonus = tm != null && Math.abs(tm - b.ringDur) <= win;
+    if (b.bonus) { g.greats++; A.tone(880, 0, .12, 'triangle', .06, 1760); num(Wd * .66, Hd * .3 - 110, 'GREAT!', '#FFE27A', true); }
+    else if (tm != null) num(Wd * .66, Hd * .3 - 110, tm < b.ringDur ? 'Too soon' : 'Too late', '#BFF6FF');
+    startAtk();
   }
   function uiMove(v) {
     if (!b || b.state !== 'pick') return;
@@ -660,8 +744,10 @@ PUM.games.sky = function (o) {
     const msg = GOAL_MSG[Q.goal] || ['Quest complete!', ''];
     banner(msg[0], msg[1], 3.4, '#FFE27A');
   }
+  /* quest challenges: 1 found a secret chest, 2 no hits at all, 4 a fast finish */
+  const challenges = () => (g.secret ? 1 : 0) | (g.lost === 0 && !g.bumps ? 2 : 0) | (g.runT <= PAR ? 4 : 0);
   function result(ok) {
-    api.finish({ok, quest:qi, right:g.right, asked:g.asked, lost:g.lost, snacks:g.snacks, crystals:g.crystals, xp:g.xp, beaten:g.beaten, reason:ok ? '' : 'ko'});
+    api.finish({ok, quest:qi, right:g.right, asked:g.asked, lost:g.lost, snacks:g.snacks, crystals:g.crystals, xp:g.xp, beaten:g.beaten, reason:ok ? '' : 'ko', chal:ok ? challenges() : 0, runT:Math.round(g.runT), par:PAR});
   }
 
   /* ---- drawing ---- */
@@ -693,6 +779,7 @@ PUM.games.sky = function (o) {
     for (const gp of W.gaps) {
       if (!near(gp.x, 200) || gp.x < hero.x - 40) continue;
       if (gp.dash && !dash) continue;
+      if (gp.noHint) continue;
       const showArc = assist >= 1, showDash = gp.dash && gp.x - hero.x < 420;
       if (!showArc && !showDash) continue;
       const a = .6 + .4 * Math.sin(t * 6), top = gp.dash ? gp.h - 260 : gp.h - 200;
@@ -719,6 +806,7 @@ PUM.games.sky = function (o) {
     const vx0 = cx - 60, vx1 = cx + Wd / s + 60;
     for (const bl of W.blocks) if (bl.x + bl.w > vx0 && bl.x < vx1) {
       if (bl.secret && !known(bl.need)) { c.save(); c.globalAlpha = tower ? .9 : .45; K.ground(c, bl.x, bl.top, bl.w, 26, 1, 'plat', isle); c.restore(); if (tower) { c.save(); c.shadowColor = '#FFE27A'; c.shadowBlur = 20; c.strokeStyle = 'rgba(255,226,122,.8)'; c.lineWidth = 3; E.rr(c, bl.x - 6, bl.top - 10, bl.w + 12, 40, 10); c.stroke(); c.restore(); } continue; }
+      if (bl.dyn) continue;
       if (bl.step) { K.stepStone(c, bl.x, bl.top, bl.w, t); continue; }
       K.ground(c, bl.x, bl.top, bl.w, bl.plat ? 26 : 520, 1, bl.plat ? 'plat' : 'ground', isle);
     }
@@ -733,6 +821,7 @@ PUM.games.sky = function (o) {
       c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(f.x, f.y, 44, 9, 0, 0, TAU); c.fill();
       K.foe(c, F, f.x, f.y - 80, F.big ? .55 : .42, t + f.x, {face:-1, seed:Math.round(f.x), shield:F.type === 'knight' ? 0 : -1});
     }
+    X.draw(c, t, (x, y) => [x, y], 1, (x, m) => x > vx0 - m && x < vx1 + m);
     K.spirit(c, comp.kind, comp.stage, g.comp.x, g.comp.y, .42, t, {face:hero.face});
     c.fillStyle = 'rgba(0,0,0,.28)'; c.beginPath(); c.ellipse(hero.x, hero.ground ? hero.y : hero.y + 4, 22, 5, 0, 0, TAU); c.fill();
     if (hero.gliding) K.glider(c, hero.x, hero.y - 100, 1, t, S.EL[comp.el].col);
@@ -746,6 +835,7 @@ PUM.games.sky = function (o) {
   const heroPose = t => ({face:hero.face, run:hero.run, speed:Math.min(1, Math.abs(hero.vx) / SPEED), air:hero.ground ? null : hero.gliding ? 1 : Math.sign(hero.vy), t});
   const goalState = () => ({done:g.mode === 'end', k:g.mode === 'end' ? Math.min(1, g.endT / 1.5) : 0, lit:g.mode === 'end' || g.lit >= W.lanterns.length, isle});
   function hudExplore(c) {
+    X.hud(c, Wd, Hd, g.t);
     glass(c, 64, 10, Math.min(Wd - 150, 210), 50);
     drawHearts(c, 82, 28);
     label(c, objText(), 74, 48, 12, '#D9E4FF', 'left');
@@ -757,6 +847,7 @@ PUM.games.sky = function (o) {
     c.clearRect(0, 0, Wd, Hd);
     R3.render(t, dt);
     drawHints(c, t, R3.project, (x, m) => Math.abs(x - hero.x) < 500 + m);
+    X.draw(c, t, R3.project, R3.ppu(), (x, m) => Math.abs(x - hero.x) < 520 + m);
     const k = R3.ppu(), [ox, oy] = R3.project(hero.x, hero.y);
     c.save(); c.translate(ox - hero.x * k, oy - hero.y * k); c.scale(k, k); if (hero.gliding) K.glider(c, hero.x, hero.y - 100, 1, t, S.EL[comp.el].col); parts.draw(c); c.restore();
     hudExplore(c);
@@ -777,13 +868,29 @@ PUM.games.sky = function (o) {
     K.battleBg(c, Wd, Hd, t, {boss:b.boss, isle});
     const fx = Wd * .66 + b.x - (b.lunge || 0) * Wd * .2, fy = Hd * .3 + (b.lunge || 0) * Hd * .08, fk = Math.min(Wd / 420, Hd / 760);
     const winA = b.state === 'win' && !b.boss ? Math.max(0, 1 - b.tm / 1.2) : 1;
-    if (b.boss) onLayer(c, b.flash > 0, lc => K.guardian(lc, b.guard, fx + 20 * fk, Hd * .47, fk * .62, t, b.pure, {flash:b.flash, hit:b.flash > .5, charge:(b.state === 'wind' || b.state === 'block') && b.phase === 2}));
+    const aw = b.awayK || 0;
+    if (b.boss) onLayer(c, b.flash > 0, lc => K.guardian(lc, b.guard, fx + 20 * fk + aw * Wd * .08, Hd * .47 - aw * Hd * .22, fk * .62 * (1 - .5 * aw), t, b.pure, {flash:b.flash, hit:b.flash > .5, charge:(b.state === 'wind' || b.state === 'block') && b.phase === 2}));
     /* golems, knights and foxes stand on the ground, lower than the floating shadows */
     const stand = b.type === 'golem' || b.type === 'knight' || b.type === 'trick', fs = fk * (b.big ? .95 : .8);
     if (!b.boss) onLayer(c, b.flash > 0, lc => K.foe(lc, foeArt(), fx, stand ? fy + Hd * .22 - 140 * fs : fy, fs, t, {face:-1, flash:b.flash, alpha:winA, seed:b.seed, shield:b.shield ? b.shield.got / b.shield.need : -1, hit:b.flash > .5, atk:b.state === 'wind'}));
     /* guardians get a shadow barrier; a knight's own shield (drawn on the knight) shows the cracks */
     if (b.shield && b.boss) { c.save(); c.translate(Wd * .66, Hd * .3); const r = 150 * fk; c.shadowColor = '#B04CFF'; c.shadowBlur = 24; c.strokeStyle = 'rgba(200,120,255,.9)'; c.fillStyle = 'rgba(120,40,200,.18)'; c.lineWidth = 3; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + t * .3; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.fill(); c.stroke();
       c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 2; for (let i = 0; i < b.shield.got; i++) { c.beginPath(); c.moveTo(0, 0); for (let j = 1; j < 5; j++) c.lineTo(Math.cos(i * 2.1 + j * .4) * r * j / 4, Math.sin(i * 2.1 + j * .3) * r * j / 4); c.stroke(); } c.restore(); }
+    /* shadow minions while the guardian is out of reach */
+    if (b.minions) b.minions.forEach((m, i) => {
+      if (!m.alive) return;
+      const [mx, my] = minionPos(i, t), cur = b.state === 'minion' && b.mi === i;
+      if (cur) { c.save(); c.strokeStyle = '#FFE27A'; c.lineWidth = 3; c.shadowColor = '#FFE27A'; c.shadowBlur = 14; c.beginPath(); c.arc(mx, my, 46 * fk, 0, TAU); c.stroke(); c.restore(); }
+      K.foe(c, {type:'shadow', el:b.el}, mx, my, fk * (cur ? .4 : .32), t + i, {face:-1, seed:i + 3});
+    });
+    /* the timing ring */
+    if (b.state === 'timing') {
+      const cx = Wd * .66, cy = Hd * .3, r0 = 62 * fk, k = b.tm / b.ringDur, r = r0 * Math.max(.25, 1 + 2.4 * (1 - k));
+      const win = age <= 6 ? .3 : age <= 9 ? .22 : .16, close = Math.abs(b.tm - b.ringDur) <= win;
+      c.save(); c.setLineDash([8, 8]); c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 3; c.beginPath(); c.arc(cx, cy, r0, 0, TAU); c.stroke(); c.setLineDash([]);
+      c.strokeStyle = close ? '#FFE27A' : '#7FF0FF'; c.shadowColor = c.strokeStyle; c.shadowBlur = close ? 26 : 12; c.lineWidth = close ? 7 : 5; c.beginPath(); c.arc(cx, cy, r, 0, TAU); c.stroke(); c.restore();
+      if (close) label(c, 'TAP!', cx, cy, 30, '#FFE27A', 'center', 'D');
+    }
     /* slash effects */
     if (b.state === 'atk' && b.tm < 1) { const col = S.EL[b.move].col, k2 = clamp((b.tm - .2) / .35, 0, 1); c.save(); c.shadowColor = col; c.shadowBlur = 20; c.strokeStyle = '#FFFFFF'; c.lineWidth = 6 * (1 - k2) + 1; c.beginPath(); c.arc(Wd * .66, Hd * .3, 90 * fk, -2.4 + k2 * 2.6, -2.4 + k2 * 2.6 + 1.2); c.stroke(); c.strokeStyle = col; c.lineWidth = 3; c.stroke(); c.restore(); }
     if (b.compFx > 0) { b.compFx -= .03; c.save(); c.globalAlpha = Math.max(0, b.compFx); c.strokeStyle = S.EL[comp.el].col; c.lineWidth = 5; c.beginPath(); c.moveTo(Wd * .42, Hd * .44); c.lineTo(Wd * .66, Hd * .3); c.stroke(); c.restore(); }
@@ -843,7 +950,7 @@ PUM.games.sky = function (o) {
       if (g.banner) { g.banner.t += dt; if (g.banner.t > g.banner.dur) g.banner = null; }
       for (const n of g.nums) n.t += dt; g.nums = g.nums.filter(n => n.t < 1.1);
       g.shake *= Math.exp(-dt * 8);
-      if (g.mode === 'explore') updateExplore(dt);
+      if (g.mode === 'explore') { g.runT += dt; updateExplore(dt); }
       else if (g.mode === 'trans') { g.trans += dt; if (g.trans > .75) { g.mode = 'battle'; b = newBattle(g.pending); api.ctrl(''); if (b.boss) say(`Guardian battle! Defeat ${b.name}!`); else say(`${b.name}! It is weak to ${S.EL[S.weakTo(b.el)].name}.`); } }
       else if (g.mode === 'battle' && b && !g.koWait) updateBattle(dt);
       else if (g.mode === 'trans2') { g.trans += dt; if (g.trans > .6) { g.mode = 'explore'; api.ctrl(exploreCtrl()); } }
@@ -864,16 +971,17 @@ PUM.games.sky = function (o) {
       c.restore();
       drawBanner(c);
     },
-    pointer() {},
+    pointer(kind) { if (kind === 'down' && g.mode === 'battle' && b && b.state === 'timing') tapRing(b.tm); },
     setControl(k, down) {
       if (k === 'left' || k === 'right' || k === 'glide') { ctl[k] = down && g.mode === 'explore'; return; }
       if (k === 'dash') { if (down && g.mode === 'explore') hero.dashQ = .15; return; }
-      if (k === 'jump') { if (down && g.mode === 'explore') hero.buf = .14; return; }
+      if (k === 'jump') { if (down && g.mode === 'explore') hero.buf = .14; else if (down && b && b.state === 'timing') tapRing(b.tm); return; }
       if (/^k[1-4]$/.test(k) && down) { const els = document.querySelectorAll('#choose [data-gp]:not(.sq-leave):not(.sq-tier)'); const el = els[Number(k[1]) - 1] || (els.length === 1 ? els[0] : null); if (el && !el.disabled) el.click(); }
       if (k === 'k0' && down) { const el = document.querySelector('#choose .special'); if (el) el.click(); }
     },
     ui(act, v) {
-      if (act === 'ans') { const n = Number(v); if (g.mode === 'lock') answerLock(n); else if (b && b.state === 'block') answerBlock(n); else if (b) answerBattle(n); }
+      if (act === 'ans') { const n = Number(v); if (g.mode === 'lock') answerLock(n); else if (b && b.state === 'block') answerBlock(n); else if (b && b.state === 'minion') answerMinion(n); else if (b) answerBattle(n); }
+      if (act === 'tap' && b) tapRing(b.tm);
       if (act === 'move') uiMove(v);
       if (act === 'meet' && b && b.state === 'meet') { A.sfx('tap'); api.panel(null); toPick(); }
       if (act === 'tier' && b && b.state === 'pick') { g.tier = Number(v) || 0; A.sfx('tap'); api.panel(moveBtns(), 'sky-q'); }
