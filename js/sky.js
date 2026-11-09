@@ -27,6 +27,7 @@ S.LOOKS = ['Kai the Sky Swordfighter', 'Mira the Blossom Mage', 'Jax the Comet A
 S.HEROES = S.STYLE.length;
 /* The hero is called whatever the kid types; blank means the kid's own name. */
 S.heroName = p => ((p.sky && p.sky.name) || '').trim() || p.name;
+S.moveName = (p, el) => S.MOVES[el][p.hero] || S.MOVES[el][0];
 /* Move strength: a harder question powers a stronger hit. d = how many math steps above the kid's level. */
 S.TIERS = [
   {k:'light', name:'Light', stars:1, d:-1, mult:.65, xp:6, what:'Easier question, small hit'},
@@ -56,6 +57,34 @@ S.title = l => l >= 8 ? 'Sky Hero' : l >= 4 ? 'Guardian' : 'Apprentice';
 S.stats = p => {
   const lv = S.level(p.sky.xp), up = p.up;
   return {lv, hearts:3 + Math.floor((lv - 1) / 3) + (p.sky.b.spring ? 1 : 0) + (up.armor || 0), atk:10 + 2.5 * (lv - 1) + 5 * (up.weapon || 0), meter:.34 + .05 * (up.charm || 0), boots:0, storm:lv >= 3};
+};
+
+/* ---------- move powers and move stars ----------
+   Every elemental move starts as a plain hit. Each one has a power the hero earns slowly: reach the
+   hero level, then pass that power's trial at the dojo. Moves also grow stars with use: star 2 after
+   10 right-answer hits, star 3 after 15 more hits once the power is learned. Stars hit harder and
+   make the power stronger. */
+S.POW = {
+  blossom:{k:'heal', name:'Heal', lv:5, what:'Hit with Blossom to heal a heart.', recharge:3, perks:['Heals 1 heart', 'Hits harder', 'Heals 2 hearts']},
+  tide:{k:'guard', name:'Bubble guard', lv:8, what:'Hit with Tide and a bubble guards you. Miss a block and the bubble pops instead of a heart.', perks:['Guards 1 missed block', 'Guards 2 missed blocks', 'Soaks the enemy: your next Storm hit does double']},
+  ember:{k:'burn', name:'Burn', lv:11, what:'Hit with Ember to set the enemy on fire. It keeps burning after your turn.', perks:['Burns for 2 turns', 'Burns for 3 turns', 'Burns harder']},
+  storm:{k:'stun', name:'Stun', lv:14, what:'Hit with Storm to stun. A stunned enemy skips its next attack.', recharge:3, perks:['Ready again in 3 turns', 'Ready again in 2 turns', 'Hits harder']},
+};
+S.POW_ORDER = ['blossom', 'tide', 'ember', 'storm'];
+S.STAR2 = 10; S.STAR3 = 15;
+S.STAR_HIT = [1, 1.15, 1.3];
+S.moveStars = sk => !sk ? 1 : sk.got && sk.n - sk.at >= S.STAR3 ? 3 : sk.n >= S.STAR2 ? 2 : 1;
+/* uses still needed for the next star, or null at 3 stars (or 2 stars before the power is learned) */
+S.nextStar = sk => { const s = S.moveStars(sk); return s === 1 ? {need:S.STAR2, have:sk.n} : s === 2 && sk.got ? {need:S.STAR3, have:Math.max(0, sk.n - sk.at)} : null; };
+S.moveOpen = (p, el) => el !== 'storm' || S.stats(p).storm;
+/* the next power the hero is ready to learn at the dojo, or null */
+S.readyPower = p => S.POW_ORDER.find(el => !p.sky.skill[el].got && S.level(p.sky.xp) >= S.POW[el].lv && S.moveOpen(p, el)) || null;
+/* the dojo trial for each power: a sparring match built around that power */
+S.TRIALS = {
+  blossom:{type:'shadow', el:'tide', name:'Sparring Wisp', hearts:1, teach:'You start with just 1 heart! Hit with Blossom to heal, then win the match.'},
+  tide:{type:'imp', el:'ember', name:'Sparring Imp', teach:'This imp is fast! Hit with Tide to make a bubble. If you miss a block, the bubble pops instead of a heart.'},
+  ember:{type:'golem', el:'blossom', name:'Sparring Golem', hp:9, teach:'This golem is tough! Hit with Ember to set it on fire. It keeps burning after your turn.'},
+  storm:{type:'imp', el:'tide', name:'Sparring Imp', teach:'This imp attacks twice! Hit with Storm to stun it, so it skips its next attack.'},
 };
 
 /* ---------- the hero shop ----------
@@ -91,7 +120,7 @@ S.activeComp = p => { const k = p.sky.comps[p.sky.comp] ? p.sky.comp : Object.ke
 
 /* ---------- Sky Village ---------- */
 S.BUILD = [
-  {k:'dojo', name:'Training dojo', cost:0, what:'Practice 10 quick questions for crystals and XP.'},
+  {k:'dojo', name:'Training dojo', cost:0, what:'Practice quick questions for crystals and XP, and learn new move powers.'},
   {k:'garden', name:'Spirit garden', cost:20, what:'Feed snacks to your spirits so they level up and evolve.'},
   {k:'shop', name:'Hero shop', cost:0, what:'Buy a stronger weapon, armor, charms and snacks. Pay by counting out your crystals!'},
   {k:'spring', name:'Healing spring', cost:40, what:'Start every quest with one extra heart.'},
@@ -218,9 +247,11 @@ S.normalize = function (raw, p) {
   if (x.comps && typeof x.comps === 'object') for (const k of Object.keys(K.SPIRITS)) { const c = x.comps[k]; if (c && typeof c === 'object') comps[k] = {lv:clamp(num(c.lv) || 1, 1, 15), name:String(c.name || '').slice(0, 14)}; }
   const b = (x.b && typeof x.b === 'object') ? x.b : {};
   const mv = (x.moves && typeof x.moves === 'object') ? x.moves : {};
+  const sk = (x.skill && typeof x.skill === 'object') ? x.skill : {};
+  const skill = Object.fromEntries(Object.keys(S.EL).map(el => { const o = (sk[el] && typeof sk[el] === 'object') ? sk[el] : {}, n = clamp(Math.round(num(o.n)), 0, 1e5); return [el, {n, got:!!o.got, at:clamp(Math.round(num(o.at)), 0, n)}]; }));
   return {v:num(x.v), made:!!x.made, name:String(x.name || '').trim().slice(0, 16), hair:K.HAIR[x.hair] ? x.hair : null, outfit:K.OUTFIT[x.outfit] ? x.outfit : null, xp:clamp(num(x.xp), 0, 1e6),
     comp:K.SPIRITS[x.comp] ? x.comp : null, comps, snacks:clamp(num(x.snacks), 0, 99),
-    b:{garden:!!b.garden, forge:!!b.forge, spring:!!b.spring, tower:!!b.tower, shrine:!!b.shrine}, moves:{double:!!mv.double, dash:!!mv.dash, glide:!!mv.glide},
+    b:{garden:!!b.garden, forge:!!b.forge, spring:!!b.spring, tower:!!b.tower, shrine:!!b.shrine}, moves:{double:!!mv.double, dash:!!mv.dash, glide:!!mv.glide}, skill,
     seen:Object.fromEntries(Object.keys(S.TYPES).filter(k => x.seen && x.seen[k]).map(k => [k, true])),
     chal:S.QUESTS.map((Q, i) => clamp(Math.round(num(Array.isArray(x.chal) ? x.chal[i] : 0)), 0, 7))};
 };
@@ -320,11 +351,20 @@ PUM.games.sky = function (o) {
   const L = K.lookOf(p), st = S.stats(p), comp = S.activeComp(p), age = p.age, mira = p.hero === 1;
   const mv = p.sky.moves, double = mv.double, dash = mv.dash, glide = mv.glide, tower = p.sky.b.tower, shrine = p.sky.b.shrine;
   const known = need => !need || !!mv[need];
+  /* a dojo trial is a single sparring match built around one move power */
+  const trial = o.trial && S.TRIALS[o.trial] ? o.trial : null, TR = trial ? S.TRIALS[trial] : null;
   const W = build(Q, {dash});
   const parts = E.Particles();
   const hero = {x:90, y:0, vx:0, vy:0, ground:true, face:1, run:0, coyote:0, buf:0, used2:false, inv:0, safe:{x:90, y:0}, dashT:0, dashQ:0, dashCd:0, usedDash:false, gliding:false};
   const g = {tier:1, mode:'explore', t:0, hearts:st.hearts, maxH:st.hearts, meter:0, revived:false, lost:0, right:0, asked:0, snacks:0, crystals:0, beaten:0,
-    shake:0, banner:null, nums:[], trans:0, heal:S.heal(p, isle), healTo:S.heal(p, isle), camX:0, camY:0, comp:{x:40, y:-110}, endT:0, lit:0, xp:0, dashes:0, glides:0, blockLog:[], bumps:0, secret:false, runT:0, greats:0};
+    shake:0, banner:null, nums:[], trans:0, heal:S.heal(p, isle), healTo:S.heal(p, isle), camX:0, camY:0, comp:{x:40, y:-110}, endT:0, lit:0, xp:0, dashes:0, glides:0, blockLog:[], bumps:0, secret:false, runT:0, greats:0,
+    use:{blossom:0, tide:0, ember:0, storm:0}, trialUsed:false, pow:{heal:0, guard:0, burn:0, stun:0}};
+  if (TR && TR.hearts) g.hearts = Math.min(g.maxH, TR.hearts);
+  /* move stars and powers, counting this quest's hits; the trial's power works while it is being learned */
+  const skOf = el => { const s0 = p.sky.skill[el]; return {n:s0.n + g.use[el], got:s0.got || trial === el, at:s0.got ? s0.at : trial === el ? s0.n : s0.at}; };
+  const stars = el => S.moveStars(skOf(el));
+  const hasPow = el => !!S.POW[el] && skOf(el).got;
+  const powReady = el => hasPow(el) && (b.ready[el] || 0) <= b.round;
   const ctl = {left:false, right:false, glide:false};
   let Wd = 360, Hd = 640, s = 1, gy = 400, b = null, lock = null;
   const SPEED = 250 * (1 + .06 * st.boots), JV = -880 * (1 + .025 * st.boots), JV2 = -700, GRAV = 2300, HW = 14;
@@ -460,7 +500,9 @@ PUM.games.sky = function (o) {
     A.sfx(S.GUARDIANS[f.kind] ? 'boss' : 'blast');
   }
   const easy = assist >= 2 ? .7 : assist ? .85 : 1;
-  function newBattle(f) {
+  function newBattle(f) { return Object.assign(makeBattle(f), {round:0, ready:{}, bubble:0, burn:null, stun:false, soak:false}); }
+  function makeBattle(f) {
+    if (f.kind === 'trial') { const hp = Math.round(st.atk * (TR.hp || 7) * easy); return {f, type:TR.type, TY:Object.assign({}, S.TYPES[TR.type], {gems:0}), el:TR.el, name:TR.name, hp, max:hp, big:TR.type === 'golem', isle, state:'intro', tm:0, x:0, seed:7, trial:true}; }
     const GD = S.GUARDIANS[f.kind];
     if (GD) { const hp = Math.round(GD.hp * easy); return {f, boss:true, guard:f.kind, type:'boss', TY:Object.assign({}, S.TYPES.shadow, {gems:0}), el:GD.el, name:GD.name, hp, max:hp, phase:0, phases:GD.phases, shield:null, pure:0, x:0, state:'intro', tm:0}; }
     const F = FOES[f.kind], type = F.type || 'shadow', TY = S.TYPES[type], hp = Math.round(F.hp * S.foeScale(qi) * easy);
@@ -476,22 +518,40 @@ PUM.games.sky = function (o) {
     api.panel(`<div class="sq-card meet"><div class="sq-title">New enemy!</div><img class="sq-foeimg" src="${K.foeImg(foeArt())}" alt="" draggable="false"><b class="sq-meet-name">${b.name} <span class="sq-tag t-${b.type}">${TY.tag}</span></b><p class="sq-meet-how">${TY.how}</p><button class="sq-go" data-gp="meet">Got it!</button></div>`, 'sky-q');
     say(`${b.name}! ${TY.how}`); setState('meet');
   }
+  function trialCard() {
+    const P = S.POW[trial];
+    api.panel(`<div class="sq-card meet"><div class="sq-title">Dojo trial: ${P.name}</div><img class="sq-foeimg" src="${K.foeImg(foeArt())}" alt="" draggable="false"><b class="sq-meet-name">${b.name} <span class="sq-tag t-${b.type}">${b.TY.tag}</span></b><p class="sq-meet-how">${TR.teach}</p><p class="sq-meet-how"><b>${P.name}:</b> ${P.what}</p><button class="sq-go" data-gp="meet">Let's go!</button></div>`, 'sky-q');
+    say(`Dojo trial. ${TR.teach}`); setState('meet');
+  }
   function setState(s2) { b.state = s2; b.tm = 0; }
-  function moveName(el) { return S.MOVES[el][p.hero] || S.MOVES[el][0]; }
+  function moveName(el) { return S.moveName(p, el); }
+  /* the power line on a move button: what it does right now */
+  function powLine(el) {
+    if (!hasPow(el)) return '';
+    const left = (b.ready[el] || 0) - b.round;
+    const txt = el === 'blossom' ? (left > 0 ? `Heal in ${left}` : g.hearts >= g.maxH ? 'Heal: hearts full' : 'Heal ready!')
+      : el === 'tide' ? (b.bubble ? `Bubble on (${b.bubble})` : 'Bubble guard')
+      : el === 'ember' ? (b.burn ? `Burning (${b.burn.n})` : 'Burn')
+      : left > 0 ? `Stun in ${left}` : 'Stun ready!';
+    const on = el === 'blossom' ? left <= 0 && g.hearts < g.maxH : el === 'storm' ? left <= 0 : true;
+    return `<em class="sq-pow ${on ? 'on' : ''}">${txt}</em>`;
+  }
+  const starTxt = el => `<span class="sq-mstars" aria-label="${stars(el)} of 3 stars">${'&#9733;'.repeat(stars(el))}<i>${'&#9733;'.repeat(3 - stars(el))}</i></span>`;
   const specBtns = sub => `<button class="sq-move special" data-gp="move" data-v="special"><b>${S.SPECIAL[p.hero]}</b><small>${sub}</small></button>${shrine ? `<button class="sq-move special two" data-gp="move" data-v="special2"><b>${S.SPECIAL2}</b><small>Your guardians attack, and you get a heart back</small></button>` : ''}`;
   function moveBtns() {
-    const els = ['blossom', 'tide', 'ember'].concat(st.storm ? ['storm'] : []);
-    const spec = g.meter >= 1 ? specBtns('Special move ready!') : '';
+    const guided = trial && !g.trialUsed;
+    const els = guided ? [trial] : ['blossom', 'tide', 'ember'].concat(st.storm ? ['storm'] : []);
+    const spec = g.meter >= 1 && !guided ? specBtns('Special move ready!') : '';
     const armor = b.TY.armor;
     const tiers = `<div class="sq-tiers" role="group" aria-label="Move strength">${S.TIERS.map((T, i) => `<button class="sq-tier ${g.tier === i ? 'on' : ''} ${armor && T.k === 'light' ? 'weak' : ''}" data-gp="tier" data-v="${i}" aria-pressed="${g.tier === i}"><b>${T.name} ${'&#9733;'.repeat(T.stars)}</b><small>${armor && T.k === 'light' ? 'Bounces off this one!' : T.what}</small></button>`).join('')}</div>`;
-    const title = g.meter >= 1 ? 'Your Spirit meter is full!' : armor ? 'Too tough for Light moves! Pick Strong or Mega' : b.TY.trick ? `Weak to ${S.EL[S.weakTo(b.el)].name} right now! Pick a move` : 'Pick how strong, then a move';
-    return `<div class="sq-card moves"><div class="sq-title">${title}</div>${spec}${tiers}<div class="sq-moves n${els.length}">${els.map((el, i) => `<button class="sq-move el-${el}" data-gp="move" data-v="${el}"><small>${S.EL[el].name}</small><b>${moveName(el)}</b><i>${i + 1}</i></button>`).join('')}</div></div>`;
+    const title = guided ? `Use ${S.POW[trial].name}! Pick how strong, then ${moveName(trial)}` : g.meter >= 1 ? 'Your Spirit meter is full!' : armor ? 'Too tough for Light moves! Pick Strong or Mega' : b.TY.trick ? `Weak to ${S.EL[S.weakTo(b.el)].name} right now! Pick a move` : 'Pick how strong, then a move';
+    return `<div class="sq-card moves"><div class="sq-title">${title}</div>${spec}${tiers}<div class="sq-moves n${els.length}">${els.map((el, i) => `<button class="sq-move el-${el}" data-gp="move" data-v="${el}"><small>${S.EL[el].name} ${starTxt(el)}</small><b>${moveName(el)}</b>${powLine(el)}<i>${i + 1}</i></button>`).join('')}</div></div>`;
   }
   function toPick() {
     if (b.shield) { toAsk('shield'); return; }
     if (assist >= 2) {
       if (g.meter >= 1) { api.panel(`<div class="sq-card moves"><div class="sq-title">Your Spirit meter is full!</div>${specBtns('Tap for your special move!')}</div>`, 'sky-q'); setState('pick'); say('Special move ready! Tap it!'); return; }
-      toAsk(S.weakTo(b.el)); return;
+      toAsk(trial && !g.trialUsed ? trial : S.weakTo(b.el)); return;
     }
     api.panel(moveBtns(), 'sky-q'); setState('pick');
   }
@@ -512,6 +572,7 @@ PUM.games.sky = function (o) {
     g.asked++; api.answer(ok, b.q);
     const crit = ok && b.crit && b.askT <= b.crit && b.move !== 'shield';
     if (ok) { g.right++; g.xp += (b.tierUsed ? b.tierUsed.xp : 10) + (crit ? 5 : 0); }
+    if (ok && S.EL[b.move]) { const s0 = stars(b.move); g.use[b.move]++; const s1 = stars(b.move); if (s1 > s0) b.starUp = {el:b.move, s:s1}; }
     api.panel(qPanel(ok ? (crit ? 'CRITICAL!' : b.move === 'shield' ? 'Crack!' : 'Yes!') : `Not quite. It's ${b.q.ans}.`, b.q, b.opts, {picked:v}), 'sky-q');
     b.ok = ok; b.isCrit = crit;
     setState(ok ? 'resolve' : 'miss');
@@ -520,6 +581,8 @@ PUM.games.sky = function (o) {
   const heroPower = () => p.hero === 0 ? .55 : p.hero === 4 ? .5 : p.hero === 3 ? (b.tierUsed && b.tierUsed.k === 'mega' ? 1.35 : 1.05) : 1;
   function damage(el, factor) {
     let m = S.mult(el, b.el, mira) * factor;
+    if (S.EL[el]) m *= S.STAR_HIT[stars(el) - 1];
+    if (el === 'storm' && b.soak) m *= 2;
     if (p.hero === 2 && Math.random() < .2) { m *= 1.5; b.lucky = true; }
     return Math.max(1, Math.round(st.atk * m));
   }
@@ -532,7 +595,7 @@ PUM.games.sky = function (o) {
     g.shake = Math.max(g.shake, big ? 16 : 6); A.sfx(big ? 'blast' : 'slash');
   }
   function afterHeroTurn() {
-    if (b.hp <= 0) { const gems = b.TY.gems; setState('win'); A.sfx('chime'); banner('Defeated!', b.boss ? '' : `+${gems} crystals`, 1.6); if (!b.boss) { api.addMp(gems); g.crystals += gems; } g.beaten++; return; }
+    if (b.hp <= 0) { const gems = b.TY.gems; setState('win'); A.sfx('chime'); banner(b.trial ? 'Trial passed!' : 'Defeated!', b.boss || b.trial ? '' : `+${gems} crystals`, 1.6); if (!b.boss) { api.addMp(gems); g.crystals += gems; } g.beaten++; return; }
     /* shield knights raise their shield once more when they're hurt */
     if (b.reshield && !b.shield && b.hp / b.max <= .5) { b.reshield = false; b.shield = {got:0, need:b.TY.shield}; setState('shieldUp'); A.sfx('block'); banner('Shield up again!', `${b.TY.shield} right in a row breaks it`, 1.8); say('Shield up again!'); return; }
     /* tricksters change element after every hit */
@@ -547,7 +610,48 @@ PUM.games.sky = function (o) {
       if (b.phase === 2 && b.hp <= 1 && !b.finale) { b.finale = true; g.meter = 1; banner(`${b.name} is weak!`, 'Use your special move!', 1.8); say('Use your special move!'); }
       if (b.dizzy) { b.dizzy = false; banner('Still dizzy!', 'Attack again!', 1.3, '#FFE27A'); say('Attack again!'); toPick(); return; }
     }
+    foeTurn();
+  }
+  /* before the enemy attacks: burn hurts it, and a stunned enemy skips its turn. Each one counts as a turn for recharging. */
+  function foeTurn() {
+    b.round++;
+    if (b.burn && !b.shield) { setState('burn'); return; }
+    afterBurn();
+  }
+  function afterBurn() {
+    if (b.stun) { b.stun = false; setState('stunned'); A.sfx('block'); banner(`${b.name} is stunned!`, 'It skips its attack', 1.5, '#FFE24A'); say(`${b.name} is stunned! It skips its attack.`); return; }
     enemyTurn();
+  }
+  function burnTick() {
+    let d = b.burn.dmg;
+    /* a guardian's burn stops at its next shadow shield, and never finishes it off */
+    if (b.boss) { const th = b.phase === 0 ? .66 : b.phase === 1 ? .33 : 0; d = Math.max(0, Math.min(d, b.hp - (th > 0 ? Math.ceil(th * b.max) + 1 : 1))); }
+    if (d > 0) { hitFoe(d, '#FF9A3D', false); num(Wd * .66, Hd * .3 - 80, 'BURN!', '#FF9A3D', true); }
+    else num(Wd * .66, Hd * .3 - 80, 'Burn', '#FF9A3D');
+    b.burn.n--; if (b.burn.n <= 0) b.burn = null;
+  }
+  /* a move's power kicks in after its first hit lands */
+  function usePower() {
+    const el = b.move; if (!hasPow(el)) return;
+    const s = stars(el), P = S.POW[el], hx = Wd * .26, hy = Hd * .45, fx = Wd * .66, fy = Hd * .3;
+    const bounced = b.TY.armor && b.tierUsed && b.tierUsed.k === 'light';
+    let used = false;
+    if (el === 'blossom' && powReady(el) && g.hearts < g.maxH) {
+      const n = Math.min(g.maxH - g.hearts, s >= 3 ? 2 : 1); g.hearts += n; b.ready.blossom = b.round + P.recharge; used = true;
+      num(hx + 40, hy - 70, `+${n}`, '#FF8FC8', true); parts.burst(hx, hy, 26, {speed:180, life:.9, size:4, color:['#FF8FC8', '#9BF6C8', '#FFFFFF'], shape:'star', g:-120});
+      banner('Heal!', `+${n} heart${n > 1 ? 's' : ''}`, 1.2, '#FF8FC8'); A.tone(784, 0, .25, 'sine', .06, 1175);
+    } else if (el === 'tide') {
+      b.bubble = s >= 2 ? 2 : 1; if (s >= 3) b.soak = true; used = true;
+      num(hx + 40, hy - 70, 'BUBBLE!', '#9BF6FF', true); parts.burst(hx, hy, 18, {speed:140, life:.7, size:4, color:['#9BF6FF', '#FFFFFF']});
+      banner('Bubble guard!', s >= 3 ? 'It soaked the enemy too: your next Storm hit does double!' : `It guards ${b.bubble === 2 ? '2 missed blocks' : '1 missed block'}`, 1.4, '#9BF6FF');
+    } else if (el === 'ember' && !bounced) {
+      b.burn = {n:s >= 2 ? 3 : 2, dmg:Math.max(1, Math.round(st.atk * (s >= 3 ? .8 : .5)))}; used = true;
+      num(fx, fy - 80, 'ON FIRE!', '#FF9A3D', true); banner('Burn!', `It burns for ${b.burn.n} more turns`, 1.3, '#FF9A3D');
+    } else if (el === 'storm' && !bounced && powReady(el)) {
+      b.stun = true; b.ready.storm = b.round + (s >= 2 ? 2 : 3); used = true;
+      num(fx, fy - 80, 'STUN!', '#FFE24A', true); banner('Stun!', 'It will skip its next attack', 1.3, '#FFE24A');
+    }
+    if (used) { g.pow[P.k]++; if (trial === el) g.trialUsed = true; }
   }
   /* Enemy attacks are blocked with math: answer before the timer runs out to raise your shield.
      The block question is one step easier than the kid's level, because there's a clock. */
@@ -592,7 +696,8 @@ PUM.games.sky = function (o) {
       g.hurtFx = 1; g.shake = 14; A.sfx('hurt');
       /* heavy hits take 2 hearts (1 for the youngest kids and in easy mode) */
       const n = b.TY.hurt > 1 && age > 5 && assist < 2 ? b.TY.hurt : 1;
-      if (!b.hurt) { b.hurt = true; g.hearts = Math.max(0, g.hearts - n); g.lost += n; num(hx + 40, hy - 70, '-' + n, '#FF6FB0', true); if (n > 1) g.shake = 22; if (g.hearts <= 0) { b.ko = true; } }
+      if (b.bubbleOn || (!b.hurt && b.bubble > 0)) { if (!b.bubbleOn) { b.bubbleOn = true; b.hurt = true; b.bubble--; g.bubbleSaves = (g.bubbleSaves || 0) + 1; num(hx + 40, hy - 70, 'POP! Safe!', '#9BF6FF', true); parts.burst(hx, hy, 24, {speed:240, life:.6, size:4, color:['#9BF6FF', '#FFFFFF']}); } g.hurtFx = .3; }
+      else if (!b.hurt) { b.hurt = true; g.hearts = Math.max(0, g.hearts - n); g.lost += n; num(hx + 40, hy - 70, '-' + n, '#FF6FB0', true); if (n > 1) g.shake = 22; if (g.hearts <= 0) { b.ko = true; } }
     }
   }
   function knockedOut() {
@@ -604,7 +709,7 @@ PUM.games.sky = function (o) {
     b.awayK = lerp(b.awayK || 0, b.state === 'away' || b.state === 'minion' || b.state === 'minionHit' ? 1 : 0, 1 - Math.exp(-dt * 3)); b.flash = Math.max(0, (b.flash || 0) - dt * 4); b.x *= Math.exp(-dt * 10); b.lunge = Math.max(0, (b.lunge || 0) - dt * 3);
     g.blockFx = Math.max(0, (g.blockFx || 0) - dt * 2.5); g.hurtFx = Math.max(0, (g.hurtFx || 0) - dt * 2.5);
     b.elFx = Math.max(0, (b.elFx || 0) - dt * .8);
-    if (b.state === 'intro' && b.tm > 1.5) { if (!b.boss && b.type !== 'shadow' && !(p.sky.seen && p.sky.seen[b.type])) meetCard(); else toPick(); }
+    if (b.state === 'intro' && b.tm > 1.5) { if (b.trial) trialCard(); else if (!b.boss && b.type !== 'shadow' && !(p.sky.seen && p.sky.seen[b.type])) meetCard(); else toPick(); }
     else if (b.state === 'ask') b.askT += dt;
     else if (b.state === 'resolve' && b.tm > .55) {
       api.panel(null);
@@ -636,7 +741,8 @@ PUM.games.sky = function (o) {
         if (b.mOk) { A.sfx('shatter'); num(mx, my - 40, 'POP!', '#FFE27A', true); parts.burst(mx, my, 22, {speed:240, life:.6, size:3.5, color:[S.EL[b.el].col, '#FFFFFF'], shape:'star'}); api.addMp(2); g.crystals += 2; }
         else {
           g.hurtFx = 1; g.shake = 12; A.sfx('hurt'); parts.burst(mx, my, 12, {speed:160, life:.4, size:3, color:['#B04CFF']});
-          if (assist < 2) { g.hearts = Math.max(0, g.hearts - 1); g.lost++; num(Wd * .26 + 40, Hd * .45 - 70, '-1', '#FF6FB0', true); if (g.hearts <= 0) { setState('ko'); knockedOut(); return; } }
+          if (b.bubble > 0) { b.bubble--; num(Wd * .26 + 40, Hd * .45 - 70, 'POP! Safe!', '#9BF6FF', true); }
+          else if (assist < 2) { g.hearts = Math.max(0, g.hearts - 1); g.lost++; num(Wd * .26 + 40, Hd * .45 - 70, '-1', '#FF6FB0', true); if (g.hearts <= 0) { setState('ko'); knockedOut(); return; } }
         }
       }
       if (b.tm > 1.3) {
@@ -646,20 +752,31 @@ PUM.games.sky = function (o) {
       }
     }
     else if (b.state === 'land' && b.tm > 2.2) toPick();
+    else if (b.state === 'burn') {
+      if (!b.burnDone && b.tm > .35) { b.burnDone = true; burnTick(); }
+      if (b.tm > 1.15) {
+        b.burnDone = false;
+        if (b.hp <= 0) { afterHeroTurn(); return; }
+        if (b.boss && b.phase === 2 && b.hp <= 1 && !b.finale) { b.finale = true; g.meter = 1; banner(`${b.name} is weak!`, 'Use your special move!', 1.8); say('Use your special move!'); }
+        afterBurn();
+      }
+    }
+    else if (b.state === 'stunned' && b.tm > 1.5) toPick();
     else if (b.state === 'miss' && b.tm > 1.3) {
       api.panel(null);
       if (b.move === 'shield' && assist === 0) b.shield.got = 0;
       setState('dodge'); A.sfx('jump');
     }
-    else if (b.state === 'dodge' && b.tm > .8) enemyTurn();
+    else if (b.state === 'dodge' && b.tm > .8) foeTurn();
     else if (b.state === 'atk') {
       const col = S.EL[b.move].col;
       const bounce = b.TY.armor && b.tierUsed && b.tierUsed.k === 'light';
       if (b.hitsLeft > 0 && bounce && b.tm > .35) { b.hitsLeft = 0; g.bounces = (g.bounces || 0) + 1; A.sfx('block'); b.x = 6; num(Wd * .66, Hd * .3 - 40, 'BOUNCE!', '#FFE27A', true); parts.burst(Wd * .66, Hd * .3, 14, {speed:220, life:.5, size:3, color:['#FFE27A', '#FFFFFF']}); banner('Too tough!', 'Use a Strong or Mega move', 1.6, '#FFB347'); say('Too tough! Use a Strong or Mega move.'); }
       if (b.hitsLeft > 0 && b.tm > (b.hitsN > 1 ? .3 + (b.hitsN - b.hitsLeft) * (p.hero === 4 ? .18 : .25) : .35)) { b.hitsLeft--; if (p.hero === 4 && b.hitsN === 3 && b.hitsLeft === 0) num(Wd * .66, Hd * .3 - 80, 'TRIPLE!', '#5BFFB0', true); hitFoe(damage(b.move, heroPower() * (b.isCrit ? 1.35 : 1) * (b.tierUsed ? b.tierUsed.mult : 1)), col, b.isCrit || (b.tierUsed && b.tierUsed.k === 'mega')); }
       if (b.bonus && !b.bonusDone && !bounce && b.tm > .72) { b.bonusDone = true; num(Wd * .66, Hd * .3 - 70, 'BONUS!', '#FFE27A', true); hitFoe(damage(b.move, heroPower() * .6 * (b.tierUsed ? b.tierUsed.mult : 1)), '#FFE27A', true); }
+      if (!b.powDone && b.tm > .5) { b.powDone = true; usePower(); }
       if (!b.compDone && b.tm > .95) { b.compDone = true; b.compFx = 1; hitFoe(Math.max(1, Math.round(st.atk * (.25 + .04 * comp.lv) * S.mult(comp.el, b.el))), S.EL[comp.el].col, false); }
-      if (b.tm > 1.5) { b.compDone = false; b.bonus = false; b.bonusDone = false; afterHeroTurn(); }
+      if (b.tm > 1.5) { b.compDone = false; b.bonus = false; b.bonusDone = false; b.powDone = false; if (b.move === 'storm' && b.soak && !bounce) b.soak = false; afterHeroTurn(); }
     }
     else if (b.state === 'cutin' && b.tm > 1.8) { setState('specAtk'); }
     else if (b.state === 'specAtk') {
@@ -675,13 +792,14 @@ PUM.games.sky = function (o) {
     }
     else if (b.state === 'block') { if (b.tm > b.blockLim) answerBlock(null); }
     else if (b.state === 'wind') {
-      if (b.tm < .05) { b.hurt = false; b.perfectGiven = false; }
+      if (b.tm < .05) { b.hurt = false; b.perfectGiven = false; b.bubbleOn = false; }
       for (const h of b.hits) if (!h.done && b.tm >= h.t) enemyHit(h);
       if (b.ko && !g.koWait) { b.ko = false; setState('ko'); api.panel(null); knockedOut(); return; }
       if (b.tm > b.windDur) { api.panel(null); api.ctrl(''); if (b.attacksLeft > 1) { b.attacksLeft--; enemyTurn(true); } else toPick(); }
     }
     else if (b.state === 'win') {
       if (b.boss) { b.pure = Math.min(1, b.tm / 2.4); if (b.tm > 1 && !b.joined) { const GD = S.GUARDIANS[b.guard]; b.joined = true; banner(`${b.name} is free!`, `${GD.title.replace(/^the/, 'The')} joins your team!`, 2.4, '#FFC6DD'); } if (b.tm > 3.6) { finishQuest(); } }
+      else if (b.tm > 1.8 && b.trial) { g.mode = 'done'; result(true); }
       else if (b.tm > 1.8) { b.f.done = true; b = null; g.mode = 'trans2'; g.trans = 0; }
     }
   }
@@ -707,7 +825,10 @@ PUM.games.sky = function (o) {
     api.panel(qPanel(ok ? 'Pop!' : timeUp ? `Too slow! It was ${b.q.ans}.` : `Not quite. It's ${b.q.ans}.`, b.q, b.opts, timeUp ? null : {picked:v}), 'sky-q');
     b.mOk = ok; setState('minionHit');
   }
-  function startAtk() { setState('atk'); b.hitsLeft = p.hero === 0 ? 2 : p.hero === 4 ? (Math.random() < .3 ? 3 : 2) : 1; b.hitsN = b.hitsLeft; }
+  function startAtk() {
+    if (b.starUp) { const {el, s} = b.starUp, P = S.POW[el]; b.starUp = null; banner(`${moveName(el)} ${'\u2605'.repeat(s)}!`, s === 3 ? (P.perks[2] === 'Hits harder' ? 'It hits even harder!' : `${P.perks[2]}!`) : hasPow(el) && P.perks[1] !== 'Hits harder' ? `Hits harder. ${P.perks[1]}!` : 'It hits harder now!', 2, S.EL[el].col); A.sfx('chime'); say(`${moveName(el)} is now ${s} stars!`); }
+    if (b.move === 'storm' && b.soak) num(Wd * .66, Hd * .3 - 110, 'SOAKED! x2', '#46C8FF', true);
+    setState('atk'); b.hitsLeft = p.hero === 0 ? 2 : p.hero === 4 ? (Math.random() < .3 ? 3 : 2) : 1; b.hitsN = b.hitsLeft; }
   /* the timing ring: tap close to the moment the shrinking ring meets the target for a bonus hit */
   function tapRing(tm) {
     if (!b || b.state !== 'timing' || b.tapped) return;
@@ -747,7 +868,8 @@ PUM.games.sky = function (o) {
   /* quest challenges: 1 found a secret chest, 2 no hits at all, 4 a fast finish */
   const challenges = () => (g.secret ? 1 : 0) | (g.lost === 0 && !g.bumps ? 2 : 0) | (g.runT <= PAR ? 4 : 0);
   function result(ok) {
-    api.finish({ok, quest:qi, right:g.right, asked:g.asked, lost:g.lost, snacks:g.snacks, crystals:g.crystals, xp:g.xp, beaten:g.beaten, reason:ok ? '' : 'ko', chal:ok ? challenges() : 0, runT:Math.round(g.runT), par:PAR});
+    if (trial) { api.finish({ok:ok && g.trialUsed, trial, quest:qi, right:g.right, asked:g.asked, lost:g.lost, xp:g.xp, use:g.use, reason:ok ? '' : 'ko'}); return; }
+    api.finish({ok, quest:qi, right:g.right, asked:g.asked, lost:g.lost, snacks:g.snacks, crystals:g.crystals, xp:g.xp, beaten:g.beaten, reason:ok ? '' : 'ko', chal:ok ? challenges() : 0, runT:Math.round(g.runT), par:PAR, use:g.use, pow:g.pow});
   }
 
   /* ---- drawing ---- */
@@ -900,6 +1022,17 @@ PUM.games.sky = function (o) {
     c.translate(Wd * .26 - 180 * bs + lunge, Hd * .47 - 220 * bs + dodge * .3); c.scale(bs, bs);
     K.bust(c, L, {fierce:b.state === 'atk' || b.state === 'wind' || b.state === 'block', mouth:b.state === 'atk' ? 'shout' : b.state === 'win' ? 'grin' : 'smile', blink:Math.sin(t * 1.7) > .985 ? .1 : 1});
     c.restore();
+    /* move powers: flames on a burning enemy, sparks over a stunned one, a bubble around the hero */
+    const fcy = b.boss ? Hd * .36 - aw * Hd * .22 : stand ? fy + Hd * .22 - 140 * fs : fy, tall = b.boss || b.big;
+    if (b.burn && b.state !== 'win') for (let i = 0; i < 3; i++) K.flameShape(c, fx + (i - 1) * (tall ? 60 : 46) * fk, fcy + ((tall ? 80 : 52) + (i % 2) * 18) * fk, .75 * fk * (1 + .12 * Math.sin(t * 9 + i)), t + i, ['#FF4A1A', '#FF9A3D', '#FFE9B0']);
+    if (b.stun || b.state === 'stunned') for (let i = 0; i < 3; i++) { const a = t * 4 + i * TAU / 3; label(c, '✦', fx + Math.cos(a) * 46 * fk, fcy - (b.boss ? 110 : b.big && !stand ? 90 : 62) * fk + Math.sin(a) * 12 * fk, 20, '#FFE24A'); }
+    if (b.bubble > 0) {
+      const hx = Wd * .26, hy = Hd * .45, r = Math.min(Wd * .2, Hd * .14) * (1 + .03 * Math.sin(t * 3));
+      c.save(); c.shadowColor = '#9BF6FF'; c.shadowBlur = 16; c.fillStyle = 'rgba(155,246,255,.1)'; c.strokeStyle = 'rgba(190,250,255,.85)'; c.lineWidth = 3;
+      c.beginPath(); c.arc(hx, hy, r, 0, TAU); c.fill(); c.stroke();
+      if (b.bubble > 1) { c.globalAlpha = .6; c.beginPath(); c.arc(hx, hy, r * .88, 0, TAU); c.stroke(); }
+      c.globalAlpha = .8; c.lineWidth = 4; c.strokeStyle = '#FFFFFF'; c.beginPath(); c.arc(hx, hy, r * .78, -2.5, -1.9); c.stroke(); c.restore();
+    }
     if (g.hurtFx > 0) { c.save(); c.globalAlpha = g.hurtFx * .5; c.fillStyle = '#FF2A5A'; c.fillRect(0, 0, Wd, Hd); c.restore(); }
     if (g.blockFx > 0) { c.save(); c.globalAlpha = g.blockFx; c.translate(Wd * .26, Hd * .45); c.shadowColor = '#7FF0FF'; c.shadowBlur = 20; c.strokeStyle = '#BFF6FF'; c.lineWidth = 4; const r = 90 * (1.2 - g.blockFx * .2); c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * TAU / 6; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.stroke(); c.restore(); }
     K.spirit(c, comp.kind, comp.stage, Wd * .48, Hd * .5, .5 * Math.min(1.2, Wd / 380), t, {face:1});
@@ -923,6 +1056,13 @@ PUM.games.sky = function (o) {
     label(c, `Weak to ${S.EL[wk].name.toUpperCase()}`, px + pw - 64, 132, 12, '#FFFFFF');
     /* the enemy type's rule, so kids know how this one works */
     if (!b.boss) { const TY = b.TY, txt = `${TY.tag}: ${TY.rule}`; c.save(); c.font = '800 11px Lexend, sans-serif'; const bw = Math.min(Wd - 24, c.measureText(txt).width + 26); c.restore(); c.save(); E.rr(c, Wd - 12 - bw, 150, bw, 22, 11); c.fillStyle = 'rgba(16,20,64,.85)'; c.fill(); c.strokeStyle = TY.col; c.lineWidth = 2; c.stroke(); c.restore(); label(c, txt, Wd - 12 - bw / 2, 161, 11, TY.col); }
+    /* what the hero's powers have done to the enemy */
+    const chips = [];
+    if (b.burn) chips.push([`BURN ${b.burn.n}`, '#FF9A3D']);
+    if (b.stun || b.state === 'stunned') chips.push(['STUNNED', '#FFE24A']);
+    if (b.soak) chips.push(['SOAKED', '#46C8FF']);
+    let chx = Wd - 12; const chy = b.boss ? 150 : 180;
+    for (const [txt, col] of chips) { c.save(); c.font = '800 11px Lexend, sans-serif'; const w = c.measureText(txt).width + 20; chx -= w; E.rr(c, chx, chy, w, 22, 11); c.fillStyle = 'rgba(16,20,64,.85)'; c.fill(); c.strokeStyle = col; c.lineWidth = 2; c.stroke(); c.restore(); label(c, txt, chx + w / 2, chy + 11, 11, col); chx -= 6; }
     /* hero status */
     const sy = Hd * .575;
     glass(c, 10, sy - 18, Math.min(Wd - 20, 360), 40);
@@ -930,7 +1070,7 @@ PUM.games.sky = function (o) {
     drawMeter(c, Math.min(Wd - 20, 360) - 150, sy, 140);
     if (b.state === 'cutin') K.cutin(c, Wd, Hd, b.tm / 1.8, L, b.spec === 'special2' ? S.SPECIAL2 : S.SPECIAL[p.hero], b.spec === 'special2' ? '#FFB347' : S.EL[comp.el].col, t);
     if (b.state === 'specAtk' && b.tm < .8) { c.save(); c.globalAlpha = Math.max(0, .9 - b.tm * 1.4); c.fillStyle = '#FFFFFF'; c.fillRect(0, 0, Wd, Hd); c.restore(); K.speedLines(c, Wd, Hd, Wd * .66, Hd * .3, t, 'rgba(255,255,255,.6)', 80); }
-    if (b.state === 'intro') { const a = Math.min(1, b.tm * 3) * Math.min(1, (1.5 - b.tm) * 3); c.save(); c.globalAlpha = a; label(c, b.boss ? 'GUARDIAN BATTLE' : b.type === 'shadow' ? 'A shadow appears!' : `A ${b.TY.tag.toLowerCase()} enemy!`, Wd / 2, Hd * .5, Math.min(28, Wd / 13), '#FFFFFF', 'center', 'D'); c.restore(); }
+    if (b.state === 'intro') { const a = Math.min(1, b.tm * 3) * Math.min(1, (1.5 - b.tm) * 3); c.save(); c.globalAlpha = a; label(c, b.trial ? 'DOJO TRIAL' : b.boss ? 'GUARDIAN BATTLE' : b.type === 'shadow' ? 'A shadow appears!' : `A ${b.TY.tag.toLowerCase()} enemy!`, Wd / 2, Hd * .5, Math.min(28, Wd / 13), '#FFFFFF', 'center', 'D'); c.restore(); }
   }
   function drawTrans(c, k, into) {
     const n = 7, h = Hd / n;
@@ -942,6 +1082,7 @@ PUM.games.sky = function (o) {
 
   return {
     onStart() {
+      if (trial) { g.mode = 'battle'; b = newBattle({kind:'trial', x:0, y:0}); api.ctrl(''); A.sfx('blast'); say(`Dojo trial: ${S.POW[trial].name}!`); return; }
       if (PUM.SKY3D && PUM.SKY3D.ready()) { try { R3 = PUM.SKY3D.create({world:W, hero, g, look:L, comp, double, tower, isle, known}); const gc = document.getElementById('gc'); gc.parentNode.insertBefore(R3.canvas, gc); R3.resize(Wd, Hd); } catch (e) { console.error(e); if (R3) R3.dispose(); R3 = null; } }
       api.ctrl(exploreCtrl()); banner(Q.name, Q.story.length < 60 ? Q.story : Q.obj, 2.2, ['#FFC6DD', '#9BF6FF', '#FFC27A'][isle]); say(Q.story); },
     resize(w, h) { Wd = w; Hd = h; s = Math.min(h / 700, w / 380); gy = h * .64; if (R3) R3.resize(w, h); },
@@ -999,6 +1140,7 @@ PUM.games.sky = function (o) {
     onStop() { if (R3) { R3.dispose(); R3 = null; } },
     is3d: () => !!R3,
     xpEarned: () => g.xp,
+    usesEarned: () => g.use,
     _debug: () => ({g, hero, W, get b() { return b; }, get lock() { return lock; }, get R3() { return R3; }}),
   };
 };
