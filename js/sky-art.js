@@ -1862,15 +1862,39 @@ K.shop = function (c, W, H, t, o = {}) {
   });
   K.petals(c, W, H, t, 8);
 };
+/* a name tag on the village map: a dark pill with the name, and an optional second line
+   (gold when it is good news, with a small crystal for a price). Centred on x, top at y, kept inside the canvas. */
+function vTag(c, W, x, y, name, sub, o = {}) {
+  c.save(); c.textAlign = 'left'; c.textBaseline = 'middle';
+  const fs = o.size || 9.5, f1 = `800 ${fs}px Lexend, sans-serif`, f2 = `700 ${fs}px Lexend, sans-serif`;
+  c.font = f1; const w1 = c.measureText(name).width;
+  c.font = f2; const subT = sub ? (o.two ? sub : ` · ${sub}`) : '', w2 = sub ? c.measureText(subT).width + (o.gem ? 9 : 0) : 0;
+  const two = !!(o.two && sub), w = (two ? Math.max(w1, w2) : w1 + w2) + 12, h = two ? 25 : 15;
+  x = clamp(x, w / 2 + 3, W - w / 2 - 3);
+  c.fillStyle = o.dim ? 'rgba(26,28,62,.8)' : 'rgba(16,20,64,.88)'; c.strokeStyle = o.hi ? '#FFE27A' : 'rgba(143,230,255,.55)'; c.lineWidth = o.hi ? 1.5 : 1;
+  E.rr(c, x - w / 2, y, w, h, 7); c.fill(); c.stroke();
+  const subCol = o.good ? '#FFE27A' : o.dim ? '#AAB4DA' : '#BFF6FF';
+  if (two) {
+    c.textAlign = 'center'; c.font = f1; c.fillStyle = '#FFFFFF'; c.fillText(name, x, y + 7.5);
+    c.font = f2; c.fillStyle = subCol; c.fillText(sub, x, y + 18);
+  } else {
+    let tx = x - w / 2 + 6;
+    c.font = f1; c.fillStyle = o.dim ? '#D4DAF2' : '#FFFFFF'; c.fillText(name, tx, y + 7.8); tx += w1;
+    if (sub) { c.font = f2; c.fillStyle = subCol; c.fillText(subT, tx, y + 7.8); tx += c.measureText(subT).width; if (o.gem) K.crystal(c, tx + 4.5, y + 7.5, 3, o.t || 0); }
+  }
+  c.restore();
+}
 /* where each village building stands, in island units (x across, y front-to-back) */
-const VSPOT = {shrine:[-.3, -.33], tower:[.62, -.26], garden:[-.58, .03], dojo:[.04, .02], shop:[.52, .17], spring:[-.22, .3]};
+const VSPOT = {shrine:[-.3, -.33], tower:[.5, -.23], garden:[-.58, .03], dojo:[.04, .02], shop:[.52, .17], spring:[-.22, .3]};
 K.village = function (c, W, H, t, st, sel) {
   K.skyGradient(c, W, H, '#101A52', '#40308E', '#C77BB8', '#FFC2A8');
   K.stars(c, W, H * .7, t, 50, 21);
   const isl = st.isles || [], dpr = (c.getTransform ? c.getTransform().a : 1) || 1, uu = Math.min(W / 360, H / 380);
   /* Tide Grotto and Ember Peak float nearby: in clouds until they open */
+  const isleTags = [];
   for (const [k, px, py, rr] of [[1, .12, .14, 30], [2, .88, .15, 32]]) {
     const O = isl[k] || {}, x = W * px, y = H * py + Math.sin(t * .8 + k * 2) * 2 * uu, sr = rr * uu;
+    if (O.name) isleTags.push([x, y + sr * .55, O.name, O.open ? 'Open on the Sky map' : `Beat ${O.need}`, O.open]);
     const sm = isleCached(k, sr, {dpr, small:true, heal:O.heal, locked:!O.open}); c.drawImage(sm.cv, x - sm.ox, y - sm.oy, sm.w, sm.h); isleLive(c, k, x, y, sr, t, true);
     if (!O.open) { c.save(); c.fillStyle = 'rgba(225,230,255,.5)'; for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + t * .15; c.beginPath(); c.arc(x + Math.cos(a) * sr * .8, y - sr * .05 + Math.sin(a) * sr * .3, sr * (.3 + (i % 2) * .08), 0, TAU); c.fill(); } c.restore();
       const lr = 7 * uu, ly = y - sr * .15; c.save(); c.fillStyle = '#FFFFFF'; c.strokeStyle = LINE; c.lineWidth = 2; c.beginPath(); c.arc(x, ly, lr + 5 * uu, 0, TAU); c.fill(); c.stroke(); c.strokeStyle = '#4A4466'; c.lineWidth = 2.5 * uu; c.beginPath(); c.arc(x, ly - 2 * uu, lr * .5, Math.PI, 0); c.stroke(); c.fillStyle = '#4A4466'; E.rr(c, x - lr * .7, ly - 2 * uu, lr * 1.4, lr * 1.05, 2 * uu); c.fill(); c.restore(); }
@@ -1906,6 +1930,10 @@ K.village = function (c, W, H, t, st, sel) {
   /* companions playing near the garden */
   if (st.comps && st.comps.length) st.comps.slice(0, 4).forEach((cp, i) => K.spirit(c, cp.kind, cp.stage, at('garden')[0] + (i - .5) * 30 * u + Math.sin(t * .8 + i) * 10 * u, at('garden')[1] + 22 * u, .22 * u, t + i, {glow:false, face:Math.sin(t * .8 + i) > 0 ? 1 : -1}));
   K.petals(c, W, H, t, 14);
+  /* name tags: every building, and the islands still to come */
+  const L = st.labels || {};
+  for (const k of Object.keys(L)) { const [x, y] = at(k), T = L[k]; vTag(c, W, x, y + 3 * u, T.name, T.sub, {gem:T.gem, good:T.built || /!$/.test(T.sub), hi:sel === k || /!$/.test(T.sub), dim:!T.built && !/!$/.test(T.sub), t}); }
+  for (const [x, y, name, sub, open] of isleTags) vTag(c, W, x, y, name, sub, {two:true, dim:!open, good:open, hi:open});
   return hits;
 };
 
