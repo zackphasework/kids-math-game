@@ -729,7 +729,18 @@ function skyAfterRender(p) {
   if (view === 'base') {
     let hits = [];
     const isles = isleInfo(p);
-    skyCanvas('village', {draw(ctx, W, H, t) { hits = KA.village(ctx, W, H, t, {buildings:p.sky.b, comps:compList(p), isles}, skySel); },
+    /* labels on the map: each building's name and what it needs, and which guardian opens each locked island */
+    const ready = SK.readyPower(p), NAMES = {dojo:'Dojo', shop:'Hero shop', garden:'Spirit garden', spring:'Healing spring', tower:'Lantern tower', shrine:'Sky shrine'};
+    const labels = Object.fromEntries(SK.BUILD.map(B => {
+      const built = B.k === 'dojo' || B.k === 'shop' || p.sky.b[B.k];
+      let sub = '', gem = 0;
+      if (B.k === 'dojo' && ready) sub = 'New power!';
+      else if (!built && B.guardians) sub = SK.guardians(p) >= B.guardians ? 'Open it!' : `${B.guardians} guardians`;
+      else if (!built) { sub = String(B.cost); gem = B.cost; }
+      return [B.k, {name:NAMES[B.k], sub, gem, built}];
+    }));
+    const isleTags = isles.map((I, k) => Object.assign({}, I, {need:k ? SK.GUARDIANS[SK.ISLANDS[k - 1].guardian].name : ''}));
+    skyCanvas('village', {draw(ctx, W, H, t) { hits = KA.village(ctx, W, H, t, {buildings:p.sky.b, comps:compList(p), isles:isleTags, labels}, skySel); },
       tap(x, y) { const h = hits.find(o => Math.hypot(o.x - x, o.y - y) < o.r); if (!h) return; A.ac(); A.sfx('tap'); skySel = h.k; render(); const el = document.getElementById('b-' + h.k); if (el) el.scrollIntoView({block:'center', behavior:'smooth'}); }}, w => Math.min(500, w * 1.02));
   }
   if (view === 'map') {
