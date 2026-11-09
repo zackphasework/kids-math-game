@@ -2,7 +2,7 @@
    The game's own files are network-first, so every update shows up as soon as there's internet;
    fonts and three.js (for the 3D islands) are stored with the game and cached the first time they load.
    Family saves (Supabase) always go straight to the network. */
-const CACHE = 'pum-v5';
+const CACHE = 'pum-v6';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'css/fonts.css', 'css/app.css',
   'js/core.js', 'js/math.js', 'js/levels.js', 'js/engine.js', 'js/sky-art.js', 'js/sky.js', 'js/sky-stage.js', 'js/sky3d.js', 'js/shop.js',
   'js/store.js', 'js/crew.js', 'js/rig.js', 'js/trucks.js', 'js/app.js',

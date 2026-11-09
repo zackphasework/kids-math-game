@@ -1544,37 +1544,220 @@ K.cutin = function (c, W, H, k, L, name, col, t) {
 /* ---------- Sky Village: home base on a floating island. Returns tap areas. ---------- */
 const VPOS = {dojo:[.5, .52], garden:[.2, .6], shop:[.8, .6], spring:[.3, .8], tower:[.72, .34], shrine:[.5, .26]};
 K.VPOS = VPOS;
-function roofHouse(c, x, y, w, h, wall, roof, lit, t) {
-  c.strokeStyle = LINE; c.lineWidth = 2;
-  c.fillStyle = wall; c.fillRect(x - w / 2, y - h, w, h); c.strokeRect(x - w / 2, y - h, w, h);
-  if (lit) { c.save(); c.shadowColor = '#FFC56A'; c.shadowBlur = 12; c.fillStyle = '#FFD98A'; c.fillRect(x - w * .3, y - h * .7, w * .18, h * .32); c.fillRect(x + w * .12, y - h * .7, w * .18, h * .32); c.restore(); }
-  c.fillStyle = '#2E2A48'; c.fillRect(x - w * .1, y - h * .45, w * .2, h * .45);
-  c.fillStyle = roof; c.beginPath(); c.moveTo(x - w * .72, y - h + 2); c.quadraticCurveTo(x, y - h - h * .25, x + w * .72, y - h + 2); c.lineTo(x + w * .5, y - h - h * .5); c.quadraticCurveTo(x, y - h - h * .62, x - w * .5, y - h - h * .5); c.closePath(); c.fill(); c.stroke();
+/* Village buildings. All are drawn front-on with a soft ground shadow, clean outlines and the
+   same wood, stone and roof colours, standing on (x, y) with s = village scale. */
+const V = {wood:'#6E3E2C', wood2:'#A8733F', plank:'#E7B97E', stone:'#D9D1E6', stone2:'#B3A9C6', paper:'#FFF5E4', lattice:'#D8BE97', roof:'#C23A45', roofDk:'#7A1E2A', jade:'#2F8A6A', jadeDk:'#1D5A45'};
+function vShadow(c, x, y, rx, ry) { c.fillStyle = 'rgba(20,30,60,.22)'; c.beginPath(); c.ellipse(x, y + 1, rx, ry, 0, 0, TAU); c.fill(); }
+/* a curved temple roof: bottom edge from x-bw to x+bw at yb with turned-up tips, top edge x-tw..x+tw at yt */
+function vRoof(c, x, yb, bw, yt, tw, s, col, dk) {
+  const lift = 5 * s, sag = 2.5 * s, ud = 2.8 * s;
+  /* the bottom edge, tip to tip, as points so the eave band can follow it exactly */
+  const edge = [];
+  for (let i = 0; i <= 24; i++) { const k = i / 24, u2 = k * 2 - 1, a = Math.abs(u2); edge.push([x + u2 * bw, yb + sag * (1 - u2 * u2) - lift * Math.pow(a, 6)]); }
+  const shape = () => {
+    c.beginPath(); c.moveTo(edge[0][0], edge[0][1]); for (const q of edge) c.lineTo(q[0], q[1]);
+    c.quadraticCurveTo(x + tw + (bw - tw) * .3, yt + (yb - yt) * .45, x + tw, yt);
+    c.lineTo(x - tw, yt);
+    c.quadraticCurveTo(x - tw - (bw - tw) * .3, yt + (yb - yt) * .45, edge[0][0], edge[0][1]);
+    c.closePath();
+  };
+  /* eave underside, a dark band along the whole bottom edge */
+  c.beginPath(); edge.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]));
+  for (let i = edge.length - 2; i >= 1; i--) c.lineTo(edge[i][0] + (i - 12) / 12 * -1.2 * s, edge[i][1] + ud);
+  c.closePath(); c.fillStyle = dk; c.fill(); c.strokeStyle = LINE; c.lineWidth = 1.4 * s; c.stroke();
+  /* roof face and tile rows */
+  shape(); c.fillStyle = col; c.fill();
+  c.save(); shape(); c.clip(); c.strokeStyle = 'rgba(40,0,10,.2)'; c.lineWidth = 1 * s;
+  const n = Math.max(6, Math.round(bw / (5 * s)));
+  for (let i = 1; i < n; i++) { const k = i / n; c.beginPath(); c.moveTo(x - tw + 2 * tw * k, yt); c.lineTo(x - bw + 2 * bw * k, yb + sag); c.stroke(); }
+  c.fillStyle = 'rgba(255,255,255,.2)'; c.fillRect(x - bw, yt, bw * 2, (yb - yt) * .25);
+  c.restore();
+  shape(); c.strokeStyle = LINE; c.lineWidth = 1.8 * s; c.stroke();
 }
-/* an empty lot waiting to be rebuilt: a stone foundation, broken low walls, fallen blocks,
-   a faint outline of what will stand there, and a little sign with a hammer */
-function ruin(c, x, y, w, h, t = 0) {
-  c.save();
-  c.fillStyle = 'rgba(0,0,0,.22)'; c.beginPath(); c.ellipse(x, y + 2, w * .62, w * .16, 0, 0, TAU); c.fill();
-  c.fillStyle = '#B7ADC8'; c.strokeStyle = LINE; c.lineWidth = 2;
-  c.beginPath(); c.moveTo(x - w * .55, y); c.lineTo(x - w * .45, y - h * .14); c.lineTo(x + w * .45, y - h * .14); c.lineTo(x + w * .55, y); c.closePath(); c.fill(); c.stroke();
-  c.fillStyle = '#D6CFE2'; c.beginPath(); c.moveTo(x - w * .45, y - h * .14); c.lineTo(x - w * .4, y - h * .2); c.lineTo(x + w * .4, y - h * .2); c.lineTo(x + w * .45, y - h * .14); c.closePath(); c.fill(); c.stroke();
-  /* broken walls */
-  const wall = (x0, x1, hs) => { c.fillStyle = '#9C91B2'; c.beginPath(); c.moveTo(x0, y - h * .2); hs.forEach(([f, hh]) => c.lineTo(x0 + (x1 - x0) * f, y - h * .2 - h * hh)); c.lineTo(x1, y - h * .2); c.closePath(); c.fill(); c.stroke();
-    c.strokeStyle = 'rgba(34,55,75,.35)'; c.lineWidth = 1; for (let i = 1; i < 3; i++) { c.beginPath(); c.moveTo(x0 + 2, y - h * .2 - i * h * .13); c.lineTo(x1 - 2, y - h * .2 - i * h * .13); c.stroke(); } c.strokeStyle = LINE; c.lineWidth = 2; };
-  wall(x - w * .38, x - w * .08, [[0, .5], [.35, .42], [.55, .26], [.8, .33], [1, .12]]);
-  wall(x + w * .12, x + w * .38, [[0, .2], [.3, .38], [.6, .3], [1, .46]]);
-  /* fallen blocks */
-  for (const [dx, dy, s2, a2] of [[-.5, -.02, .12, .3], [.48, .0, .1, -.4], [.0, -.16, .09, .2]]) { c.save(); c.translate(x + dx * w, y + dy * h); c.rotate(a2); c.fillStyle = '#A79CBD'; c.fillRect(-w * s2 / 2, -w * s2 * .6, w * s2, w * s2 * .6); c.strokeRect(-w * s2 / 2, -w * s2 * .6, w * s2, w * s2 * .6); c.restore(); }
-  /* the ghost of the building to come */
-  c.globalAlpha = .45 + .15 * Math.sin(t * 2); c.strokeStyle = '#FFE27A'; c.lineWidth = 1.6; c.setLineDash([4, 4]);
-  c.beginPath(); c.moveTo(x - w * .36, y - h * .2); c.lineTo(x - w * .36, y - h * .9); c.lineTo(x - w * .46, y - h * .9); c.lineTo(x, y - h * 1.25); c.lineTo(x + w * .46, y - h * .9); c.lineTo(x + w * .36, y - h * .9); c.lineTo(x + w * .36, y - h * .2); c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
-  /* sign with a hammer */
-  const sx = x + w * .5, sy = y - h * .02;
-  c.fillStyle = '#8A6A4A'; c.fillRect(sx - 1.5, sy - h * .62, 3, h * .62);
-  c.fillStyle = '#F3E2C6'; E.rr(c, sx - w * .17, sy - h * .82, w * .34, h * .26, 3); c.fill(); c.stroke();
-  c.strokeStyle = '#6A4A3A'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(sx - w * .07, sy - h * .6); c.lineTo(sx + w * .05, sy - h * .76); c.stroke();
-  c.fillStyle = '#5A6070'; c.save(); c.translate(sx + w * .05, sy - h * .76); c.rotate(-.9); c.fillRect(-w * .06, -h * .05, w * .12, h * .1); c.restore();
+function vLantern(c, x, y, s, t, i) {
+  c.strokeStyle = LINE; c.lineWidth = 1 * s; c.beginPath(); c.moveTo(x, y - 3 * s); c.lineTo(x, y); c.stroke();
+  c.save(); c.shadowColor = '#FFB347'; c.shadowBlur = (8 + Math.sin(t * 3 + i) * 2) * s;
+  c.fillStyle = '#FF6A4A'; c.beginPath(); c.ellipse(x, y + 4.5 * s, 3.4 * s, 4.4 * s, 0, 0, TAU); c.fill(); c.restore();
+  c.fillStyle = 'rgba(255,230,160,.65)'; c.beginPath(); c.ellipse(x - .8 * s, y + 3.6 * s, 1.2 * s, 2.4 * s, 0, 0, TAU); c.fill();
+  c.fillStyle = '#2A2238'; c.fillRect(x - 2.2 * s, y, 4.4 * s, 1.4 * s); c.fillRect(x - 2.2 * s, y + 7.8 * s, 4.4 * s, 1.4 * s);
+}
+/* the training dojo: stone base and steps, wooden frame with paper screens, an open lit doorway
+   with a noren curtain, a two-tier red roof and paper lanterns at the eaves */
+function vDojo(c, x, y, s, t) {
+  c.save(); c.lineJoin = 'round'; c.strokeStyle = LINE;
+  vShadow(c, x, y, 54 * s, 9 * s);
+  /* base and steps */
+  c.lineWidth = 1.8 * s;
+  c.fillStyle = V.stone2; c.fillRect(x - 40 * s, y - 10 * s, 80 * s, 10 * s); c.strokeRect(x - 40 * s, y - 10 * s, 80 * s, 10 * s);
+  c.fillStyle = V.stone; c.fillRect(x - 42 * s, y - 13 * s, 84 * s, 3.5 * s); c.strokeRect(x - 42 * s, y - 13 * s, 84 * s, 3.5 * s);
+  c.fillStyle = '#ECE6F3'; c.fillRect(x - 12 * s, y - 5 * s, 24 * s, 5 * s); c.strokeRect(x - 12 * s, y - 5 * s, 24 * s, 5 * s);
+  c.fillRect(x - 10 * s, y - 10 * s, 20 * s, 5 * s); c.strokeRect(x - 10 * s, y - 10 * s, 20 * s, 5 * s);
+  /* walls */
+  const wt = y - 44 * s, wb = y - 13 * s;
+  c.fillStyle = V.paper; c.fillRect(x - 35 * s, wt, 70 * s, wb - wt);
+  /* paper screen lattice on both sides */
+  c.strokeStyle = V.lattice; c.lineWidth = .9 * s;
+  for (const sd of [-1, 1]) {
+    const x0 = sd < 0 ? x - 33 * s : x + 14 * s, x1 = x0 + 19 * s;
+    for (let i = 1; i < 3; i++) { const lx = x0 + (x1 - x0) * i / 3; c.beginPath(); c.moveTo(lx, wt + 2 * s); c.lineTo(lx, wb - 1 * s); c.stroke(); }
+    for (let i = 1; i < 4; i++) { const ly = wt + (wb - wt) * i / 4; c.beginPath(); c.moveTo(x0, ly); c.lineTo(x1, ly); c.stroke(); }
+  }
+  /* the lit doorway and its curtain */
+  const dg = c.createLinearGradient(0, wt, 0, wb); dg.addColorStop(0, '#FFE3A0'); dg.addColorStop(1, '#F29A48');
+  c.save(); c.shadowColor = '#FFC56A'; c.shadowBlur = 10 * s; c.fillStyle = dg; c.fillRect(x - 12 * s, wt + 3 * s, 24 * s, wb - wt - 3 * s); c.restore();
+  c.fillStyle = 'rgba(120,60,30,.35)'; c.fillRect(x - 12 * s, wb - 4 * s, 24 * s, 4 * s);
+  c.fillStyle = '#3B3F8C'; c.strokeStyle = LINE; c.lineWidth = 1.2 * s;
+  for (let i = 0; i < 3; i++) { const nx = x - 12 * s + i * 8 * s; c.beginPath(); c.moveTo(nx + .4 * s, wt + 3 * s); c.lineTo(nx + 7.6 * s, wt + 3 * s); c.lineTo(nx + 7.6 * s, wt + 12 * s); c.quadraticCurveTo(nx + 4 * s, wt + 13.5 * s, nx + .4 * s, wt + 12 * s); c.closePath(); c.fill(); c.stroke(); }
+  c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(x, wt + 7.5 * s, 2.4 * s, 0, TAU); c.fill();
+  /* wooden frame */
+  c.fillStyle = V.wood; c.strokeStyle = LINE; c.lineWidth = 1.4 * s;
+  for (const px of [-36, -14, 12, 33]) { c.fillRect(x + px * s, wt, 3.4 * s, wb - wt); c.strokeRect(x + px * s, wt, 3.4 * s, wb - wt); }
+  c.fillRect(x - 37 * s, wb - 2 * s, 74 * s, 3 * s); c.strokeRect(x - 37 * s, wb - 2 * s, 74 * s, 3 * s);
+  c.fillRect(x - 38 * s, wt - 3 * s, 76 * s, 4 * s); c.strokeRect(x - 38 * s, wt - 3 * s, 76 * s, 4 * s);
+  /* roofs: lower wide tier, a short wall, then the top tier and ridge */
+  vRoof(c, x, wt - 2 * s, 52 * s, wt - 18 * s, 30 * s, s, V.roof, V.roofDk);
+  c.fillStyle = V.paper; c.strokeStyle = LINE; c.lineWidth = 1.4 * s; c.fillRect(x - 20 * s, wt - 25 * s, 40 * s, 7 * s); c.strokeRect(x - 20 * s, wt - 25 * s, 40 * s, 7 * s);
+  c.fillStyle = V.wood; for (const px of [-20, -7, 6, 17]) c.fillRect(x + px * s, wt - 25 * s, 2.6 * s, 7 * s);
+  /* name plaque */
+  c.fillStyle = '#2E2238'; E.rr(c, x - 7 * s, wt - 26 * s, 14 * s, 8 * s, 1.5 * s); c.fill(); c.strokeStyle = '#FFC94A'; c.lineWidth = 1 * s; c.stroke();
+  c.fillStyle = '#FFC94A'; c.beginPath(); c.arc(x, wt - 22 * s, 1.6 * s, 0, TAU); c.fill();
+  vRoof(c, x, wt - 25 * s, 32 * s, wt - 38 * s, 14 * s, s, V.roof, V.roofDk);
+  /* ridge with small gold tips */
+  c.fillStyle = '#3A2A38'; c.strokeStyle = LINE; c.lineWidth = 1.2 * s; E.rr(c, x - 16 * s, wt - 40.5 * s, 32 * s, 3.4 * s, 1.7 * s); c.fill(); c.stroke();
+  c.fillStyle = '#FFC94A'; c.lineWidth = 1 * s; for (const sd of [-1, 0, 1]) { c.beginPath(); c.arc(x + sd * 16 * s, wt - 41.5 * s, (sd ? 1.6 : 2) * s, 0, TAU); c.fill(); c.stroke(); }
+  /* paper lanterns under the eaves */
+  vLantern(c, x - 41 * s, wt - 1 * s, s, t, 0); vLantern(c, x + 41 * s, wt - 1 * s, s, t, 1);
+  c.restore();
+}
+/* an empty building lot waiting to be rebuilt: a tidy stone foundation, a little wooden scaffold,
+   a stack of planks, cut stone blocks and a sign with a hammer */
+function vLot(c, x, y, s, t) {
+  c.save(); c.lineJoin = 'round'; c.strokeStyle = LINE;
+  vShadow(c, x, y, 36 * s, 7 * s);
+  /* foundation slab */
+  const fh = 5 * s, top = y - fh, back = top - 9 * s;
+  c.lineWidth = 1.6 * s;
+  c.fillStyle = V.stone; c.beginPath(); c.moveTo(x - 30 * s, top); c.lineTo(x + 30 * s, top); c.lineTo(x + 25 * s, back); c.lineTo(x - 25 * s, back); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = 'rgba(34,55,75,.25)'; c.lineWidth = .9 * s;
+  for (const k of [-.33, .33]) { c.beginPath(); c.moveTo(x + k * 60 * s, top); c.lineTo(x + k * 50 * s, back); c.stroke(); }
+  c.beginPath(); c.moveTo(x - 27.5 * s, top - 4.5 * s); c.lineTo(x + 27.5 * s, top - 4.5 * s); c.stroke();
+  c.strokeStyle = LINE; c.lineWidth = 1.6 * s;
+  c.fillStyle = V.stone2; c.fillRect(x - 30 * s, top, 60 * s, fh); c.strokeRect(x - 30 * s, top, 60 * s, fh);
+  /* the wooden frame of the new building going up at the back */
+  const beam = pts => { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (const q of pts.slice(1)) c.lineTo(q[0], q[1]); c.strokeStyle = LINE; c.lineWidth = 3.6 * s; c.lineCap = 'round'; c.stroke(); c.strokeStyle = V.wood2; c.lineWidth = 2.2 * s; c.stroke(); };
+  const fb = back + 1 * s, ft = back - 22 * s, ap = back - 37 * s;
+  beam([[x - 21 * s, fb], [x - 21 * s, ft]]); beam([[x + 21 * s, fb], [x + 21 * s, ft]]); beam([[x, fb], [x, ft]]);
+  beam([[x - 21 * s, fb - 2 * s], [x, ft + 3 * s]]);
+  beam([[x - 25 * s, ft], [x + 25 * s, ft]]);
+  beam([[x - 25 * s, ft + 1 * s], [x, ap], [x + 25 * s, ft + 1 * s]]);
+  beam([[x, ft], [x, ap]]);
+  c.lineCap = 'butt';
+  /* a little flag on the top of the frame */
+  const fl = Math.sin(t * 3) * 1.2 * s;
+  c.strokeStyle = LINE; c.lineWidth = 1 * s; c.beginPath(); c.moveTo(x, ap); c.lineTo(x, ap - 8 * s); c.stroke();
+  c.fillStyle = '#FF6FA0'; c.beginPath(); c.moveTo(x, ap - 8 * s); c.lineTo(x + 7 * s, ap - 6.5 * s + fl); c.lineTo(x, ap - 4.5 * s); c.closePath(); c.fill(); c.stroke();
+  /* planks */
+  c.lineWidth = 1.2 * s;
+  for (let i = 0; i < 3; i++) { const py = top - 3.2 * s * (i + 1), px = x - 24 * s + (i % 2) * 1.5 * s; c.fillStyle = V.plank; E.rr(c, px, py, 20 * s, 3.2 * s, 1 * s); c.fill(); c.stroke(); c.fillStyle = '#C48F55'; c.beginPath(); c.arc(px + 1.8 * s, py + 1.6 * s, .9 * s, 0, TAU); c.fill(); }
+  /* cut stone blocks */
+  const blk = (bx2, by2, w2, h2) => { c.fillStyle = '#C9C0D8'; c.fillRect(bx2, by2, w2, h2); c.strokeRect(bx2, by2, w2, h2); c.fillStyle = 'rgba(255,255,255,.45)'; c.fillRect(bx2 + 1 * s, by2 + 1 * s, w2 - 2 * s, 1.4 * s); };
+  blk(x + 4 * s, top - 6 * s, 10 * s, 6 * s); blk(x + 14.5 * s, top - 6 * s, 10 * s, 6 * s); blk(x + 9 * s, top - 11.5 * s, 10 * s, 5.5 * s);
+  /* sign */
+  const sx = x + 33 * s;
+  c.fillStyle = V.wood; c.fillRect(sx - 1.2 * s, y - 20 * s, 2.4 * s, 20 * s); c.strokeRect(sx - 1.2 * s, y - 20 * s, 2.4 * s, 20 * s);
+  c.fillStyle = '#FFE9B8'; E.rr(c, sx - 8 * s, y - 30 * s, 16 * s, 12 * s, 2 * s); c.fill(); c.lineWidth = 1.4 * s; c.stroke();
+  c.save(); c.translate(sx, y - 24 * s); c.rotate(-.7);
+  c.fillStyle = '#9A6A44'; E.rr(c, -.9 * s, -1 * s, 1.8 * s, 7 * s, .8 * s); c.fill();
+  c.fillStyle = '#5A6070'; E.rr(c, -3.4 * s, -3.6 * s, 6.8 * s, 3 * s, .8 * s); c.fill();
+  c.restore();
+  /* a little twinkle: this spot can be rebuilt */
+  const tw = (Math.sin(t * 2.4) + 1) / 2;
+  c.save(); c.globalAlpha = .35 + .65 * tw; c.fillStyle = '#FFE27A'; E.starPath(c, sx + 8 * s, y - 31 * s, 3 * s * (.7 + .3 * tw), 1.2 * s, 4); c.fill(); c.restore();
+  c.restore();
+}
+/* the spirit garden: a small green-roofed gazebo among flower beds */
+function vGarden(c, x, y, s, t) {
+  c.save(); c.lineJoin = 'round'; c.strokeStyle = LINE;
+  vShadow(c, x, y, 40 * s, 8 * s);
+  /* flower beds either side */
+  for (const sd of [-1, 1]) {
+    const bx = x + sd * 26 * s;
+    c.fillStyle = '#6B4A3A'; c.lineWidth = 1.3 * s; c.beginPath(); c.ellipse(bx, y - 2 * s, 13 * s, 4.5 * s, 0, 0, TAU); c.fill(); c.stroke();
+    const cols = ['#FF8FC0', '#FFE27A', '#FFFFFF', '#9BD8FF'];
+    for (let i = 0; i < 6; i++) { const fx = bx - 9 * s + i * 3.6 * s, fy = y - 3 * s - (i % 2) * 2 * s; c.fillStyle = '#4FBF7A'; c.fillRect(fx - .4 * s, fy, .8 * s, 3 * s); c.fillStyle = cols[(i + (sd > 0 ? 2 : 0)) % 4]; c.beginPath(); c.arc(fx, fy, 1.8 * s, 0, TAU); c.fill(); }
+  }
+  /* gazebo */
+  c.fillStyle = V.stone; c.lineWidth = 1.5 * s; c.fillRect(x - 15 * s, y - 5 * s, 30 * s, 5 * s); c.strokeRect(x - 15 * s, y - 5 * s, 30 * s, 5 * s);
+  c.fillStyle = V.wood; for (const px of [-13, 10]) { c.fillRect(x + px * s, y - 26 * s, 3 * s, 21 * s); c.strokeRect(x + px * s, y - 26 * s, 3 * s, 21 * s); }
+  c.fillStyle = 'rgba(255,240,200,.55)'; c.fillRect(x - 10 * s, y - 24 * s, 20 * s, 19 * s);
+  /* a spirit lamp hanging inside */
+  c.save(); c.shadowColor = '#9BF6FF'; c.shadowBlur = 10 * s; c.fillStyle = '#BFF6FF'; c.beginPath(); c.arc(x, y - 16 * s + Math.sin(t * 2) * .8 * s, 2.6 * s, 0, TAU); c.fill(); c.restore();
+  vRoof(c, x, y - 26 * s, 24 * s, y - 38 * s, 4 * s, s, V.jade, V.jadeDk);
+  c.fillStyle = '#FFC94A'; c.strokeStyle = LINE; c.lineWidth = 1 * s; c.beginPath(); c.arc(x, y - 40 * s, 2.4 * s, 0, TAU); c.fill(); c.stroke();
+  c.restore();
+}
+/* the healing spring: a ring of round stones around glowing water, with steam */
+function vSpring(c, x, y, s, t) {
+  c.save(); c.lineJoin = 'round'; c.strokeStyle = LINE; c.lineWidth = 1.4 * s;
+  vShadow(c, x, y, 40 * s, 9 * s);
+  const rx = 31 * s, ry = 11 * s, cy = y - 6 * s;
+  const rock = (a, sz) => { const px = x + Math.cos(a) * rx, py = cy + Math.sin(a) * ry; c.fillStyle = Math.sin(a * 3) > 0 ? '#C9C0D8' : '#B3A9C6'; c.beginPath(); c.ellipse(px, py, sz * 1.25, sz, 0, 0, TAU); c.fill(); c.stroke(); c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(px - sz * .3, py - sz * .35, sz * .45, sz * .25, 0, 0, TAU); c.fill(); };
+  const N = 14, back = [], front = [];
+  for (let i = 0; i < N; i++) { const a = i / N * TAU, sz = (4.2 + (i * 7 % 3) * .8) * s; (Math.sin(a) < 0 ? back : front).push([a, sz]); }
+  back.forEach(([a, sz]) => rock(a, sz));
+  c.save(); c.shadowColor = '#7FF0FF'; c.shadowBlur = 14 * s;
+  const wg = c.createRadialGradient(x, cy, 2, x, cy, rx); wg.addColorStop(0, '#CFF8FF'); wg.addColorStop(1, '#5CC8F0');
+  c.fillStyle = wg; c.beginPath(); c.ellipse(x, cy, rx - 1 * s, ry - 1 * s, 0, 0, TAU); c.fill(); c.restore();
+  c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1 * s;
+  for (let i = 0; i < 2; i++) { const q = (t * .6 + i / 2) % 1; c.globalAlpha = 1 - q; c.beginPath(); c.ellipse(x, cy, (6 + q * 18) * s, (2 + q * 6) * s, 0, 0, TAU); c.stroke(); }
+  c.globalAlpha = 1; c.strokeStyle = LINE; c.lineWidth = 1.4 * s;
+  front.sort((p, q) => Math.sin(p[0]) - Math.sin(q[0])).forEach(([a, sz]) => rock(a, sz));
+  /* steam */
+  for (let i = 0; i < 4; i++) { const q = (t * .35 + i / 4) % 1; c.fillStyle = `rgba(255,255,255,${.45 * (1 - q) * Math.min(1, q * 5)})`; c.beginPath(); c.arc(x - 12 * s + i * 8 * s + Math.sin(q * 6 + i) * 2 * s, cy - 4 * s - q * 26 * s, (3 + q * 5) * s, 0, TAU); c.fill(); }
+  c.restore();
+}
+/* the Sky shrine: a small outlined three-tier pagoda behind a red torii gate */
+function vShrine(c, x, y, s, t) {
+  c.save(); c.lineJoin = 'round'; c.strokeStyle = LINE;
+  const sg = c.createRadialGradient(x, y - 40 * s, 4, x, y - 40 * s, 62 * s); sg.addColorStop(0, `rgba(255,226,122,${.35 + Math.sin(t * 2) * .1})`); sg.addColorStop(1, 'rgba(255,226,122,0)'); c.fillStyle = sg; c.beginPath(); c.arc(x, y - 40 * s, 62 * s, 0, TAU); c.fill();
+  vShadow(c, x, y, 26 * s, 6 * s);
+  c.fillStyle = V.stone2; c.lineWidth = 1.5 * s; c.fillRect(x - 18 * s, y - 5 * s, 36 * s, 5 * s); c.strokeRect(x - 18 * s, y - 5 * s, 36 * s, 5 * s);
+  let yy = y - 5 * s;
+  for (let i = 0; i < 3; i++) {
+    const w = (13 - i * 2.5) * s, h = 9 * s;
+    c.fillStyle = V.paper; c.lineWidth = 1.3 * s; c.fillRect(x - w, yy - h, w * 2, h); c.strokeRect(x - w, yy - h, w * 2, h);
+    c.fillStyle = V.wood; c.fillRect(x - w, yy - h, 2.2 * s, h); c.fillRect(x + w - 2.2 * s, yy - h, 2.2 * s, h);
+    if (i === 0) { c.save(); c.shadowColor = '#FFC56A'; c.shadowBlur = 8 * s; c.fillStyle = '#FFD98A'; c.fillRect(x - 3.5 * s, yy - h + 2 * s, 7 * s, h - 2 * s); c.restore(); }
+    vRoof(c, x, yy - h, w + 9 * s, yy - h - 7 * s, w * .45, s * .8, V.roof, V.roofDk);
+    yy -= h + 7 * s;
+  }
+  c.strokeStyle = LINE; c.lineWidth = 1.2 * s; c.fillStyle = '#FFC94A'; c.fillRect(x - .9 * s, yy - 9 * s, 1.8 * s, 10 * s); c.strokeRect(x - .9 * s, yy - 9 * s, 1.8 * s, 10 * s);
+  for (let i = 0; i < 3; i++) { c.beginPath(); c.ellipse(x, yy - 2 * s - i * 3 * s, 2.6 * s, .9 * s, 0, 0, TAU); c.fill(); c.stroke(); }
+  /* torii in front */
+  const tx = x, ty = y + 9 * s;
+  c.fillStyle = '#E2453E'; c.lineWidth = 1.3 * s;
+  for (const sd of [-1, 1]) { c.fillRect(tx + sd * 13 * s - 1.6 * s, ty - 22 * s, 3.2 * s, 22 * s); c.strokeRect(tx + sd * 13 * s - 1.6 * s, ty - 22 * s, 3.2 * s, 22 * s); }
+  c.fillRect(tx - 15 * s, ty - 17 * s, 30 * s, 2.4 * s); c.strokeRect(tx - 15 * s, ty - 17 * s, 30 * s, 2.4 * s);
+  c.beginPath(); c.moveTo(tx - 20 * s, ty - 25 * s); c.quadraticCurveTo(tx, ty - 22 * s, tx + 20 * s, ty - 25 * s); c.lineTo(tx + 18 * s, ty - 21.6 * s); c.quadraticCurveTo(tx, ty - 19 * s, tx - 18 * s, ty - 21.6 * s); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#2A2238'; c.beginPath(); c.moveTo(tx - 21 * s, ty - 26.5 * s); c.quadraticCurveTo(tx, ty - 23.5 * s, tx + 21 * s, ty - 26.5 * s); c.lineTo(tx + 20 * s, ty - 24.6 * s); c.quadraticCurveTo(tx, ty - 21.8 * s, tx - 20 * s, ty - 24.6 * s); c.closePath(); c.fill();
+  c.restore();
+}
+/* the lantern tower: a slim stone tower with two small roofs and a lantern on top */
+function vTower(c, x, y, s, t) {
+  c.save(); c.lineJoin = 'round'; c.strokeStyle = LINE;
+  vShadow(c, x, y, 16 * s, 4 * s);
+  c.fillStyle = V.stone2; c.lineWidth = 1.4 * s; c.fillRect(x - 12 * s, y - 5 * s, 24 * s, 5 * s); c.strokeRect(x - 12 * s, y - 5 * s, 24 * s, 5 * s);
+  c.fillStyle = '#EFE6D6'; c.beginPath(); c.moveTo(x - 9 * s, y - 5 * s); c.lineTo(x - 7 * s, y - 62 * s); c.lineTo(x + 7 * s, y - 62 * s); c.lineTo(x + 9 * s, y - 5 * s); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = 'rgba(34,55,75,.2)'; c.lineWidth = .9 * s; for (let i = 1; i < 6; i++) { const ly = y - 5 * s - i * 9.5 * s; c.beginPath(); c.moveTo(x - 9 * s + i * .35 * s, ly); c.lineTo(x + 9 * s - i * .35 * s, ly); c.stroke(); }
+  c.strokeStyle = LINE; c.lineWidth = 1.2 * s; c.fillStyle = '#3A2F78'; c.beginPath(); c.moveTo(x - 3 * s, y - 5 * s); c.lineTo(x - 3 * s, y - 12 * s); c.arc(x, y - 12 * s, 3 * s, Math.PI, 0); c.lineTo(x + 3 * s, y - 5 * s); c.closePath(); c.fill(); c.stroke();
+  c.save(); c.shadowColor = '#FFC56A'; c.shadowBlur = 6 * s; c.fillStyle = '#FFD98A'; c.fillRect(x - 2 * s, y - 50 * s, 4 * s, 6 * s); c.restore(); c.strokeRect(x - 2 * s, y - 50 * s, 4 * s, 6 * s);
+  vRoof(c, x, y - 32 * s, 15 * s, y - 38 * s, 7 * s, s * .8, V.roof, V.roofDk);
+  vRoof(c, x, y - 62 * s, 16 * s, y - 69 * s, 6 * s, s * .8, V.roof, V.roofDk);
+  /* the big lantern on top */
+  c.fillStyle = V.wood; c.fillRect(x - 1 * s, y - 73 * s, 2 * s, 5 * s);
+  c.save(); c.shadowColor = '#FFC56A'; c.shadowBlur = (14 + Math.sin(t * 4) * 4) * s; c.fillStyle = '#FFD98A'; E.rr(c, x - 5 * s, y - 84 * s, 10 * s, 11 * s, 2.5 * s); c.fill(); c.restore();
+  c.lineWidth = 1.3 * s; E.rr(c, x - 5 * s, y - 84 * s, 10 * s, 11 * s, 2.5 * s); c.stroke();
+  c.fillStyle = '#3A2A38'; c.beginPath(); c.moveTo(x - 7 * s, y - 84 * s); c.lineTo(x, y - 90 * s); c.lineTo(x + 7 * s, y - 84 * s); c.closePath(); c.fill(); c.stroke();
   c.restore();
 }
 /* ---------- the hero shop ----------
@@ -1680,7 +1863,7 @@ K.shop = function (c, W, H, t, o = {}) {
   K.petals(c, W, H, t, 8);
 };
 /* where each village building stands, in island units (x across, y front-to-back) */
-const VSPOT = {shrine:[-.04, -.3], tower:[.62, -.26], garden:[-.56, .02], dojo:[0, .03], shop:[.5, .16], spring:[-.24, .28]};
+const VSPOT = {shrine:[-.3, -.33], tower:[.62, -.26], garden:[-.58, .03], dojo:[.04, .02], shop:[.52, .17], spring:[-.22, .3]};
 K.village = function (c, W, H, t, st, sel) {
   K.skyGradient(c, W, H, '#101A52', '#40308E', '#C77BB8', '#FFC2A8');
   K.stars(c, W, H * .7, t, 50, 21);
@@ -1704,22 +1887,18 @@ K.village = function (c, W, H, t, st, sel) {
   c.save(); c.lineCap = 'round'; paths(); c.strokeStyle = 'rgba(0,0,0,.2)'; c.lineWidth = r * .1; c.stroke(); paths(); c.strokeStyle = '#C9A98A'; c.lineWidth = r * .08; c.stroke(); paths(); c.strokeStyle = '#F6E7CF'; c.lineWidth = r * .055; c.stroke(); paths(); c.setLineDash([r * .018, r * .04]); c.strokeStyle = 'rgba(120,90,70,.35)'; c.lineWidth = r * .018; c.stroke(); c.restore();
   const u = r / 190, hits = [], B = st.buildings || {}, items = [];
   /* cherry trees around the edge */
-  for (const [x, y, s2] of [[-.86, -.1, .34], [-.3, -.3, .3], [.26, -.34, .28], [.86, -.06, .32], [.18, .34, .28], [-.66, .3, .3], [.82, .2, .28], [.36, -.3, .26]]) items.push([y, () => { c.save(); c.globalAlpha = .95; sakura(c, cx + x * r, cy + y * r, s2 * u, seed(Math.round(x * 100 + 700)), true); c.restore(); }]);
+  for (const [x, y, s2] of [[-.86, -.1, .34], [.02, -.38, .26], [.24, -.36, .28], [.86, -.06, .32], [.18, .34, .28], [-.66, .3, .3], [.82, .2, .28], [.36, -.3, .26]]) items.push([y, () => { c.save(); c.globalAlpha = .95; sakura(c, cx + x * r, cy + y * r, s2 * u, seed(Math.round(x * 100 + 700)), true); c.restore(); }]);
   for (const k of ['shrine', 'tower', 'garden', 'dojo', 'shop', 'spring']) {
     const [x, y] = at(k), built = k === 'dojo' || k === 'shop' || B[k];
     items.push([VSPOT[k][1], () => {
       if (sel === k) { c.save(); c.shadowColor = '#FFE27A'; c.shadowBlur = 20; c.fillStyle = 'rgba(255,226,122,.4)'; c.beginPath(); c.ellipse(x, y, 52 * u, 14 * u, 0, 0, TAU); c.fill(); c.restore(); }
-      if (!built) ruin(c, x, y, 60 * u, 44 * u, t);
-      else if (k === 'dojo') roofHouse(c, x, y, 76 * u, 44 * u, '#F3E6D0', '#C8384A', true, t);
-      else if (k === 'garden') { roofHouse(c, x, y, 50 * u, 28 * u, '#E8F6EE', '#2F7A5E', true, t); for (let i = 0; i < 5; i++) blossom(c, x - 28 * u + i * 14 * u, y + 4 * u, 6 * u, '#FFC6DD'); }
+      if (!built) vLot(c, x, y, u, t);
+      else if (k === 'dojo') vDojo(c, x, y, u, t);
+      else if (k === 'garden') vGarden(c, x, y, u, t);
       else if (k === 'shop') stall(c, x, y, u * 1.1, t);
-      else if (k === 'spring') { c.save(); c.fillStyle = '#B7ADC8'; c.beginPath(); c.ellipse(x, y - 4 * u, 40 * u, 15 * u, 0, 0, TAU); c.fill(); c.strokeStyle = LINE; c.lineWidth = 2; c.stroke(); c.shadowColor = '#7FF0FF'; c.shadowBlur = 18; c.fillStyle = '#9BE8FF'; c.beginPath(); c.ellipse(x, y - 6 * u, 33 * u, 11 * u, 0, 0, TAU); c.fill(); c.restore(); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 1.5; for (let i = 0; i < 3; i++) { const q = (t * 10 + i * 8) % 24; c.beginPath(); c.ellipse(x, y - 6 * u, (10 + q) * u, (3 + q * .3) * u, 0, 0, TAU); c.stroke(); } for (let i = 0; i < 3; i++) { const q = (t * .5 + i / 3) % 1; c.fillStyle = `rgba(255,255,255,${.4 * (1 - q)})`; c.beginPath(); c.arc(x - 10 * u + i * 10 * u, y - 14 * u - q * 26 * u, (4 + q * 6) * u, 0, TAU); c.fill(); } }
-      else if (k === 'tower') {
-        c.fillStyle = '#E8DCC8'; c.strokeStyle = LINE; c.lineWidth = 2; c.beginPath(); c.moveTo(x - 12 * u, y); c.lineTo(x - 9 * u, y - 66 * u); c.lineTo(x + 9 * u, y - 66 * u); c.lineTo(x + 12 * u, y); c.closePath(); c.fill(); c.stroke();
-        c.fillStyle = '#C8384A'; for (const yy of [-30, -66]) { c.beginPath(); c.moveTo(x - 20 * u, y + yy * u); c.quadraticCurveTo(x, y + (yy - 8) * u, x + 20 * u, y + yy * u); c.lineTo(x + 12 * u, y + (yy - 10) * u); c.lineTo(x - 12 * u, y + (yy - 10) * u); c.closePath(); c.fill(); c.stroke(); }
-        c.fillStyle = '#3A2F78'; c.fillRect(x - 3 * u, y - 18 * u, 6 * u, 10 * u); K.lantern(c, x, y - 76 * u, .5 * u, true, t);
-      }
-      else if (k === 'shrine') { c.save(); const sg = c.createRadialGradient(x, y - 40 * u, 4, x, y - 40 * u, 70 * u); sg.addColorStop(0, `rgba(255,226,122,${.35 + Math.sin(t * 2) * .1})`); sg.addColorStop(1, 'rgba(255,226,122,0)'); c.fillStyle = sg; c.beginPath(); c.arc(x, y - 40 * u, 70 * u, 0, TAU); c.fill(); c.restore(); pagoda(c, x, y, .5 * u, '#C8384A'); }
+      else if (k === 'spring') vSpring(c, x, y, u, t);
+      else if (k === 'tower') vTower(c, x, y, u, t);
+      else if (k === 'shrine') vShrine(c, x, y, u * .95, t);
     }]);
     hits.push({k, x, y:y - 20 * u, r:40 * u});
   }
